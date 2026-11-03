@@ -392,6 +392,35 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 .npin i{transform:rotate(45deg);font-style:normal}
 .npin.dim span{background:#8a8a94}
 .leaflet-container{font:inherit}
+
+/* store info panel (Shop style) */
+.storesheet .body{padding-top:16px}
+.storeinfo,.storeinfo #about{display:flex;flex-direction:column;gap:14px}.storeinfo #about:empty{display:none}
+.sitop{display:flex;align-items:center}
+.sitop .grow{flex:1}
+.sibtn{width:46px;height:46px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center}
+.storesheet .body>.storeinfo~.close,.storesheet .grab{display:none}
+.sihead{display:flex;align-items:center;gap:14px;padding:4px 2px 6px}
+.sihead .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sihead b{font-size:19px;line-height:1.2}
+.sihead span{color:var(--muted);font-size:14px}
+.sihead .logo{position:relative;flex:none;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:24px;color:#fff;overflow:hidden}
+.sicard{display:block;background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:20px 22px;text-decoration:none;color:var(--text);text-align:left;width:100%}
+.sicard h3{margin:0 0 6px;font-size:24px;letter-spacing:-.01em}
+.sicard .sdesc{margin:8px 0 0;color:var(--muted)}
+.sirow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;text-decoration:none;color:var(--muted);font-size:17px}
+.sirow span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sirow svg{flex:none;color:var(--text)}
+.sirow:active,.silink:active{opacity:.6}
+.silink{display:flex;align-items:center;justify-content:space-between;font-size:18px;font-weight:600;min-height:72px}
+.sicard .row{padding:12px 0}
+.shlogo{flex:none;border-radius:18px}
+.srec{align-items:center}
+.srec .lbl{flex:none;color:var(--muted);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:2px}
+.srec .chip{height:36px;font-size:14px;background:transparent;border-style:dashed}
+.srec .chip svg{color:var(--muted)}
+[data-hold]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.holding{transform:scale(.93)!important;transition:transform .45s ease-out!important}
 </style>
 </head>
 <body>
@@ -454,6 +483,12 @@ const I = {
   mail:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>',
   pin:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
   locate:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+  phone2:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 3.5h3.2l1.6 4-2.1 1.3a11 11 0 0 0 5.5 5.5l1.3-2.1 4 1.6V17a3 3 0 0 1-3 3A15.5 15.5 0 0 1 2 6.5a3 3 0 0 1 3-3z"/></svg>',
+  share:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1"/></svg>',
+  arrow:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg>',
+  refund:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M14 14.5h-5m0 0 2-2m-2 2 2 2"/></svg>',
+  box:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="8" width="17" height="12" rx="2.5"/><path d="M5 8l2-4h10l2 4M10 12h4"/></svg>',
+  shield:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>',
   ext:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>',
 };
 $id('nav-home').innerHTML=I.home; $id('nav-saved').innerHTML=I.heart; $id('nav-lists').innerHTML=I.grid;
@@ -580,20 +615,24 @@ async function linkCode(raw){
   await syncNow(); render(); toast('This device is synced'); openSync();
 }
 function openStore(st){
-  const on=!S.prefs.off.includes(st.id);
-  sheet(`<div class="storepage" style="${heroStyle(st)}"><div class="abhero"><button class="close glass" data-act="close">${I.x}</button>${storeLogo(st)}<div><h2>${esc(st.name)}</h2><div>${esc(st.host||'')}</div></div></div><div class="syncs">
+  const on=!S.prefs.off.includes(st.id), here=route.name==='store'&&route.id===st.id;
+  sheet(`<div class="storeinfo" style="${heroStyle(st)}">
+    <div class="sitop"><button class="sibtn" data-act="close" aria-label="Close">${I.x.replace('width="16" height="16"','width="20" height="20"')}</button><span class="grow"></span>
+      <button class="sibtn" data-act="storeshare" data-s="${esc(st.id)}" aria-label="Share">${I.share}</button></div>
+    <div class="sihead">${storeLogo(st)}<div class="grow"><b>${esc(st.name)}</b><span>${esc(st.host||'')}${st.deck?' · One-tap cart':''}</span></div></div>
     <div id="about" data-s="${esc(st.id)}">${aboutHTML(st)}</div>
-    <a class="btn block" href="${esc(storeHome(st))}" target="_blank" rel="noopener" style="margin-top:16px">Visit online store ${I.ext}</a>
-    ${route.name==='store'&&route.id===st.id?'':`<button class="btn ghost block" data-act="gostore" data-s="${esc(st.id)}" style="margin-top:10px">Open store page</button>`}
-    <div class="sub" style="margin:22px 0 4px">In Card Hunt</div>
-    <button class="row" data-act="storetoggle" data-s="${esc(st.id)}"><span class="grow"><div class="t">Include in searches</div><div class="s">${on?'Card Hunt checks this store every time you search':'Skipped when you search'}</div></span><span class="switch${on?' on':''}"><i></i></span></button>
-    <div class="row" style="cursor:default"><span class="grow"><div class="t">Checking out</div><div class="s">${st.deck?'Has a deck list page, so Card Hunt can send your whole cart there in one tap':'Card Hunt walks you through adding each card to its cart'}</div></span></div>
-    ${st.custom?`<div class="sub" style="margin:14px 0 0">Store name</div>
-      <div class="field"><input id="storename" value="${esc(st.name)}" autocomplete="off"><button class="btn ghost" data-act="savename" data-s="${esc(st.id)}">Save</button></div>`:''}
-    ${st.custom?`<div class="sub" style="margin:10px 0 0">${st.deck?'Deck list page:':'Does this store have a deck list or multi-card search page? Paste its link and Card Hunt can send your whole cart there.'}</div>
-      <div class="field"><input id="decklink" placeholder="https://…/pages/deck-list" value="${esc(st.deck||'')}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn ghost" data-act="savedeck" data-s="${esc(st.id)}">Save</button></div>`:''}
-    ${st.custom?`<button class="btn ghost block" data-act="removestore" data-s="${esc(st.id)}" style="color:var(--heart);margin-top:14px">${I.trash} Remove store</button>`:''}</div></div>`, 'storesheet');
-  if(!profOf(st)) loadProfile(st).then(()=>{ const a=$id('about'); if(a&&a.dataset.s===st.id){ a.innerHTML=aboutHTML(st);  } });
+    <a class="sicard silink" href="${esc(storeHome(st))}" target="_blank" rel="noopener"><span>Visit Online Store</span>${I.arrow}</a>
+    ${here?'':`<button class="sicard silink" data-act="gostore" data-s="${esc(st.id)}"><span>Open store page in Card Hunt</span>${I.chev.replace('width="16" height="16"','width="20" height="20"')}</button>`}
+    <div class="sicard"><h3>In Card Hunt</h3>
+      <button class="row" data-act="storetoggle" data-s="${esc(st.id)}"><span class="grow"><div class="t">Include in searches</div><div class="s">${on?'Card Hunt checks this store every time you search':'Skipped when you search'}</div></span><span class="switch${on?' on':''}"><i></i></span></button>
+      <div class="row" style="cursor:default"><span class="grow"><div class="t">Checking out</div><div class="s">${st.deck?'Has a deck list page, so Card Hunt can send your whole cart there in one tap':'Card Hunt walks you through adding each card to its cart'}</div></span></div>
+      ${st.custom?`<div class="sub" style="margin:14px 0 0">Store name</div>
+        <div class="field"><input id="storename" value="${esc(st.name)}" autocomplete="off"><button class="btn ghost" data-act="savename" data-s="${esc(st.id)}">Save</button></div>
+        <div class="sub" style="margin:10px 0 0">${st.deck?'Deck list page:':'Does this store have a deck list or multi-card search page? Paste its link and Card Hunt can send your whole cart there.'}</div>
+        <div class="field"><input id="decklink" placeholder="https://…/pages/deck-list" value="${esc(st.deck||'')}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn ghost" data-act="savedeck" data-s="${esc(st.id)}">Save</button></div>
+        <button class="btn ghost block" data-act="removestore" data-s="${esc(st.id)}" style="color:var(--heart);margin-top:6px">${I.trash} Remove store</button>`:''}
+    </div></div>`, 'storesheet');
+  if(!profOf(st)) loadProfile(st).then(()=>{ const a=$id('about'); if(a&&a.dataset.s===st.id) a.innerHTML=aboutHTML(st); });
 }
 function openAddStore(msg=''){
   sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
@@ -750,7 +789,7 @@ const countCards = l => l.items.reduce((a,i)=>a+i.qty,0);
 // ---------- store pages ----------
 // Each store gets its own page: its logo on a header in its own colours, a search of just that store, and what you have saved there.
 // The description, socials and policies come from the store's own home page through the helper, kept for 3 days.
-let PROF=LS.get('prof',{});
+let PROF=LS.get('prof2',{});
 const profOf = st => (st&&st.host&&PROF[st.host]&&PROF[st.host].data)||null;
 async function loadProfile(st){
   if(!st||!st.host) return null; const p=PROF[st.host];
@@ -760,7 +799,7 @@ async function loadProfile(st){
     PROF[st.host]=j.ok?{at:Date.now(),data:j}:{at:Date.now(),data:p&&p.data||null};
     if(!j.ok&&p&&p.data) PROF[st.host].at=Date.now()-3*864e5+5*60e3;
   }catch(e){ PROF[st.host]={at:Date.now(),data:p&&p.data||null}; }
-  LS.set('prof',PROF); return PROF[st.host].data;
+  LS.set('prof2',PROF); return PROF[st.host].data;
 }
 const SDATA={};   // store searches, keyed "<store id>|<query>"
 let storeQ='', storeBack=null;
@@ -826,16 +865,14 @@ function viewStore(){
   return `<div class="storepage" style="${heroStyle(st)}"><div class="shero">
       <div class="shnav"><button class="glass" data-act="back" aria-label="Back">${I.back}</button><span class="grow"></span>
         <button class="glass" data-act="storeinfo" data-s="${esc(st.id)}" aria-label="About ${esc(st.name)}">${I.info}</button></div>
-      <div class="shin">${storeLogo(st)}<div class="grow"><h1>${esc(st.name)}</h1>
+      <div class="shin"><button class="shlogo" data-act="storeinfo" data-s="${esc(st.id)}" aria-label="Store info">${storeLogo(st)}</button><div class="grow" data-act="storeinfo" data-s="${esc(st.id)}"><h1>${esc(st.name)}</h1>
         <div class="shmeta"><span>${esc(st.host||'')}</span>${st.deck?`<span class="b">${I.cart.replace('width="30" height="30"','width="12" height="12"')} One-tap cart</span>`:''}${on?'':'<span class="b">Skipped in searches</span>'}</div></div></div>
     </div>
     <div class="stools">
       <div class="pill">${I.search}
         <input id="sq" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="Search ${esc(st.name)}" value="${esc(storeQ)}">
         <button type="button" class="x${storeQ?'':' hidden'}" data-act="sqclear" title="Clear">${I.x}</button><div class="suggest hidden" id="sug3"></div></div>
-      <div class="chips"><button class="chip" data-act="storeinfo" data-s="${esc(st.id)}">${I.info.replace('width="22" height="22"','width="17" height="17"')} About</button>
-        <a class="chip" href="${esc(storeHome(st))}" target="_blank" rel="noopener" style="text-decoration:none">${I.ext} Visit online store</a>
-        ${!storeQ?sugg.map(q=>`<button class="chip" data-act="sq" data-q="${esc(q)}">${esc(q)}</button>`).join(''):''}</div>
+      ${!storeQ&&sugg.length?`<div class="chips srec"><span class="lbl">Recent</span>${sugg.map(q=>`<button class="chip" data-act="sq" data-q="${esc(q)}">${I.search.replace('width="24" height="24"','width="15" height="15"')}${esc(q)}</button>`).join('')}</div>`:''}
     </div>
     ${results}
     ${!storeQ&&n?`<div class="stcart"><div class="grow"><b>${n} item${n===1?'':'s'} in your cart here</b><span>from ${money(sub)}</span></div>
@@ -846,14 +883,17 @@ function viewStore(){
     ${!storeQ&&!n&&!seen.length&&!favs.length?`<div class="empty">Search ${esc(st.name)} above to see what they have. Cards you open, save or add from here show up on this page.</div>`:''}</div>`;
 }
 const SOCIAL={instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',youtube:'YouTube',x:'X',discord:'Discord'};
+// The store info panel, laid out like the Shop app's: a card each for policies, contact and following the store.
+const POL_ICON={'Refund policy':'refund','Shipping policy':'box','Privacy policy':'shield','Terms of service':'info'};
 function aboutHTML(st){
-  const p=profOf(st); if(!p) return st.host&&!PROF[st.host]?`<div class="sub" style="margin:16px 0 0">Loading store details…</div>`:'';
+  const p=profOf(st); if(!p) return st.host&&!PROF[st.host]?`<div class="sicard"><div class="sub" style="margin:0">Loading store details…</div></div>`:'';
   const desc=(p.description||'').trim(); const showDesc=desc&&desc.toLowerCase()!==String(p.name||st.name).toLowerCase();
   const soc=Object.entries(p.socials||{}).filter(([k,u])=>SOCIAL[k]&&/^https?:/.test(u));
-  return `${showDesc?`<p class="sdesc">${esc(desc)}</p>`:''}
-    ${soc.length?`<div class="sub" style="margin:16px 0 8px">Follow</div><div class="socials">${soc.map(([k,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener"><span class="si">${SOC_ICON[k]||I.ext}</span>${SOCIAL[k]}</a>`).join('')}</div>`:''}
-    ${p.email?`<div class="sub" style="margin:16px 0 4px">Contact</div><a class="row" href="mailto:${esc(p.email)}" style="text-decoration:none"><span class="ic">${I.mail}</span><span class="grow"><div class="t">${esc(p.email)}</div><div class="s">Email the store</div></span>${I.chev}</a>`:''}
-    ${p.policies&&p.policies.length?`<div class="sub" style="margin:16px 0 4px">Policies</div><div class="rows">${p.policies.map(x=>`<a class="row" href="${esc(x.url)}" target="_blank" rel="noopener" style="text-decoration:none"><span class="grow"><div class="t">${esc(x.title)}</div></span>${I.chev}</a>`).join('')}</div>`:''}`;
+  const row=(href,label,icon,ext)=>`<a class="sirow" href="${esc(href)}"${ext?' target="_blank" rel="noopener"':''}><span>${esc(label)}</span>${icon}</a>`;
+  return `${showDesc?`<div class="sicard"><h3>About</h3><p class="sdesc">${esc(desc)}</p></div>`:''}
+    ${p.policies&&p.policies.length?`<div class="sicard"><h3>Policies</h3>${p.policies.map(x=>row(x.url,x.title==='Terms of service'?'Terms and conditions':x.title,I[POL_ICON[x.title]]||I.info,1)).join('')}</div>`:''}
+    ${p.email||p.phone?`<div class="sicard"><h3>Contact</h3>${p.email?row('mailto:'+p.email,p.email,I.mail):''}${p.phone?row('tel:'+p.phone.replace(/[^\d+]/g,''),p.phone,I.phone2):''}</div>`:''}
+    ${soc.length?`<div class="sicard"><h3>Follow</h3>${soc.map(([k,u])=>row(u,SOCIAL[k],SOC_ICON[k]||I.ext,1)).join('')}</div>`:''}`;
 }
 const SOC_ICON={
   instagram:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -960,7 +1000,7 @@ function viewHome(){
       :`<div class="recent">${['Sol Ring','Lightning Bolt','Rhystic Study','Commander deck'].map(q=>`<button class="chip" data-act="q" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
     <button class="promo" data-act="multi"><span class="ic">${I.grid}</span><span class="grow"><b>Price a whole decklist</b><span>Paste your list and see every card at all ${STORES.length} stores</span></span>${I.chev}</button>
     <div class="h"><h2>Your stores</h2><span class="hint">${STORES.length-S.prefs.off.filter(id=>SBY[id]).length} of ${STORES.length} searched</span></div>
-    <div class="srail">${STORES.map(st=>`<button class="sbub${S.prefs.off.includes(st.id)?' off':''}" data-act="gostore" data-s="${esc(st.id)}">${storeLogo(st, st.deck?`<i title="Can fill its cart from a list">${I.cart.replace('width="30" height="30"','width="11" height="11"')}</i>`:'')}<span class="nm">${esc(st.name)}</span></button>`).join('')}
+    <div class="srail">${STORES.map(st=>`<button class="sbub${S.prefs.off.includes(st.id)?' off':''}" data-act="gostore" data-hold="${esc(st.id)}" data-s="${esc(st.id)}">${storeLogo(st, st.deck?`<i title="Can fill its cart from a list">${I.cart.replace('width="30" height="30"','width="11" height="11"')}</i>`:'')}<span class="nm">${esc(st.name)}</span></button>`).join('')}
       <button class="sbub" data-act="addstore"><span class="logo add">${I.plus}</span><span class="nm">Add store</span></button></div>
     ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2></div><div class="rail">${S.viewed.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
     ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use Card Hunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
@@ -1114,6 +1154,8 @@ function burst(imgEl){
   setTimeout(()=>b.remove(),950);
 }
 function buzz(){try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}}
+// A very light tap on every button press (Android; iPhones don't let websites vibrate).
+function tick(){try{navigator.vibrate&&navigator.vibrate(6)}catch(e){}}
 let tapT=null, tapK=null;
 function toggleFav(o){
   if(isFav(o)){S.favs=S.favs.filter(f=>f.url!==o.url); toast('Removed from favorites')}
@@ -1129,7 +1171,7 @@ function openProduct(o, fromCart=productFromCart){
   const c=inCart(o);
   sheet(`<div class="pd"><div class="grab"></div><button class="close" data-act="close">${I.x}</button>
     ${imgTag(o,'big')}
-    ${SBY[o.store]?`<button class="store" data-act="gostore" data-s="${esc(o.store)}">${esc(o.storeName)} ${I.chev}</button>`:`<div class="store">${esc(o.storeName)}</div>`}<h3>${esc(o.title)}</h3>
+    ${SBY[o.store]?`<button class="store" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}">${esc(o.storeName)} ${I.chev}</button>`:`<div class="store">${esc(o.storeName)}</div>`}<h3>${esc(o.title)}</h3>
     <div class="pr">${esc(priceText(o))}</div>
     <div class="st${o.available?'':' sold'}">${o.available?'In stock':'Sold out'}${o.foil?' · Foil':''}</div>
     <div class="hint">${o.priceMax>o.price+0.001?'Price depends on condition. You choose the condition on the store\'s page.':'Check the condition on the store\'s page.'}</div>
@@ -1169,10 +1211,10 @@ function openCart(){
   const grand=shown.reduce((a,g)=>a+g.items.reduce((b,c)=>b+c.price*c.qty,0),0);
   const shownN=shown.reduce((a,g)=>a+g.items.reduce((b,c)=>b+c.qty,0),0);
   sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><h2>Cart</h2>
-    ${groups.length>1?`<div class="cjump"><button data-act="csel" data-s="" class="${picking?'':'on'}">All stores</button>${groups.map(({s,items})=>`<button data-act="csel" data-s="${esc(s.id)}" class="${CSEL.has(s.id)?'on':''}" aria-pressed="${CSEL.has(s.id)}">${CSEL.has(s.id)?'✓':`<span class="dot" style="background:${s.color}"></span>`}${esc(s.name)} <b>${items.reduce((a,c)=>a+c.qty,0)}</b></button>`).join('')}</div>
+    ${groups.length>1?`<div class="cjump"><button data-act="csel" data-s="" class="${picking?'':'on'}">All stores</button>${groups.map(({s,items})=>`<button data-act="csel" data-s="${esc(s.id)}" data-hold="${esc(s.id)}" class="${CSEL.has(s.id)?'on':''}" aria-pressed="${CSEL.has(s.id)}">${CSEL.has(s.id)?'✓':`<span class="dot" style="background:${s.color}"></span>`}${esc(s.name)} <b>${items.reduce((a,c)=>a+c.qty,0)}</b></button>`).join('')}</div>
       ${picking?`<div class="cpicked"><div><b>${shown.length} of ${groups.length} stores</b><span>${shownN} item${shownN===1?'':'s'} · tap more stores to add them</span></div><div class="amt">${money(grand)}</div></div>`:'<div class="cpick">Tap stores to see only those, with their own total</div>'}`:''}
     ${groups.length?shown.map(({s,items})=>{const sub=items.reduce((a,c)=>a+c.price*c.qty,0), n=items.reduce((a,c)=>a+c.qty,0), fold=groups.length>1&&!picking&&FOLD.has(s.id); return `<div class="sc${fold?' folded':''}" data-s="${esc(s.id)}">
-      <button class="shd" data-act="fold" aria-expanded="${!fold}">${storeLogo(s)}<div class="grow"><div class="sn">${esc(s.name)}</div><div class="sum">${n} item${n===1?'':'s'} · from ${money(sub)}</div></div><span class="chev">${I.down}</span></button>
+      <button class="shd" data-act="fold" data-hold="${esc(s.id)}" aria-expanded="${!fold}">${storeLogo(s)}<div class="grow"><div class="sn">${esc(s.name)}</div><div class="sum">${n} item${n===1?'':'s'} · from ${money(sub)}</div></div><span class="chev">${I.down}</span></button>
       <div class="scb"><div>
       ${items.map(c=>`<div class="ci"><button class="ciimg" data-act="cartopen" data-k="${esc(c.url)}" aria-label="Open ${esc(c.title)}">${imgTag(c)}</button><div class="grow"><div class="top2"><button class="nm" data-act="cartopen" data-k="${esc(c.url)}">${esc(c.title)}</button><div class="pp">${esc(money(c.price*c.qty))}</div></div>
         <div class="cd">${c.foil?'Foil · ':''}${esc(priceText(c))} each</div>${c.added?'<div class="added">✓ Added at the store</div>':''}
@@ -1252,9 +1294,21 @@ function newList(withName){
   S.lists.push(l); save('lists'); closeSheet(); go('list',{id:l.id});
 }
 
+// Press and hold a store (on Home, in the cart, on a card) to see its info.
+let holdT=null, holdFired=false, holdXY=null;
+document.addEventListener('pointerdown',e=>{ holdFired=false; const h=e.target.closest('[data-hold]'); if(!h||e.button>0) return; holdXY=[e.clientX,e.clientY];
+  clearTimeout(holdT); h.classList.add('holding');
+  holdT=setTimeout(()=>{ h.classList.remove('holding'); const st=SBY[h.dataset.hold]; if(!st) return; holdFired=true; try{navigator.vibrate&&navigator.vibrate([10,30,18])}catch(_){}
+    if($id('sheet').querySelector('.cartsheet')) productFromCart=false; openStore(st); },480); });
+const holdCancel=()=>{ clearTimeout(holdT); document.querySelectorAll('.holding').forEach(x=>x.classList.remove('holding')); };
+document.addEventListener('pointerup',holdCancel); document.addEventListener('pointercancel',holdCancel);
+document.addEventListener('pointermove',e=>{ if(holdXY&&Math.hypot(e.clientX-holdXY[0],e.clientY-holdXY[1])>10) holdCancel(); });
+document.addEventListener('contextmenu',e=>{ if(e.target.closest('[data-hold]')) e.preventDefault(); });
+document.addEventListener('click',e=>{ if(holdFired){ holdFired=false; e.preventDefault(); e.stopImmediatePropagation(); } },true);
 document.addEventListener('click', e=>{
   const el=e.target.closest('[data-act]'); if(!el) return;
   const a=el.dataset.act, k=el.dataset.k;
+  if(!['open','fav','close'].includes(a)) tick();
   if(a!=='open'&&a!=='walkopen'&&el.tagName!=='A') e.preventDefault();
   if(a==='fav'){ e.stopPropagation(); const o=offerOf(k); if(!o) return; toggleFav(o); buzz();
     if($id('sheet').querySelector('.pd')) { openProduct(o); render(); return; }
@@ -1311,6 +1365,7 @@ document.addEventListener('click', e=>{
     case 'csel': { const id=el.dataset.s; if(!id) CSEL.clear(); else if(CSEL.has(id)) CSEL.delete(id); else CSEL.add(id); buzz(); openCart();
       const b=$id('sheet').querySelector('.body'), c=b&&b.querySelector('.cjump'); if(b&&c&&b.scrollTop>c.offsetTop) b.scrollTo({top:c.offsetTop-8,behavior:'smooth'}); break; }
     case 'storeinfo': openStore(SBY[el.dataset.s]); break;
+    case 'storeshare': { const st=SBY[el.dataset.s], u=storeHome(st); if(navigator.share) navigator.share({title:st.name,url:u}).catch(()=>{}); else (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Store link copied'),()=>prompt('Store link',u)); break; }
     case 'storetoggle': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; save('prefs'); openStore(SBY[id]); render(); break; }
     case 'addstore': openAddStore(); break;
     case 'gostore': { const id=el.dataset.s; if(!SBY[id]) break; productFromCart=false; closeSheet(); if(!(route.name==='store'&&route.id===id)){ storeBack=route.name==='store'?storeBack:{...route,q:searchQ}; storeQ=''; go('store',{id}); } buzz(); break; }

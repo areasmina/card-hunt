@@ -76,7 +76,7 @@ function prettyHost(h) { const b = h.replace(/^(www|store|shop|en)\./, '').split
 // Read a store's home page once: name, favicon logo, a banner picture, short description, theme colour,
 // contact email and social links. Shopify sometimes rate-limits us, so retry once after a pause.
 async function readHome(host) {
-  const out = { name: '', logo: null, banner: null, description: '', color: null, email: null, socials: {} };
+  const out = { name: '', logo: null, banner: null, description: '', color: null, email: null, phone: null, socials: {} };
   try {
     const get = () => fetch(`https://${host}/`, { headers: { 'User-Agent': UA, Accept: 'text/html' }, redirect: 'follow' });
     let hp = await get();
@@ -98,6 +98,11 @@ async function readHome(host) {
     const pick = sec ? abs(sec[1]) : (og ? abs(og) : null);
     if (pick) { const x = new URL(pick); if (/\/cdn\/shop\/|cdn\.shopify\.com/.test(x.href)) { x.searchParams.delete('height'); x.searchParams.delete('crop'); x.searchParams.set('width', '1200'); } out.banner = x.href; }
     const mail = t.match(/mailto:([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})/i); if (mail) out.email = mail[1];
+    // Shops often write their email and phone as plain text in the footer, so look in the visible text too.
+    const text = t.replace(/<(script|style|svg)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/g, ' ');
+    if (!out.email) { const m = text.match(/\b[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|ca|net|org|co|io|shop|store)\b/i); if (m && !/example|domain|sentry|shopify/i.test(m[0])) out.email = m[0]; }
+    const tel = t.match(/href=["']tel:([+\d][\d\s().-]{6,20})["']/i) || text.match(/(?:\+?1[\s.-]?)?\(?\b[2-9]\d{2}\)?[\s.-]\d{3}[\s.-]\d{4}\b/);
+    out.phone = tel ? (tel[1] || tel[0]).trim() : null;
     const SOC = { instagram: /instagram\.com/, facebook: /facebook\.com/, tiktok: /tiktok\.com/, youtube: /youtube\.com|youtu\.be/, x: /(?:twitter|x)\.com/, discord: /discord\.(?:gg|com)/ };
     for (const m of t.matchAll(/href=["'](https?:\/\/[^"']+)["']/gi)) {
       const u = dec(m[1]); for (const [k, re] of Object.entries(SOC)) if (!out.socials[k] && re.test(u) && !/sharer|share\?|intent\/|\/plugins\//i.test(u)) out.socials[k] = u;
@@ -110,7 +115,7 @@ async function readHome(host) {
 async function profile(url, ctx) {
   const host = String(url.searchParams.get('host') || '').toLowerCase();
   if (!HOST_RE.test(host)) return Response.json({ ok: false, error: 'bad host' }, { status: 400, headers: CORS });
-  const key = new Request(`https://cardhunt.cache/v1/profile/${host}`);
+  const key = new Request(`https://cardhunt.cache/v2/profile/${host}`);
   const hit = url.searchParams.has('fresh') ? null : await caches.default.match(key);
   if (hit) return hit;
   const p = await readHome(host);
