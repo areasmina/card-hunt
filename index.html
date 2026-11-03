@@ -220,11 +220,13 @@ const API = 'https://card-hunt.areasmina.workers.dev';
 const STORES = [
   {id:'ea',     name:'EA Collectibles', color:'#0f766e', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
   {id:'lamood', name:'La Mood',         color:'#be185d', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
-  {id:'mana',   name:'Mana Lounge',     color:'#1d4ed8', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'mana',   name:'Mana Lounge',     color:'#1d4ed8', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
   {id:'ge',     name:'Gamers Emporium', color:'#b45309', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'players',name:'Players',         color:'#6b7280', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`},
+  {id:'players',name:'Players',         color:'#6b7280', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
 ];
 const SBY = Object.fromEntries(STORES.map(s=>[s.id,s]));
+// Mana Lounge and Players have a deck-list page that adds cards straight to their own cart.
+function deckUrl(store, items){ return store.deck + '?game=mtg&' + items.map(i=>'cards='+encodeURIComponent(`${i.qty} ${i.name}`)).join('&'); }
 function enc(s){return encodeURIComponent(s).replace(/%20/g,'+')}
 
 // ---------- icons ----------
@@ -449,6 +451,7 @@ function viewList(){
     ${l.items.length?rows:(temp?'':'<div class="empty">This list is empty. Add cards above, or paste a whole decklist.</div>')}
     ${searched?`<div class="total"><span>Cheapest in-stock total${missing?` (${missing} missing)`:''}</span><span>${money(total)}</span></div>`:''}
     ${l.items.some(i=>!DATA[i.name.toLowerCase()])?`<button class="btn block" style="margin-top:16px" data-act="findall">${I.search} Check prices at all stores</button>`:''}
+    ${l.items.length?`<div class="sub" style="margin:22px 0 8px">Load the whole list into a store's cart</div><div class="actions" style="margin:0">${STORES.filter(x=>x.deck).map(x=>`<button class="btn ghost" data-act="senddeck" data-s="${x.id}">${I.cart.replace('width="30" height="30"','width="18" height="18"')} ${esc(x.name)}</button>`).join('')}</div>`:''}
     ${searched?'<p class="note">Tap a card to see every copy across the stores.</p>':''}
     <div class="actions" style="margin-top:28px">${temp
       ? (l.items.length?`<button class="btn" data-act="savetemp">${I.heart} Save as a list</button><button class="btn ghost" data-act="cleartemp">Start over</button>`:'')
@@ -569,10 +572,11 @@ function openCart(){
         <div class="ctl"><div class="stepper"><button data-act="cq" data-k="${esc(c.url)}" data-d="-1">${c.qty>1?I.minus:I.trash}</button><span>${c.qty}</span><button data-act="cq" data-k="${esc(c.url)}" data-d="1">${I.plus}</button></div>
         <button class="later" data-act="later" data-k="${esc(c.url)}">Save for later</button></div></div></div>`).join('')}
       <div class="subt"><span>Subtotal from</span><span>${money(sub)}</span></div>
-      <button class="co" data-act="checkout" data-s="${s.id}">Continue to ${esc(s.name)}</button>
+      <button class="co" data-act="checkout" data-s="${s.id}">${s.deck?`Send to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart`:`Continue to ${esc(s.name)}`}</button>
+      ${s.deck?`<div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} Opens the store's deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store's cart.</div>`:''}
       <div class="info">${I.ship} Each store ships and checks out separately.</div></div>`}).join('')
       +`<div class="coall"><button class="btn" data-act="checkoutall">${I.cart.replace('width="30" height="30"','width="22" height="22"')} Open all ${S.cart.reduce((a,c)=>a+c.qty,0)} · from ${money(grand)}</button></div>
-      <p class="note">"Continue" opens each item's page at that store, where you pick the condition and pay. Allow pop-ups the first time.</p>`
+      <p class="note">Mana Lounge and Players can load your cards straight into their own cart. For the other stores, "Continue" opens each item's page, and you add it there. Allow pop-ups the first time.</p>`
     :`<div class="empty">Your cart is empty.<br>Tap a card, then "Add to cart".</div>`}`, 'cartsheet');
 }
 function sheet(html, cls=''){
@@ -625,8 +629,13 @@ document.addEventListener('click', e=>{
     case 'dellist': { const l=curList(); if(confirm(`Delete "${l.name}"?`)){ S.lists=S.lists.filter(x=>x!==l); if(!S.lists.length) S.lists=[{id:'wish',name:'Wishlist',items:[],at:Date.now()}]; save('lists'); go('lists'); } break; }
     case 'cq': { const c=S.cart.find(x=>x.url===k); c.qty+=+el.dataset.d; if(c.qty<1) S.cart=S.cart.filter(x=>x!==c); save('cart'); openCart(); render(); break; }
     case 'later': { const c=S.cart.find(x=>x.url===k); S.cart=S.cart.filter(x=>x!==c); if(!isFav(c)){const {qty,...o}=c; S.favs=[o,...S.favs]; save('favs');} save('cart'); openCart(); render(); toast('Moved to favorites'); break; }
-    case 'checkout': openUrls(S.cart.filter(c=>c.store===el.dataset.s).map(c=>c.url)); break;
-    case 'checkoutall': openUrls(S.cart.map(c=>c.url)); break;
+    case 'checkout': { const st=SBY[el.dataset.s], its=S.cart.filter(c=>c.store===st.id);
+      if(st.deck){ const m=new Map(); for(const c of its){const n=c.name||c.title; m.set(n,(m.get(n)||0)+c.qty)} openUrls([deckUrl(st,[...m].map(([name,qty])=>({name,qty})))]); }
+      else openUrls(its.map(c=>c.url)); break; }
+    case 'senddeck': { const st=SBY[el.dataset.s]; openUrls([deckUrl(st, curList().items)]); break; }
+    case 'checkoutall': { const urls=[]; for(const st of STORES){ const its=S.cart.filter(c=>c.store===st.id); if(!its.length) continue;
+        if(st.deck){ const m=new Map(); for(const c of its){const n=c.name||c.title; m.set(n,(m.get(n)||0)+c.qty)} urls.push(deckUrl(st,[...m].map(([name,qty])=>({name,qty})))); } else urls.push(...its.map(c=>c.url)); }
+      openUrls(urls); break; }
   }
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').innerHTML) closeSheet(); });
