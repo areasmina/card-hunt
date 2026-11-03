@@ -73,11 +73,17 @@ async function checkStore(raw) {
   if (!ok) return Response.json({ ok: false, host, error: "Card Hunt can only search stores built on Shopify, and this one didn't answer like a Shopify store." }, { headers: CORS });
   let name = host.replace(/^www\./, '');
   try { const m = await get(host, '/meta.json'); if (m.ok) { const j = await m.json(); if (j.name) name = j.name; } } catch {}
-  let deck = null;
+  // Only BinderPOS deck-list pages accept a prefilled ?cards= list, so require its script on the page.
+  let deck = null; const tried = [];
   for (const path of DECK_PATHS) {
-    try { const d = await get(host, path, 'text/html'); if (d.ok && new URL(d.url).pathname === path) { const t = await d.text(); if (/binder|deck ?list|decklist|multi.?card/i.test(t)) { deck = `https://${host}${path}`; break; } } } catch {}
+    try {
+      let d = await get(host, path, 'text/html');
+      if (d.status === 429) { await new Promise(r => setTimeout(r, 800)); d = await get(host, path, 'text/html'); }
+      tried.push(`${path}:${d.status}`);
+      if (d.ok && new URL(d.url).pathname === path && /binderpos/i.test(await d.text())) { deck = `https://${new URL(d.url).host}${path}`; break; }
+    } catch (e) { tried.push(`${path}:err`); }
   }
-  return Response.json({ ok: true, host, name, deck }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=3600' } });
+  return Response.json({ ok: true, host, name, deck, tried }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=3600' } });
 }
 
 // Sync: a device keeps a random secret code; the saved data is stored in KV under a hash of it.

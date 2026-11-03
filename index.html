@@ -141,6 +141,7 @@ svg{display:block}
 .field textarea{min-height:130px;resize:vertical}
 .field .suggest{top:52px}
 .btn{height:48px;border-radius:999px;padding:0 20px;background:var(--accent);color:var(--accent-text);font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+a.btn{text-decoration:none}
 .btn.ghost{background:var(--surface-2);color:var(--text);font-weight:550}
 .btn.block{width:100%}
 .btn:disabled{opacity:.5}
@@ -152,6 +153,22 @@ svg{display:block}
 .skel.t{aspect-ratio:auto;height:14px;border-radius:7px;margin-top:10px;width:70%}
 @keyframes pulse{50%{opacity:.45}}
 .note{color:var(--muted);font-size:13px;margin-top:18px}
+.h .hint{margin-left:auto;color:var(--muted);font-size:14px}
+.srail{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 6px}
+.srail::-webkit-scrollbar{display:none}
+.sbub{flex:none;width:72px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.sbub .logo,.sthead .logo{position:relative;width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:24px;color:#fff}
+.sbub .logo.add{background:var(--surface-2);color:var(--accent);border:1.5px dashed var(--line)}
+.sbub .logo i{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.sbub .nm{font-size:12.5px;line-height:1.2;text-align:center;color:var(--text);max-width:72px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sbub.off .logo{filter:grayscale(1);opacity:.45}
+.sbub.off .nm{color:var(--muted);text-decoration:line-through}
+.sthead{display:flex;align-items:center;gap:14px;margin:6px 0 10px}
+.sthead h2{margin:0;font-size:22px}
+.switch{flex:none;width:50px;height:30px;border-radius:999px;background:var(--surface-3);position:relative;transition:background .2s}
+.switch i{position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.switch.on{background:var(--ok)}
+.switch.on i{transform:translateX(20px)}
 .hello{display:flex;align-items:center;gap:8px;padding:14px 0 2px}
 .hello>div{flex:1;min-width:0}
 .hello h1{margin:0;font-size:30px;letter-spacing:-.03em;line-height:1.1}
@@ -279,14 +296,21 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 <script>
 // ---------- config ----------
 const API = 'https://card-hunt.areasmina.workers.dev';
-const STORES = [
-  {id:'ea',     name:'EA Collectibles', color:'#0f766e', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'lamood', name:'La Mood',         color:'#be185d', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
-  {id:'mana',   name:'Mana Lounge',     color:'#1d4ed8', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
-  {id:'ge',     name:'Gamers Emporium', color:'#b45309', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'players',name:'Players',         color:'#6b7280', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
+const BUILTIN = [
+  {id:'ea',     name:'EA Collectibles', color:'#0f766e', host:'www.eacollectibles.com', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'lamood', name:'La Mood',         color:'#be185d', host:'lamoodcomics.ca', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
+  {id:'mana',   name:'Mana Lounge',     color:'#1d4ed8', host:'www.manalounge.ca', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
+  {id:'ge',     name:'Gamers Emporium', color:'#b45309', host:'gamersemporium.ca', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'players',name:'Players',         color:'#6b7280', host:'playerscandc.com', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
 ];
-const SBY = Object.fromEntries(STORES.map(s=>[s.id,s]));
+// Stores the person adds themselves (any Shopify store). They sync like favorites and lists.
+const PALETTE=['#7c3aed','#0891b2','#c2410c','#15803d','#db2777','#4f46e5','#a16207','#0f766e'];
+let STORES=[], SBY={};
+function rebuildStores(){
+  const mine=(S.myStores||[]).map((m,i)=>({id:'x:'+m.host, name:m.name, host:m.host, deck:m.deck||undefined, custom:true, color:PALETTE[i%PALETTE.length],
+    url:q=>`https://${m.host}/search?q=${enc(q)}`}));
+  STORES=[...BUILTIN,...mine]; SBY=Object.fromEntries(STORES.map(s=>[s.id,s]));
+}
 // Mana Lounge and Players have a deck-list page that adds cards straight to their own cart.
 function deckUrl(store, items){ return store.deck + '?game=mtg&' + items.map(i=>'cards='+encodeURIComponent(`${i.qty} ${i.name}`)).join('&'); }
 function enc(s){return encodeURIComponent(s).replace(/%20/g,'+')}
@@ -357,7 +381,9 @@ const S = {
   prefs: LS.get('prefs', {off:[], inStock:true, foil:false, sort:'low'}),
   theme: LS.get('theme', 'auto'),
   temp: LS.get('temp', {id:'temp', name:'Card list', items:[]}),   // the quick multi-card search
+  myStores: LS.get('myStores', []),   // {host, name, deck}
 };
+rebuildStores();
 if(!S.lists){
   // carry over the list from the first version, if any
   let old=''; try{old=JSON.parse(localStorage.getItem('cardhunt.list')||'""')}catch(e){}
@@ -367,7 +393,7 @@ if(!S.lists){
 const save = k => { LS.set(k, S[k]); if(k==='lists') LS.set('temp', S.temp); if(SYNCED.includes(k)) markDirty(); };
 // ---------- sync across devices ----------
 // Each person gets a secret sync code. Every device that has the code shares the same favorites, lists and cart.
-const SYNCED=['favs','cart','viewed','searches','lists','temp'];
+const SYNCED=['favs','cart','viewed','searches','lists','temp','myStores'];
 let SY=LS.get('sync',null);            // {code, at (last server version we have), dirty}
 let syncState='idle', syncT=null, syncBusy=false;
 const ALPH='abcdefghjkmnpqrstuvwxyz23456789';
@@ -387,11 +413,13 @@ function mergeData(a,b){ // a = this device, b = the cloud; nothing is lost from
     viewed: unionBy(a.viewed,b.viewed,o=>o.url).slice(0,30),
     searches: unionBy(a.searches,b.searches,x=>x.q.toLowerCase(),(x,y)=>x.at>y.at?x:y).sort((x,y)=>y.at-x.at).slice(0,20),
     lists: unionBy(a.lists,b.lists,l=>l.id,(x,y)=>({...((x.at||0)>=(y.at||0)?x:y),items:mergeItems(x.items,y.items)})),
+    myStores: unionBy(a.myStores,b.myStores,x=>x.host),
     temp: {...(a.temp||b.temp||{id:'temp',name:'Card list'}), items:mergeItems(a.temp&&a.temp.items,b.temp&&b.temp.items)},
   };
 }
 function applyData(d){
   for(const k of SYNCED) if(d[k]!=null){ S[k]=d[k]; LS.set(k,S[k]); }
+  rebuildStores();
   if(!Array.isArray(S.lists)||!S.lists.length){ S.lists=[{id:'wish',name:'Wishlist',items:[],at:Date.now()}]; LS.set('lists',S.lists); }
 }
 async function cloudGet(code){ const r=await fetch(`${API}/sync/${code}`,{cache:'no-store'}); if(r.status===404) return null; if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
@@ -430,6 +458,35 @@ async function linkCode(raw){
   if(!remote){ setSyncState('idle'); toast("We couldn't find that sync code"); return; }
   applyData(mergeData(snapshot(),remote.data)); SY={code,at:remote.at,dirty:true}; saveSY();
   await syncNow(); render(); toast('This device is synced'); openSync();
+}
+function openStore(st){
+  const on=!S.prefs.off.includes(st.id);
+  sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
+    <div class="sthead"><span class="logo" style="background:${st.color}">${esc(st.name[0])}</span><div><h2>${esc(st.name)}</h2><div class="sub" style="margin:0">${esc(st.host)}</div></div></div>
+    <button class="row" data-act="storetoggle" data-s="${esc(st.id)}"><span class="grow"><div class="t">Include in searches</div><div class="s">${on?'Card Hunt checks this store every time you search':'Skipped when you search'}</div></span><span class="switch${on?' on':''}"><i></i></span></button>
+    <div class="row" style="cursor:default"><span class="grow"><div class="t">Checking out</div><div class="s">${st.deck?'Has a deck list page, so Card Hunt can send your whole cart there in one tap':'No deck list page, so Card Hunt walks you through adding each card'}</div></span></div>
+    <div class="actions" style="margin-top:14px"><a class="btn" href="${esc(storeHome(st))}" target="_blank" rel="noopener">Visit store ${I.ext}</a>${st.custom?`<button class="btn ghost" data-act="removestore" data-s="${esc(st.id)}" style="color:var(--heart)">${I.trash} Remove</button>`:''}</div></div>`);
+}
+function openAddStore(msg=''){
+  sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
+    <div class="h" style="margin-top:4px"><h2>Add a store</h2></div>
+    <p class="sub">Paste the store's website. Card Hunt checks that it can search it and whether it has a deck list page for sending your cart.</p>
+    <div class="field"><input id="storeurl" placeholder="e.g. www.yourlocalstore.ca" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn" data-act="storeadd">Add</button></div>
+    <p class="sub" id="storemsg" style="margin-top:4px">${msg}</p>
+    <p class="note">Works with stores built on Shopify, which most Canadian card shops use.</p></div>`);
+  setTimeout(()=>$id('storeurl')&&$id('storeurl').focus(),350);
+}
+async function addStore(raw){
+  const m=$id('storemsg'), b=document.querySelector('[data-act="storeadd"]'); if(!raw.trim()) return;
+  m.textContent='Checking the store…'; b.disabled=true;
+  try{
+    const r=await fetch(`${API}/store?url=${encodeURIComponent(raw.trim())}`); const j=await r.json();
+    if(!j.ok){ m.textContent=j.error||"Couldn't add that store."; b.disabled=false; return; }
+    if(STORES.some(x=>x.host===j.host)){ m.textContent=`${j.name} is already one of your stores.`; b.disabled=false; return; }
+    S.myStores=[...S.myStores,{host:j.host,name:j.name,deck:j.deck||null}]; save('myStores'); rebuildStores();
+    for(const k in DATA) delete DATA[k];
+    closeSheet(); render(); toast(j.deck?`Added ${j.name}. It has a deck list page`:`Added ${j.name}`);
+  }catch(e){ m.textContent="Couldn't reach Card Hunt's helper. Try again."; b.disabled=false; }
 }
 function openSync(){
   const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -490,7 +547,8 @@ async function fetchCard(name){
   if(DATA[k]?.state==='ok' && Date.now()-DATA[k].at<10*60e3) return DATA[k];
   DATA[k]={state:'loading',offers:[]}; render();
   try{
-    const r=await fetch(`${API}/search?q=${encodeURIComponent(name)}`);
+    const extra=S.myStores.map(m=>m.host).join(',');
+    const r=await fetch(`${API}/search?q=${encodeURIComponent(name)}${extra?'&extra='+encodeURIComponent(extra):''}`);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const j=await r.json();
     const offers=(j.results||[]).map(p=>remember({store:p.store, storeName:p.storeName, title:p.title, name:p.name||name, set:p.set, url:p.url,
@@ -562,17 +620,18 @@ function viewHome(){
   const sm=w=>w.replace(/width="\d+" height="\d+"/,'width="22" height="22"');
   const recent=S.searches.slice(0,8);
   return `<header class="hello">
-      <div><h1>Card Hunt</h1><p>5 Canadian stores, one search</p></div>
+      <div><h1>Card Hunt</h1><p>${STORES.length} stores, one search</p></div>
       <button class="iconbtn${SY?' on':''}" data-act="sync" title="Sync across devices" aria-label="Sync across devices">${sm(I.cloud)}${SY?'<i></i>':''}</button>
       <button class="iconbtn" data-act="theme" title="Light or dark mode: ${({auto:'follows device',light:'light',dark:'dark'})[S.theme]}" aria-label="Change light or dark mode">${themeIcon()}</button>
     </header>
     ${searchPill('')}
     ${recent.length?`<div class="recent">${recent.map(x=>`<button class="chip" data-act="q" data-q="${esc(x.q)}">${esc(x.q)}</button>`).join('')}<button class="chip clear" data-act="clearhist" aria-label="Clear recent searches">${I.x}</button></div>`
       :`<div class="recent">${['Sol Ring','Lightning Bolt','Rhystic Study','Commander deck'].map(q=>`<button class="chip" data-act="q" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
-    <button class="promo" data-act="multi"><span class="ic">${I.grid}</span><span class="grow"><b>Price a whole decklist</b><span>Paste your list and see every card at all 5 stores</span></span>${I.chev}</button>
+    <button class="promo" data-act="multi"><span class="ic">${I.grid}</span><span class="grow"><b>Price a whole decklist</b><span>Paste your list and see every card at all ${STORES.length} stores</span></span>${I.chev}</button>
+    <div class="h"><h2>Your stores</h2><span class="hint">${STORES.length-S.prefs.off.filter(id=>SBY[id]).length} of ${STORES.length} searched</span></div>
+    <div class="srail">${STORES.map(st=>`<button class="sbub${S.prefs.off.includes(st.id)?' off':''}" data-act="storeinfo" data-s="${esc(st.id)}"><span class="logo" style="background:${st.color}">${esc(st.name[0])}${st.deck?`<i title="Can fill its cart from a list">${I.cart.replace('width="30" height="30"','width="11" height="11"')}</i>`:''}</span><span class="nm">${esc(st.name)}</span></button>`).join('')}
+      <button class="sbub" data-act="addstore"><span class="logo add">${I.plus}</span><span class="nm">Add store</span></button></div>
     ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2></div><div class="rail">${S.viewed.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
-    ${S.favs.length?`<div class="h"><h2>Your favorites</h2><button class="right" data-act="go" data-to="saved">See all</button></div><div class="rail">${S.favs.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
-    ${S.lists.some(l=>l.items.length)?`<div class="h"><h2>Your lists</h2><button class="right" data-act="go" data-to="lists">See all</button></div><div class="rail lrail">${S.lists.filter(l=>l.items.length).map(l=>`<button class="lcard" data-act="list" data-id="${l.id}">${listStack(l)}<div class="n">${esc(l.name)}</div><div class="c">${countCards(l)} card${countCards(l)===1?'':'s'}</div></button>`).join('')}</div>`:''}
     ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use Card Hunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
     ${installEvt&&!standalone()?`<button class="promo soft" data-act="install"><span class="ic">${I.phone}</span><span class="grow"><b>Install the app</b><span>Open Card Hunt from your home screen or taskbar</span></span>${I.chev}</button>`:''}`;
 }
@@ -635,7 +694,7 @@ function viewList(){
     return `<div class="li"><img alt="" loading="lazy" src="${esc(scry(it.name))}"><button class="grow" style="text-align:left" data-act="q" data-q="${esc(it.name)}"><div class="n">${esc(it.name)}</div>${line}</button>
       <div class="stepper"><button data-act="liq" data-i="${i}" data-d="-1" title="${it.qty>1?'Fewer':'Remove'}">${it.qty>1?I.minus:I.trash}</button><span>${it.qty}</span><button data-act="liq" data-i="${i}" data-d="1" title="More">${I.plus}</button></div></div>`;
   }).join('');
-  const top = temp ? `<div class="h"><h2>Search a list of cards</h2></div><div class="sub">Paste a decklist or type cards. Card Hunt checks all 5 stores for each one.</div>`
+  const top = temp ? `<div class="h"><h2>Search a list of cards</h2></div><div class="sub">Paste a decklist or type cards. Card Hunt checks all ${STORES.length} stores for each one.</div>`
     : `<input class="titleedit" id="lname" value="${esc(l.name)}" aria-label="List name">`;
   return `${top}
     <div class="field${temp&&!l.items.length?' hidden':''}"><input id="addcard" placeholder="Add a card or product" autocomplete="off"><button class="btn" data-act="additem">Add</button><div class="suggest hidden" id="sug2"></div></div>
@@ -778,7 +837,7 @@ function openCart(){
 // ---------- guided one-by-one checkout ----------
 let walk=null; // {store, i}
 function walkItems(){ return S.cart.filter(c=>c.store===walk.store); }
-function storeHome(st){ const c=S.cart.find(x=>x.store===st.id); try{ return new URL(c.url).origin; }catch(e){ return ''; } }
+function storeHome(st){ if(st.host) return 'https://'+st.host; const c=S.cart.find(x=>x.store===st.id); try{ return new URL(c.url).origin; }catch(e){ return ''; } }
 function openWalk(){
   const st=SBY[walk.store], its=walkItems(), n=its.length;
   if(!n){ walk=null; return openCart(); }
@@ -841,7 +900,7 @@ function newList(withName){
 document.addEventListener('click', e=>{
   const el=e.target.closest('[data-act]'); if(!el) return;
   const a=el.dataset.act, k=el.dataset.k;
-  if(a!=='open'&&a!=='walkopen') e.preventDefault();
+  if(a!=='open'&&a!=='walkopen'&&el.tagName!=='A') e.preventDefault();
   if(a==='fav'){ e.stopPropagation(); const o=OFFERS[k]; if(!o) return; toggleFav(o); buzz();
     if($id('sheet').querySelector('.pd')) { openProduct(o); render(); return; }
     syncHearts(o,true); if(route.name==='saved') setTimeout(render,450); return; }
@@ -889,6 +948,11 @@ document.addEventListener('click', e=>{
     case 'walkskip': walk.i++; openWalk(); break;
     case 'walkback': walk.i=Math.max(0,walk.i-1); openWalk(); break;
     case 'sync': openSync(); break;
+    case 'storeinfo': openStore(SBY[el.dataset.s]); break;
+    case 'storetoggle': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; save('prefs'); openStore(SBY[id]); render(); break; }
+    case 'addstore': openAddStore(); break;
+    case 'storeadd': addStore($id('storeurl').value); break;
+    case 'removestore': { const st=SBY[el.dataset.s]; if(!confirm(`Remove ${st.name} from your stores?`)) break; S.myStores=S.myStores.filter(m=>'x:'+m.host!==st.id); save('myStores'); rebuildStores(); for(const k in DATA) delete DATA[k]; closeSheet(); render(); toast(`Removed ${st.name}`); break; }
     case 'favsort': { const k=Object.keys(FAVSORT); favF.sort=k[(k.indexOf(favF.sort)+1)%k.length]; render(); break; }
     case 'favstock': favF.inStock=!favF.inStock; render(); break;
     case 'favstore': favF.store=el.dataset.s; render(); break;
