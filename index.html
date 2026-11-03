@@ -421,6 +421,47 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 .srec .chip svg{color:var(--muted)}
 [data-hold]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .holding{transform:scale(.93)!important;transition:transform .45s ease-out!important}
+
+/* recently viewed */
+.rail .rmeta{font-size:12.5px;color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.seeall{flex:none;width:110px;aspect-ratio:488/680;align-self:flex-start;border-radius:14px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-weight:650;font-size:15px}
+.seeall span{width:44px;height:44px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+.seeall small{color:var(--muted);font-weight:500;font-size:12.5px}
+.h button.right{font-size:15px}
+.iconbtn.sm{width:40px;height:40px}
+.dayl{font-weight:650;font-size:15px;color:var(--muted);margin:20px 0 10px}
+/* filters */
+.fchips .chip.icon{position:relative}
+.fbadge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.filt{display:flex;flex-direction:column}
+.fhead{display:flex;align-items:center;justify-content:space-between;margin:2px 0 4px}
+.fhead h2{margin:0;font-size:28px;letter-spacing:-.02em}
+.filtsheet .grab,.filtsheet .body>.close{display:none}
+.filt section{border-top:1px solid var(--line);padding:18px 0 20px;margin-top:10px;scroll-margin-top:10px}
+.filt section.flash{animation:flash 1.2s ease-out}
+.filt h4{margin:0 0 12px;font-size:18px;font-weight:600}
+.fwrap{display:flex;flex-wrap:wrap;gap:10px}
+.fwrap .chip{height:46px}
+.chip.fst{padding-left:6px;gap:8px}
+.chip.fst .logo{position:relative;width:32px;height:32px;border-radius:50%;font-size:14px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
+.chip.fst:not(.on){opacity:.55}
+.chip.fst.on{background:var(--surface);color:var(--text);border-color:var(--text);box-shadow:inset 0 0 0 1px var(--text)}
+.prange{text-align:center}
+.prange b{display:block;font-size:22px;margin:10px 0 18px}
+.dual{position:relative;height:36px;margin:0 4px}
+.dual i{position:absolute;left:0;right:0;top:16px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--surface-3) var(--a),var(--accent) var(--a),var(--accent) var(--b),var(--surface-3) var(--b))}
+.dual input{position:absolute;inset:0;width:100%;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.dual input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:32px;height:32px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .2s cubic-bezier(.34,1.56,.64,1);cursor:grab}
+.dual input::-moz-range-thumb{pointer-events:auto;width:28px;height:28px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.dual input:active::-webkit-slider-thumb{transform:scale(1.25)}
+.dual input::-webkit-slider-runnable-track{background:none}
+.fbar{position:sticky;bottom:calc(-28px - env(safe-area-inset-bottom));display:flex;gap:10px;margin:8px -16px calc(-28px - env(safe-area-inset-bottom));padding:14px 16px calc(16px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
+.fbar .btn{flex:1;height:56px;font-size:17px}
+.btn.dark{background:var(--text);color:var(--bg)}
+.pop{animation:pop .42s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{0%{transform:scale(.88)}55%{transform:scale(1.07)}100%{transform:scale(1)}}
+.chip{transition:background .18s,color .18s,border-color .18s,transform .12s}
+@media (prefers-reduced-motion: reduce){.pop{animation:none}}
 </style>
 </head>
 <body>
@@ -737,7 +778,9 @@ function filtered(offers){
   const p=S.prefs; let o=offers.filter(x=>!p.off.includes(x.store));
   if(p.inStock) o=o.filter(x=>x.available);
   if(p.foil) o=o.filter(x=>x.foil);
-  o.sort((a,b)=>(b.available-a.available)||(p.sort==='low'?a.price-b.price:b.price-a.price));
+  if(PF.lo!=null) o=o.filter(x=>x.price>=PF.lo); if(PF.hi!=null) o=o.filter(x=>x.price<=PF.hi);
+  if(p.sort==='name') o.sort((a,b)=>(b.available-a.available)||(a.title||'').localeCompare(b.title||''));
+  else o.sort((a,b)=>(b.available-a.available)||(p.sort==='low'?a.price-b.price:b.price-a.price));
   return o;
 }
 function best(name){
@@ -760,19 +803,56 @@ function tile(o, opts={}){
       ${opts.cheapest?'<span class="tag">Cheapest</span>':''}${!o.available?'<span class="tag sold">Sold out</span>':''}
       <span class="heart${fav?' on':''}" data-act="fav" data-k="${esc(o.url)}">${fav?I.heartFill:I.heart}</span>
     </button>
-    ${opts.rail?'':`<div class="meta"><div class="store">${esc(o.storeName)}</div><div class="title">${esc(o.title)}</div><div class="price">${esc(priceText(o))}</div></div>`}
+    ${opts.rail?`<div class="rmeta">${esc(o.storeName||'')}</div>`:`<div class="meta"><div class="store">${esc(o.storeName)}</div><div class="title">${esc(o.title)}</div><div class="price">${esc(priceText(o))}</div></div>`}
   </div>`;
 }
 function skeletons(n=4){return Array.from({length:n},()=>'<div class="p"><div class="skel"></div><div class="skel t"></div><div class="skel t" style="width:45%"></div></div>').join('')}
+// ---------- filters ----------
+// The row under the search box gives quick toggles; the filter panel (Shop style) holds everything, and results
+// update behind it as you tap, so you can see the effect right away.
+let PF={lo:null,hi:null,q:''};            // price range, for this search only
+const SORTS={low:'Price: low to high',high:'Price: high to low',name:'Name: A to Z'};
+function activeFilters(){ const p=S.prefs; return (p.inStock?1:0)+(p.foil?1:0)+(PF.lo!=null||PF.hi!=null?1:0)+(p.off.filter(id=>SBY[id]).length?1:0)+(p.sort!=='low'?1:0); }
+function priceMax(){ const d=DATA[searchQ.toLowerCase()]; const m=d&&d.offers?Math.max(0,...d.offers.map(o=>o.price)):0; return Math.max(5,Math.ceil(m)); }
 function chipsHTML(){
-  const p=S.prefs;
-  return `<div class="chips">
+  const p=S.prefs, n=activeFilters(), on=STORES.filter(s=>!p.off.includes(s.id)).length;
+  if(PF.q!==searchQ.toLowerCase()){ PF={lo:null,hi:null,q:searchQ.toLowerCase()}; }
+  const pr=PF.lo!=null||PF.hi!=null;
+  return `<div class="chips fchips">
+    <button class="chip icon${n?' on':''}" data-act="filt" aria-label="Filters">${I.filter.replace('width="22" height="22"','width="20" height="20"')}${n?`<b class="fbadge">${n}</b>`:''}</button>
     <button class="chip${p.inStock?' on':''}" data-act="pref" data-p="inStock">In stock</button>
-    <button class="chip" data-act="pref" data-p="sort">Price ${p.sort==='low'?'low to high':'high to low'} ${I.down}</button>
+    <button class="chip${pr?' on':''}" data-act="filt" data-sec="price">${pr?`${money(PF.lo||0)} to ${money(PF.hi??priceMax())}`:'Price'} ${I.down}</button>
+    <button class="chip${on<STORES.length?' on':''}" data-act="filt" data-sec="stores">${on<STORES.length?`${on} store${on===1?'':'s'}`:'All stores'} ${I.down}</button>
+    <button class="chip${p.sort!=='low'?' on':''}" data-act="filt" data-sec="sort">${p.sort==='low'?'Sort':esc(SORTS[p.sort].split(':')[0]+(p.sort==='high'?' high first':' A to Z'))} ${I.down}</button>
     <button class="chip${p.foil?' on':''}" data-act="pref" data-p="foil">Foil</button>
-    ${STORES.map(s=>`<button class="chip${p.off.includes(s.id)?' off':''}" data-act="store" data-s="${s.id}">${esc(s.name)}</button>`).join('')}
   </div>`;
 }
+function resultCount(){ const d=DATA[searchQ.toLowerCase()]; return d&&d.offers?filtered(d.offers).length:0; }
+function openFilter(sec){
+  const p=S.prefs, mx=priceMax(), lo=PF.lo??0, hi=PF.hi??mx, n=resultCount();
+  const q=(cls,on,act,attrs,label)=>`<button class="chip ${cls}${on?' on':''}" data-act="${act}" ${attrs}>${label}</button>`;
+  sheet(`<div class="filt"><div class="fhead"><h2>Filter</h2><button class="sibtn" data-act="close" aria-label="Close">${I.x.replace('width="16" height="16"','width="20" height="20"')}</button></div>
+    <div class="chips">${q('',p.inStock,'fq','data-p="inStock"','In stock')}${q('',p.foil,'fq','data-p="foil"','Foil')}</div>
+    <section id="f-stores"><h4>Stores</h4><div class="fwrap">${STORES.map(st=>q('fst',!p.off.includes(st.id),'fstore',`data-s="${esc(st.id)}"`,`${storeLogo(st)}${esc(st.name)}`)).join('')}</div></section>
+    <section id="f-price"><h4>Price</h4><div class="prange"><b id="prlab">${money(lo)} - ${money(hi)}${hi>=mx?'+':''}</b>
+      <div class="dual" style="--a:${lo/mx*100}%;--b:${hi/mx*100}%"><i></i><input id="plo" type="range" min="0" max="${mx}" step="${mx>50?1:.5}" value="${lo}" aria-label="Lowest price"><input id="phi" type="range" min="0" max="${mx}" step="${mx>50?1:.5}" value="${hi}" aria-label="Highest price"></div></div></section>
+    <section id="f-sort"><h4>Sort by</h4><div class="fwrap">${Object.entries(SORTS).map(([k,v])=>q('',p.sort===k,'fsort',`data-v="${k}"`,esc(v))).join('')}</div></section>
+    <div class="fbar"><button class="btn ghost" data-act="fclear">Clear all</button><button class="btn dark" data-act="close" id="fdone">Show ${n} result${n===1?'':'s'}</button></div></div>`,'filtsheet');
+  wirePrice(mx);
+  if(sec){ const el=$id('f-'+sec); if(el) setTimeout(()=>{ el.scrollIntoView({behavior:'smooth',block:'start'}); el.classList.add('flash'); },280); }
+}
+function wirePrice(mx){
+  const a=$id('plo'), b=$id('phi'); if(!a) return; let t;
+  const upd=(e)=>{ let lo=+a.value, hi=+b.value; if(lo>hi){ if(e&&e.target===a) a.value=lo=hi; else b.value=hi=lo; }
+    a.parentElement.style.setProperty('--a',lo/mx*100+'%'); a.parentElement.style.setProperty('--b',hi/mx*100+'%');
+    $id('prlab').textContent=`${money(lo)} - ${money(hi)}${hi>=mx?'+':''}`;
+    PF.lo=lo>0?lo:null; PF.hi=hi<mx?hi:null; clearTimeout(t); t=setTimeout(()=>{ render(); updCount(); },60); };
+  a.addEventListener('input',upd); b.addEventListener('input',upd);
+  a.addEventListener('change',tick); b.addEventListener('change',tick);
+}
+function updCount(){ const d=$id('fdone'); if(!d) return; const n=resultCount(); const t=`Show ${n} result${n===1?'':'s'}`; if(d.textContent!==t){ d.textContent=t; bounce(d); } }
+function bounce(el){ if(!el) return; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+function refilter(sel){ openFilter(); render(); updCount(); if(sel) bounce(document.querySelector('#sheet '+sel)); }
 function searchPill(value, ph='Search cards or products'){
   return `<div class="top"><div class="pill">${I.search}
     <input id="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="${esc(ph)}" value="${esc(value)}">
@@ -1002,9 +1082,18 @@ function viewHome(){
     <div class="h"><h2>Your stores</h2><span class="hint">${STORES.length-S.prefs.off.filter(id=>SBY[id]).length} of ${STORES.length} searched</span></div>
     <div class="srail">${STORES.map(st=>`<button class="sbub${S.prefs.off.includes(st.id)?' off':''}" data-act="gostore" data-hold="${esc(st.id)}" data-s="${esc(st.id)}">${storeLogo(st, st.deck?`<i title="Can fill its cart from a list">${I.cart.replace('width="30" height="30"','width="11" height="11"')}</i>`:'')}<span class="nm">${esc(st.name)}</span></button>`).join('')}
       <button class="sbub" data-act="addstore"><span class="logo add">${I.plus}</span><span class="nm">Add store</span></button></div>
-    ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2></div><div class="rail">${S.viewed.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
+    ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2>${S.viewed.length>3?'<button class="right" data-act="seeviewed">See all</button>':''}</div><div class="rail">${S.viewed.slice(0,12).map(o=>tile(o,{rail:true})).join('')}${S.viewed.length>3?`<button class="seeall" data-act="seeviewed"><span>${I.chev.replace('width="16" height="16"','width="22" height="22"')}</span>See all<small>${S.viewed.length} cards</small></button>`:''}</div>`:''}
     ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use Card Hunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
     ${installEvt&&!standalone()?`<button class="promo soft" data-act="install"><span class="ic">${I.phone}</span><span class="grow"><b>Install the app</b><span>Open Card Hunt from your home screen or taskbar</span></span>${I.chev}</button>`:''}`;
+}
+function dayLabel(t){ if(!t) return 'Earlier'; const d=new Date(t), n=new Date(); const k=x=>x.toDateString();
+  if(k(d)===k(n)) return 'Today'; const y=new Date(n); y.setDate(n.getDate()-1); if(k(d)===k(y)) return 'Yesterday';
+  return d.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'}); }
+function viewViewed(){
+  if(!S.viewed.length) return `<div class="h"><button class="iconbtn" data-act="go" data-to="home" aria-label="Back">${I.back}</button><h2>Recently viewed</h2></div><div class="empty">Cards you open show up here.</div>`;
+  const groups=[]; for(const o of S.viewed){ const l=dayLabel(o.at); let g=groups[groups.length-1]; if(!g||g.l!==l) groups.push(g={l,items:[]}); g.items.push(o); }
+  return `<div class="h"><button class="iconbtn sm" data-act="go" data-to="home" aria-label="Back">${I.back}</button><h2>Recently viewed</h2><button class="right" data-act="clearviewed">Clear</button></div>
+    ${groups.map(g=>`<div class="dayl">${esc(g.l)}</div><div class="grid">${g.items.map(o=>tile(o)).join('')}</div>`).join('')}`;
 }
 function viewSearch(){
   if(!searchQ) return viewHome();
@@ -1085,9 +1174,9 @@ function viewList(){
 function render(){
   const app=$id('app');
   const active=document.activeElement; const focusId=active&&active.id; const caret=active&&active.selectionStart;
-  const views={home:viewHome, search:viewSearch, saved:viewSaved, lists:viewLists, list:viewList, store:viewStore};
+  const views={home:viewHome, viewed:viewViewed, search:viewSearch, saved:viewSaved, lists:viewLists, list:viewList, store:viewStore};
   app.innerHTML=(views[route.name]||viewHome)();
-  const tab=route.id==='temp'?'home':{home:'home',search:'home',store:'home',saved:'saved',lists:'lists',list:'lists'}[route.name];
+  const tab=route.id==='temp'?'home':{home:'home',search:'home',store:'home',viewed:'home',saved:'saved',lists:'lists',list:'lists'}[route.name];
   for(const n of ['home','saved','lists']) $id('nav-'+n).classList.toggle('on', tab===n);
   $id('cartCount').textContent=S.cart.reduce((a,c)=>a+c.qty,0);
   wireInputs();
@@ -1163,7 +1252,7 @@ function toggleFav(o){
   save('favs');
 }
 function addToCart(o,q=1){const c=inCart(o); if(c) c.qty+=q; else S.cart.push({...o,qty:q}); save('cart'); $id('cartCount').textContent=S.cart.reduce((a,c)=>a+c.qty,0); toast('Added to cart')}
-function viewed(o){S.viewed=[o,...S.viewed.filter(v=>v.url!==o.url)].slice(0,20); save('viewed')}
+function viewed(o){S.viewed=[{...o,at:Date.now()},...S.viewed.filter(v=>v.url!==o.url)].slice(0,60); save('viewed')}
 
 let productFromCart=false;
 function openProduct(o, fromCart=productFromCart){
@@ -1334,7 +1423,7 @@ document.addEventListener('click', e=>{
     case 'close': dismissSheet(); break;
     case 'q': closeSheet(); doSearch(el.dataset.q); break;
     case 'clearq': searchQ=''; go('home'); setTimeout(()=>$id('q')&&$id('q').focus(),0); break;
-    case 'pref': { const p=el.dataset.p; if(p==='sort') S.prefs.sort=S.prefs.sort==='low'?'high':'low'; else S.prefs[p]=!S.prefs[p]; save('prefs'); render(); break; }
+    case 'pref': { const p=el.dataset.p; if(p==='sort') S.prefs.sort=S.prefs.sort==='low'?'high':'low'; else S.prefs[p]=!S.prefs[p]; save('prefs'); render(); bounce(document.querySelector(`.fchips [data-p="${p}"]`)); break; }
     case 'store': { const s=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(s)?off.filter(x=>x!==s):[...off,s]; save('prefs'); render(); break; }
     case 'list': closeSheet(); go('list',{id:el.dataset.id}); break;
     case 'newlist': newList(el.dataset.n); break;
@@ -1365,6 +1454,13 @@ document.addEventListener('click', e=>{
     case 'csel': { const id=el.dataset.s; if(!id) CSEL.clear(); else if(CSEL.has(id)) CSEL.delete(id); else CSEL.add(id); buzz(); openCart();
       const b=$id('sheet').querySelector('.body'), c=b&&b.querySelector('.cjump'); if(b&&c&&b.scrollTop>c.offsetTop) b.scrollTo({top:c.offsetTop-8,behavior:'smooth'}); break; }
     case 'storeinfo': openStore(SBY[el.dataset.s]); break;
+    case 'filt': openFilter(el.dataset.sec); break;
+    case 'fq': { const p=el.dataset.p; S.prefs[p]=!S.prefs[p]; save('prefs'); refilter(`[data-act="fq"][data-p="${p}"]`); break; }
+    case 'fstore': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; if(STORES.every(s=>S.prefs.off.includes(s.id))){ S.prefs.off=off; toast('Keep at least one store'); break; } save('prefs'); refilter(`[data-act="fstore"][data-s="${CSS.escape(id)}"]`); break; }
+    case 'fsort': S.prefs.sort=el.dataset.v; save('prefs'); refilter(`[data-act="fsort"][data-v="${el.dataset.v}"]`); break;
+    case 'fclear': S.prefs.inStock=false; S.prefs.foil=false; S.prefs.sort='low'; S.prefs.off=[]; PF.lo=PF.hi=null; save('prefs'); refilter('#fdone'); buzz(); break;
+    case 'seeviewed': go('viewed'); break;
+    case 'clearviewed': if(confirm('Clear your recently viewed cards?')){ S.viewed=[]; save('viewed'); render(); } break;
     case 'storeshare': { const st=SBY[el.dataset.s], u=storeHome(st); if(navigator.share) navigator.share({title:st.name,url:u}).catch(()=>{}); else (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Store link copied'),()=>prompt('Store link',u)); break; }
     case 'storetoggle': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; save('prefs'); openStore(SBY[id]); render(); break; }
     case 'addstore': openAddStore(); break;
@@ -1409,7 +1505,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').inner
   if(h.startsWith('list/')) route={name:'list',id:h.slice(5)};
   else if(h.startsWith('store/')&&SBY[h.slice(6)]) route={name:'store',id:h.slice(6)};
   else if(h.startsWith('search/')){ searchQ=h.slice(7); route={name:'search'}; fetchCard(searchQ); }
-  else if(['saved','lists'].includes(h)) route={name:h};
+  else if(['saved','lists','viewed'].includes(h)) route={name:h};
   render();
 })();
 if(SY) syncNow();
