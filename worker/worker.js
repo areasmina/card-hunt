@@ -84,7 +84,8 @@ async function checkStore(raw) {
   try { r = await get(host, '/search/suggest.json?q=sol%20ring&resources[type]=product&resources[limit]=1'); } catch { r = null; }
   if (r && r.url) { try { const h = new URL(r.url).host; if (HOST_RE.test(h)) host = h; } catch {} } // follow e.g. shop.com -> www.shop.com
   let ok = false; try { ok = !!(r && r.ok && (await r.json()).resources); } catch {}
-  if (!ok) return Response.json({ ok: false, host, error: "Card Hunt can only search stores built on Shopify, and this one didn't answer like a Shopify store." }, { headers: CORS });
+  if (!ok && r && r.status === 429) return Response.json({ ok: false, host, busy: true, error: 'This store is busy right now. Try adding it again in a minute.' }, { headers: CORS });
+  if (!ok) return Response.json({ ok: false, host, status: r && r.status, error: "Card Hunt can only search stores built on Shopify, and this one didn't answer like a Shopify store." }, { headers: CORS });
   // Name and logo come from the store's home page: og:site_name (or /meta.json), and the favicon, which
   // Shopify can serve at any size. Retry once when Shopify rate-limits us.
   let name = '', logo = null;
