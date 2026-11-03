@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f6f6f8">
+<script>try{var t=JSON.parse(localStorage.getItem('cardhunt2.theme')||'"auto"');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 <title>Card Hunt</title>
 <meta name="description" content="Search five Canadian MTG stores at once, save favorites, wishlists and decks.">
 <style>
@@ -33,7 +34,9 @@ svg{display:block}
 .hidden{display:none!important}
 
 /* search pill */
-.top{position:sticky;top:0;z-index:15;background:var(--bg);padding:8px 0 6px;margin:0 -16px;padding-left:16px;padding-right:16px}
+.top{position:sticky;top:0;z-index:15;background:var(--bg);padding:8px 0 6px;margin:0 -16px;padding-left:16px;padding-right:16px;display:flex;gap:10px;align-items:center}
+.top .pill{flex:1;min-width:0}
+.themebtn{flex:none;height:52px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;gap:6px;padding:0 14px;font-size:14px;font-weight:600;color:var(--text)}
 .pill{display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:999px;padding:0 14px;height:52px;position:relative}
 .pill input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:18px}
 .pill input::-webkit-search-cancel-button,.pill input::-webkit-search-decoration{-webkit-appearance:none;display:none}
@@ -246,6 +249,19 @@ const I = {
 $id('nav-home').innerHTML=I.home; $id('nav-search').innerHTML=I.search; $id('nav-saved').innerHTML=I.heart; $id('nav-lists').innerHTML=I.grid;
 document.querySelector('.cartbtn').insertAdjacentHTML('afterbegin', I.cart);
 
+// ---------- theme ----------
+const SUN='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>';
+const MOON='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>';
+const AUTO='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>';
+function themeIcon(){return S.theme==='light'?SUN:S.theme==='dark'?MOON:AUTO}
+function applyTheme(){
+  const r=document.documentElement;
+  if(S.theme==='auto') delete r.dataset.theme; else r.dataset.theme=S.theme;
+  const dark=S.theme==='dark'||(S.theme==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  document.querySelector('meta[name="theme-color"]').content=dark?'#0c0c0e':'#f6f6f8';
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>applyTheme());
+
 // ---------- utils ----------
 function $id(i){return document.getElementById(i)}
 const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -268,6 +284,7 @@ const S = {
   searches: LS.get('searches', []),    // {q, at}
   lists: LS.get('lists', null),        // {id,name,kind,items:[{name,qty}],at}
   prefs: LS.get('prefs', {off:[], inStock:true, foil:false, sort:'low'}),
+  theme: LS.get('theme', 'auto'),
 };
 if(!S.lists){
   // carry over the list from the first version, if any
@@ -363,7 +380,8 @@ function searchPill(value, ph='Search cards or products'){
   return `<div class="top"><div class="pill">${I.search}
     <input id="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="${esc(ph)}" value="${esc(value)}">
     <button class="x${value?'':' hidden'}" data-act="clearq" title="Clear">${I.x}</button>
-    <div class="suggest hidden" id="sug"></div></div></div>`;
+    <div class="suggest hidden" id="sug"></div></div>
+    ${route.name==='home'||route.name==='saved'?`<button class="themebtn" data-act="theme" title="Change light or dark mode">${themeIcon()}<span>${{auto:'Auto',light:'Light',dark:'Dark'}[S.theme]}</span></button>`:''}</div>`;
 }
 function listStack(l){
   const imgs=l.items.slice(0,4).map(i=>`<img alt="" loading="lazy" src="${esc(scry(i.name))}">`).join('');
@@ -581,6 +599,7 @@ document.addEventListener('click', e=>{
     case 'open': { e.preventDefault(); const o=OFFERS[k]; if(o) openProduct(o); break; }
     case 'add': { const o=OFFERS[k]; if(o){ addToCart(o); openProduct(o); } break; }
     case 'cart': openCart(); break;
+    case 'theme': S.theme={auto:'light',light:'dark',dark:'auto'}[S.theme]; save('theme'); applyTheme(); render(); toast(S.theme==='auto'?'Theme follows your device':S.theme==='light'?'Light mode':'Dark mode'); break;
     case 'close': closeSheet(); render(); break;
     case 'q': closeSheet(); doSearch(el.dataset.q); break;
     case 'clearq': searchQ=''; go('search',{q:''}); setTimeout(()=>$id('q')&&$id('q').focus(),0); break;
@@ -608,6 +627,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').inner
 
 // ---------- boot ----------
 (function boot(){
+  applyTheme();
   const h=decodeURIComponent(location.hash.slice(1));
   if(h.startsWith('list/')) route={name:'list',id:h.slice(5)};
   else if(h.startsWith('search/')){ searchQ=h.slice(7); route={name:'search'}; fetchCard(searchQ); }
