@@ -153,6 +153,10 @@ a.btn{text-decoration:none}
 .skel.t{aspect-ratio:auto;height:14px;border-radius:7px;margin-top:10px;width:70%}
 @keyframes pulse{50%{opacity:.45}}
 .note{color:var(--muted);font-size:13px;margin-top:18px}
+.incart{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:999px;padding:4px 4px 4px 18px;font-weight:650}
+.incart .stepper{background:var(--surface)}
+.ci .ciimg{flex:none;padding:0;display:block;border-radius:12px;overflow:hidden}
+.ci button.nm{text-align:left;color:inherit;padding:0;font:inherit}
 .h .hint{margin-left:auto;color:var(--muted);font-size:14px}
 .srail{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 6px}
 .srail::-webkit-scrollbar{display:none}
@@ -547,6 +551,9 @@ document.addEventListener('visibilitychange',async()=>{ if(document.visibilitySt
 const OFFERS = {};                     // url -> offer (everything seen this session)
 const DATA = {};                       // lower name -> {state, offers}
 const remember = o => (OFFERS[o.url]=o, o);
+// Find a card by its link: this session's search results first, then anything saved (favorites, cart,
+// recently viewed), so saved cards still open after the page reloads.
+function offerOf(k){ if(OFFERS[k]) return OFFERS[k]; const f=[...S.cart,...S.favs,...S.viewed].find(x=>x.url===k); if(!f) return null; const {qty,added,opened,...o}=f; return remember(o); }
 [...S.favs,...S.cart,...S.viewed].forEach(remember);
 let route = {name:'home'};
 let searchQ = '';
@@ -814,8 +821,9 @@ function toggleFav(o){
 function addToCart(o,q=1){const c=inCart(o); if(c) c.qty+=q; else S.cart.push({...o,qty:q}); save('cart'); $id('cartCount').textContent=S.cart.reduce((a,c)=>a+c.qty,0); toast('Added to cart')}
 function viewed(o){S.viewed=[o,...S.viewed.filter(v=>v.url!==o.url)].slice(0,20); save('viewed')}
 
-function openProduct(o){
-  viewed(o);
+let productFromCart=false;
+function openProduct(o, fromCart=productFromCart){
+  productFromCart=fromCart; viewed(o);
   const c=inCart(o);
   sheet(`<div class="pd"><div class="grab"></div><button class="close" data-act="close">${I.x}</button>
     ${imgTag(o,'big')}
@@ -824,7 +832,8 @@ function openProduct(o){
     <div class="st${o.available?'':' sold'}">${o.available?'In stock':'Sold out'}${o.foil?' · Foil':''}</div>
     <div class="hint">${o.priceMax>o.price+0.001?'Price depends on condition. You choose the condition on the store\'s page.':'Check the condition on the store\'s page.'}</div>
     <div class="actions" style="margin-top:16px">
-      ${o.available?`<button class="btn" data-act="add" data-k="${esc(o.url)}">${I.cart.replace('width="30" height="30"','width="20" height="20"')} ${c?`In cart (${c.qty}) · add another`:'Add to cart'}</button>`:''}
+      ${c?`<div class="incart"><span>In your cart</span><div class="stepper"><button data-act="pq" data-k="${esc(o.url)}" data-d="-1" title="${c.qty>1?'One fewer':'Remove from cart'}">${c.qty>1?I.minus:I.trash}</button><span>${c.qty}</span><button data-act="pq" data-k="${esc(o.url)}" data-d="1" title="One more">${I.plus}</button></div></div>`
+        :o.available?`<button class="btn" data-act="add" data-k="${esc(o.url)}">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Add to cart</button>`:''}
       <button class="btn ghost" data-act="fav" data-k="${esc(o.url)}">${isFav(o)?I.heartFill:I.heart} ${isFav(o)?'Saved':'Favorite'}</button>
       <a class="btn ghost" href="${esc(o.url)}" target="_blank" rel="noopener" style="text-decoration:none">${I.ext} View at store</a>
     </div>
@@ -832,6 +841,7 @@ function openProduct(o){
       <button class="btn ghost" data-act="wishname" data-n="${esc(o.name||o.title)}">${I.plus} Add to a list</button>
       ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
     </div>
+    ${fromCart?`<button class="btn block" style="margin-top:14px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
   </div>`);
 }
 function chooseList(name){
@@ -854,7 +864,7 @@ function openCart(){
     ${groups.length?groups.map(({s,items})=>{const sub=items.reduce((a,c)=>a+c.price*c.qty,0), n=items.reduce((a,c)=>a+c.qty,0), fold=groups.length>1&&FOLD.has(s.id); return `<div class="sc${fold?' folded':''}" data-s="${esc(s.id)}">
       <button class="shd" data-act="fold" aria-expanded="${!fold}">${storeLogo(s)}<div class="grow"><div class="sn">${esc(s.name)}</div><div class="sum">${n} item${n===1?'':'s'} · from ${money(sub)}</div></div><span class="chev">${I.down}</span></button>
       <div class="scb"><div>
-      ${items.map(c=>`<div class="ci">${imgTag(c)}<div class="grow"><div class="top2"><div class="nm">${esc(c.title)}</div><div class="pp">${esc(money(c.price*c.qty))}</div></div>
+      ${items.map(c=>`<div class="ci"><button class="ciimg" data-act="cartopen" data-k="${esc(c.url)}" aria-label="Open ${esc(c.title)}">${imgTag(c)}</button><div class="grow"><div class="top2"><button class="nm" data-act="cartopen" data-k="${esc(c.url)}">${esc(c.title)}</button><div class="pp">${esc(money(c.price*c.qty))}</div></div>
         <div class="cd">${c.foil?'Foil · ':''}${esc(priceText(c))} each</div>${c.added?'<div class="added">✓ Added at the store</div>':''}
         <div class="ctl"><div class="stepper"><button data-act="cq" data-k="${esc(c.url)}" data-d="-1">${c.qty>1?I.minus:I.trash}</button><span>${c.qty}</span><button data-act="cq" data-k="${esc(c.url)}" data-d="1">${I.plus}</button></div>
         <button class="later" data-act="later" data-k="${esc(c.url)}">Save for later</button></div></div></div>`).join('')}
@@ -933,24 +943,28 @@ document.addEventListener('click', e=>{
   const el=e.target.closest('[data-act]'); if(!el) return;
   const a=el.dataset.act, k=el.dataset.k;
   if(a!=='open'&&a!=='walkopen'&&el.tagName!=='A') e.preventDefault();
-  if(a==='fav'){ e.stopPropagation(); const o=OFFERS[k]; if(!o) return; toggleFav(o); buzz();
+  if(a==='fav'){ e.stopPropagation(); const o=offerOf(k); if(!o) return; toggleFav(o); buzz();
     if($id('sheet').querySelector('.pd')) { openProduct(o); render(); return; }
     syncHearts(o,true); if(route.name==='saved') setTimeout(render,450); return; }
   switch(a){
     case 'go': closeSheet(); go(el.dataset.to); break;
     case 'open': { // single tap opens, double tap favorites
-      const o=OFFERS[k]; if(!o) break;
+      const o=offerOf(k); if(!o) break;
       if(tapT && tapK===k){ clearTimeout(tapT); tapT=null;
         if(!isFav(o)){ toggleFav(o); } buzz(); burst(el); syncHearts(o,true); break; }
       clearTimeout(tapT); tapK=k; tapT=setTimeout(()=>{tapT=null; openProduct(o)},260); break; }
-    case 'add': { const o=OFFERS[k]; if(o){ addToCart(o); openProduct(o); } break; }
-    case 'cart': openCart(); break;
+    case 'add': { const o=offerOf(k); if(o){ addToCart(o); openProduct(o); } break; }
+    case 'cart': productFromCart=false; openCart(); break;
+    case 'cartopen': { const o=offerOf(k); if(o) openProduct(o,true); break; }
+    case 'pq': { const c=S.cart.find(x=>x.url===k); if(!c) break; const d=+el.dataset.d;
+      if(c.qty+d<1){ undoToast(`Removed ${c.name||c.title}`); S.cart=S.cart.filter(x=>x!==c); } else c.qty+=d;
+      save('cart'); $id('cartCount').textContent=S.cart.reduce((a,x)=>a+x.qty,0); openProduct(offerOf(k)); render(); break; }
     case 'multi': go('list',{id:'temp'}); setTimeout(()=>{const t=$id('pastetext'); if(t&&!S.temp.items.length) t.focus()},0); break;
     case 'savetemp': { const name=prompt('Name this list', 'My deck'); if(name==null) break; const l={id:uid(),name:name.trim()||'My deck',items:S.temp.items.map(i=>({...i})),at:Date.now()}; S.lists.push(l); S.temp.items=[]; save('lists'); toast('Saved to your lists'); go('list',{id:l.id}); break; }
     case 'cleartemp': S.temp.items=[]; save('lists'); render(); break;
     case 'clearhist': S.searches=[]; save('searches'); render(); break;
     case 'theme': S.theme={auto:'light',light:'dark',dark:'auto'}[S.theme]; save('theme'); applyTheme(); render(); toast(S.theme==='auto'?'Theme follows your device':S.theme==='light'?'Light mode':'Dark mode'); break;
-    case 'close': closeSheet(); render(); break;
+    case 'close': productFromCart=false; closeSheet(); render(); break;
     case 'q': closeSheet(); doSearch(el.dataset.q); break;
     case 'clearq': searchQ=''; go('home'); setTimeout(()=>$id('q')&&$id('q').focus(),0); break;
     case 'pref': { const p=el.dataset.p; if(p==='sort') S.prefs.sort=S.prefs.sort==='low'?'high':'low'; else S.prefs[p]=!S.prefs[p]; save('prefs'); render(); break; }
@@ -968,7 +982,7 @@ document.addEventListener('click', e=>{
     case 'cq': { const c=S.cart.find(x=>x.url===k); const removing=c.qty+(+el.dataset.d)<1; if(removing) undoToast(`Removed ${c.name||c.title}`);
       c.qty+=+el.dataset.d; if(c.qty<1) S.cart=S.cart.filter(x=>x!==c); save('cart'); openCart(); render(); break; }
     case 'later': { const c=S.cart.find(x=>x.url===k); undoToast('Moved to favorites'); S.cart=S.cart.filter(x=>x!==c); if(!isFav(c)){const {qty,...o}=c; S.favs=[o,...S.favs]; save('favs');} save('cart'); openCart(); render(); break; }
-    case 'undo': { const f=undoFn; if(!f) break; f(); undoFn=null; $id('toast').classList.add('hidden'); if($id('sheet').querySelector('.cartsheet')) openCart(); render(); buzz(); break; }
+    case 'undo': { const f=undoFn; if(!f) break; f(); undoFn=null; $id('toast').classList.add('hidden'); const pd=$id('sheet').querySelector('.pd [data-act="fav"]'); if($id('sheet').querySelector('.cartsheet')) openCart(); else if(pd){ const o=offerOf(pd.dataset.k); if(o) openProduct(o); } $id('cartCount').textContent=S.cart.reduce((a,x)=>a+x.qty,0); render(); buzz(); break; }
     case 'checkout': { const st=SBY[el.dataset.s], its=S.cart.filter(c=>c.store===st.id);
       if(!st.deck){ const first=its.findIndex(c=>!c.added); walk={store:st.id, i:first<0?0:first}; openWalk(); break; }
       if(st.deck){ const m=new Map(); for(const c of its){const n=c.name||c.title; m.set(n,(m.get(n)||0)+c.qty)} openUrls([deckUrl(st,[...m].map(([name,qty])=>({name,qty})))]); }
