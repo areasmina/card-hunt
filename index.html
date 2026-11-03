@@ -565,10 +565,32 @@ function viewSearch(){
   return searchPill(searchQ)+body;
 }
 function storeLinks(q){return `<div class="links">${STORES.map(s=>`<a href="${esc(s.url(q))}" target="_blank" rel="noopener">${esc(s.name)} ${I.ext.replace('width="16" height="16"','width="12" height="12" style="display:inline;vertical-align:-1px"')}</a>`).join('')}</div>`}
+let favF={q:'',store:'',inStock:false,sort:'new'};
+const FAVSORT={new:'Newest',low:'Price low to high',high:'Price high to low',name:'A to Z'};
+function favList(){
+  const q=favF.q.trim().toLowerCase();
+  let o=S.favs.filter(x=>(!q||`${x.title} ${x.name} ${x.set}`.toLowerCase().includes(q))&&(!favF.store||x.store===favF.store)&&(!favF.inStock||x.available));
+  if(favF.sort==='low') o=[...o].sort((a,b)=>a.price-b.price);
+  else if(favF.sort==='high') o=[...o].sort((a,b)=>b.price-a.price);
+  else if(favF.sort==='name') o=[...o].sort((a,b)=>(a.name||a.title).localeCompare(b.name||b.title));
+  return o;
+}
+function favGrid(){
+  const o=favList();
+  return o.length?`<div class="sub" style="margin-top:12px">${o.length} of ${S.favs.length} favorite${S.favs.length===1?'':'s'}</div><div class="grid">${o.map(x=>tile(x)).join('')}</div>`
+    :`<div class="empty">No favorites match. <button class="right" data-act="favreset" style="color:var(--accent);font-weight:600">Clear filters</button></div>`;
+}
 function viewSaved(){
+  if(!S.favs.length) return `<div class="h"><h2>Favorites</h2></div><div class="empty">No favorites yet. Tap the heart, or double-tap any card, to save it here.</div>`;
+  const stores=STORES.filter(st=>S.favs.some(x=>x.store===st.id));
   return `<div class="h"><h2>Favorites</h2></div>
-    ${S.favs.length?`<div class="grid">${S.favs.map(o=>tile(o)).join('')}</div>`
-      :`<div class="empty">No favorites yet. Tap the heart, or double-tap any card, to save it here.</div>`}`;
+    <div class="pill" style="height:46px">${I.search}<input id="favq" type="search" autocomplete="off" spellcheck="false" placeholder="Filter your favorites" value="${esc(favF.q)}"></div>
+    <div class="chips">
+      <button class="chip" data-act="favsort">${esc(FAVSORT[favF.sort])} ${I.down}</button>
+      <button class="chip${favF.inStock?' on':''}" data-act="favstock">In stock</button>
+      ${stores.length>1?`<button class="chip${!favF.store?' on':''}" data-act="favstore" data-s="">All stores</button>${stores.map(st=>`<button class="chip${favF.store===st.id?' on':''}" data-act="favstore" data-s="${st.id}">${esc(st.name)}</button>`).join('')}`:''}
+    </div>
+    <div id="favgrid">${favGrid()}</div>`;
 }
 function listsGrid(){
   return `<div class="lcards" style="margin-top:14px">${S.lists.map(l=>`<button class="lcard" data-act="list" data-id="${l.id}">${listStack(l)}<div class="n">${esc(l.name)}</div><div class="c">${countCards(l)} card${countCards(l)===1?'':'s'}</div></button>`).join('')}
@@ -647,6 +669,8 @@ function wireInputs(){
     autocomplete(q,$id('sug'),v=>{q.value=v;doSearch(v)});
     q.addEventListener('input',()=>q.parentElement.querySelector('.x').classList.toggle('hidden',!q.value));
   }
+  const fq=$id('favq');
+  if(fq) fq.addEventListener('input',()=>{ favF.q=fq.value; $id('favgrid').innerHTML=favGrid(); });
   const add=$id('addcard');
   if(add) autocomplete(add,$id('sug2'),v=>{addItem(v)});
   const ln=$id('lname');
@@ -817,6 +841,10 @@ document.addEventListener('click', e=>{
     case 'walkskip': walk.i++; openWalk(); break;
     case 'walkback': walk.i=Math.max(0,walk.i-1); openWalk(); break;
     case 'sync': openSync(); break;
+    case 'favsort': { const k=Object.keys(FAVSORT); favF.sort=k[(k.indexOf(favF.sort)+1)%k.length]; render(); break; }
+    case 'favstock': favF.inStock=!favF.inStock; render(); break;
+    case 'favstore': favF.store=el.dataset.s; render(); break;
+    case 'favreset': favF={q:'',store:'',inStock:false,sort:favF.sort}; render(); break;
     case 'syncon': turnOnSync(); break;
     case 'synclink': linkCode($id('synccode').value); break;
     case 'synccopy': { const u=syncLink(SY.code); (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copied'),()=>prompt('Copy this link',u)); break; }
