@@ -59,6 +59,20 @@ async function searchStore(id, q) {
   });
 }
 
+// Shopify CDN images resize on request: drop old "_32x32" size suffixes and ask for 180px.
+function shopifySized(u) {
+  try {
+    const x = new URL(u); if (x.protocol === 'http:') x.protocol = 'https:';
+    if (!/\/cdn\/shop\/|cdn\.shopify\.com/.test(x.href)) return x.href;
+    x.pathname = x.pathname.replace(/_(\d+x\d*|x\d+|small|medium|large|grande|compact|icon|thumb)(@\dx)?(\.\w+)$/i, '$3');
+    for (const k of ['width', 'height', 'crop']) x.searchParams.delete(k);
+    x.searchParams.set('width', '180'); x.searchParams.set('height', '180'); x.searchParams.set('crop', 'center');
+    return x.href;
+  } catch { return u; }
+}
+// "store.401games.ca" -> "401games" when the store's real name can't be read.
+function prettyHost(h) { const b = h.replace(/^(www|store|shop|en)\./, '').split('.')[0]; return b.charAt(0).toUpperCase() + b.slice(1); }
+
 // Check a store someone wants to add: is it a Shopify store whose product search works from here,
 // what is it called, and does it have a BinderPOS deck-list page that can fill its cart?
 const DECK_PATHS = ['/pages/deck-list', '/pages/multi-card-search', '/pages/decklist', '/pages/deck-builder', '/pages/deckbuilder', '/pages/buylist-deck', '/pages/card-list', '/pages/multi-search'];
@@ -71,8 +85,24 @@ async function checkStore(raw) {
   if (r && r.url) { try { const h = new URL(r.url).host; if (HOST_RE.test(h)) host = h; } catch {} } // follow e.g. shop.com -> www.shop.com
   let ok = false; try { ok = !!(r && r.ok && (await r.json()).resources); } catch {}
   if (!ok) return Response.json({ ok: false, host, error: "Card Hunt can only search stores built on Shopify, and this one didn't answer like a Shopify store." }, { headers: CORS });
-  let name = host.replace(/^www\./, '');
-  try { const m = await get(host, '/meta.json'); if (m.ok) { const j = await m.json(); if (j.name) name = j.name; } } catch {}
+  // Name and logo come from the store's home page: og:site_name (or /meta.json), and the favicon, which
+  // Shopify can serve at any size. Retry once when Shopify rate-limits us.
+  let name = '', logo = null;
+  try {
+    let hp = await get(host, '/', 'text/html');
+    if (hp.status === 429) { await new Promise(r => setTimeout(r, 900)); hp = await get(host, '/', 'text/html'); }
+    if (hp.ok) {
+      const t = (await hp.text()).slice(0, 300000);
+      const dec = v => v.replace(/&amp;/g, '&').replace(/&#39;|&#039;/g, "'").replace(/&quot;/g, '"').replace(/&ndash;|&mdash;/g, '-').trim();
+      const site = t.match(/property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i) || t.match(/content=["']([^"']+)["'][^>]*property=["']og:site_name["']/i);
+      if (site) name = dec(site[1]);
+      const icon = t.match(/<link[^>]+rel=["'](?:apple-touch-icon|shortcut icon|icon)["'][^>]*>/i);
+      const href = icon && icon[0].match(/href=["']([^"']+)["']/i);
+      if (href) logo = shopifySized(new URL(dec(href[1]), `https://${host}/`).href);
+    }
+  } catch {}
+  if (!name) { try { const m = await get(host, '/meta.json'); if (m.ok) { const j = await m.json(); if (j.name) name = j.name; } } catch {} }
+  if (!name) name = prettyHost(host);
   // Only BinderPOS deck-list pages accept a prefilled ?cards= list, so require its script on the page.
   let deck = null; const tried = [];
   for (const path of DECK_PATHS) {
@@ -84,7 +114,7 @@ async function checkStore(raw) {
     } catch (e) { tried.push(`${path}:err`); }
   }
   // Shopify often rate-limits these page loads from Cloudflare, so say when the answer is a guess.
-  return Response.json({ ok: true, host, name, deck, deckUnsure: !deck && tried.some(t => t.endsWith(':429')), tried }, { headers: { ...CORS, 'Cache-Control': 'no-store' } });
+  return Response.json({ ok: true, host, name, logo, deck, deckUnsure: !deck && tried.some(t => t.endsWith(':429')), tried }, { headers: { ...CORS, 'Cache-Control': 'no-store' } });
 }
 
 // Sync: a device keeps a random secret code; the saved data is stored in KV under a hash of it.

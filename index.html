@@ -158,6 +158,8 @@ a.btn{text-decoration:none}
 .srail::-webkit-scrollbar{display:none}
 .sbub{flex:none;width:72px;display:flex;flex-direction:column;align-items:center;gap:6px}
 .sbub .logo,.sthead .logo{position:relative;width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:24px;color:#fff}
+.logo.haslogo{border:1px solid rgba(0,0,0,.08)}
+.logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:9%;border-radius:50%;background:#fff}
 .sbub .logo.add{background:var(--surface-2);color:var(--accent);border:1.5px dashed var(--line)}
 .sbub .logo i{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
 .sbub .nm{font-size:12.5px;line-height:1.2;text-align:center;color:var(--text);max-width:72px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -250,7 +252,7 @@ a.btn{text-decoration:none}
 .cjump .dot{width:12px;height:12px;border-radius:50%}
 .cjump b{background:rgba(255,255,255,.14);border-radius:999px;padding:1px 8px;font-size:13px}
 @media (prefers-reduced-motion: reduce){.sc .scb,.sc .shd .chev,.sc .shd .sum{transition:none}}
-.sc .logo{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:none}
+.sc .logo{position:relative;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:none}
 .sc .sn{font-size:18px;font-weight:650}
 .ci{display:flex;gap:14px;padding:10px 0}
 .ci img,.ci .blank{width:92px;height:128px;border-radius:12px;object-fit:cover;object-position:top;background:var(--sheet-2);flex:none}
@@ -269,7 +271,7 @@ a.btn{text-decoration:none}
 .ci .added{color:#4ade80;font-size:14px;font-weight:600;margin-top:4px}
 .grandrow{display:flex;justify-content:space-between;font-size:18px;font-weight:700;padding:6px 6px 4px}
 .walk .shd{display:flex;align-items:center;gap:12px;margin:4px 0 14px}
-.walk .logo{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:none}
+.walk .logo{position:relative;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:none}
 .cartsheet .btn.ghost{background:var(--sheet-2);color:var(--sheet-text)}
 .walk .sn{font-size:18px;font-weight:650}
 .walk .cd{color:var(--sheet-muted);font-size:15px}
@@ -316,16 +318,16 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 const API = 'https://card-hunt.areasmina.workers.dev';
 const BUILTIN = [
   {id:'ea',     name:'EA Collectibles', color:'#0f766e', host:'www.eacollectibles.com', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'lamood', name:'La Mood',         color:'#be185d', host:'lamoodcomics.ca', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
-  {id:'mana',   name:'Mana Lounge',     color:'#1d4ed8', host:'www.manalounge.ca', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
-  {id:'ge',     name:'Gamers Emporium', color:'#b45309', host:'gamersemporium.ca', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'players',name:'Players',         color:'#6b7280', host:'playerscandc.com', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
+  {id:'lamood', name:'La Mood',         color:'#be185d', logo:'https://cdn.shopify.com/s/files/1/0275/7728/6793/files/LA_Mood_Logo.jpg?width=240', host:'lamoodcomics.ca', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
+  {id:'mana',   name:'Mana Lounge',     color:'#1d4ed8', logo:'https://www.manalounge.ca/cdn/shop/files/favicon.png?width=180', host:'www.manalounge.ca', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
+  {id:'ge',     name:'Gamers Emporium', color:'#b45309', logo:'https://gamersemporium.ca/cdn/shop/files/GE_Logo_LinkedIn_White.jpg?crop=center&height=180&width=180', host:'gamersemporium.ca', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'players',name:'Players',         color:'#6b7280', logo:'https://playerscandc.com/cdn/shop/files/players.png?width=180', host:'playerscandc.com', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
 ];
 // Stores the person adds themselves (any Shopify store). They sync like favorites and lists.
 const PALETTE=['#7c3aed','#0891b2','#c2410c','#15803d','#db2777','#4f46e5','#a16207','#0f766e'];
 let STORES=[], SBY={};
 function rebuildStores(){
-  const mine=(S.myStores||[]).map((m,i)=>({id:'x:'+m.host, name:m.name, host:m.host, deck:m.deck||undefined, custom:true, color:PALETTE[i%PALETTE.length],
+  const mine=(S.myStores||[]).map((m,i)=>({id:'x:'+m.host, name:m.name, host:m.host, deck:m.deck||undefined, logo:m.logo||`https://www.google.com/s2/favicons?domain=${m.host}&sz=128`, custom:true, color:PALETTE[i%PALETTE.length],
     url:q=>`https://${m.host}/search?q=${enc(q)}`}));
   STORES=[...BUILTIN,...mine]; SBY=Object.fromEntries(STORES.map(s=>[s.id,s]));
 }
@@ -480,9 +482,11 @@ async function linkCode(raw){
 function openStore(st){
   const on=!S.prefs.off.includes(st.id);
   sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
-    <div class="sthead"><span class="logo" style="background:${st.color}">${esc(st.name[0])}</span><div><h2>${esc(st.name)}</h2><div class="sub" style="margin:0">${esc(st.host)}</div></div></div>
+    <div class="sthead">${storeLogo(st)}<div><h2>${esc(st.name)}</h2><div class="sub" style="margin:0">${esc(st.host)}</div></div></div>
     <button class="row" data-act="storetoggle" data-s="${esc(st.id)}"><span class="grow"><div class="t">Include in searches</div><div class="s">${on?'Card Hunt checks this store every time you search':'Skipped when you search'}</div></span><span class="switch${on?' on':''}"><i></i></span></button>
     <div class="row" style="cursor:default"><span class="grow"><div class="t">Checking out</div><div class="s">${st.deck?'Has a deck list page, so Card Hunt can send your whole cart there in one tap':'Card Hunt walks you through adding each card to its cart'}</div></span></div>
+    ${st.custom?`<div class="sub" style="margin:14px 0 0">Store name</div>
+      <div class="field"><input id="storename" value="${esc(st.name)}" autocomplete="off"><button class="btn ghost" data-act="savename" data-s="${esc(st.id)}">Save</button></div>`:''}
     ${st.custom?`<div class="sub" style="margin:10px 0 0">${st.deck?'Deck list page:':'Does this store have a deck list or multi-card search page? Paste its link and Card Hunt can send your whole cart there.'}</div>
       <div class="field"><input id="decklink" placeholder="https://…/pages/deck-list" value="${esc(st.deck||'')}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn ghost" data-act="savedeck" data-s="${esc(st.id)}">Save</button></div>`:''}
     <div class="actions" style="margin-top:14px"><a class="btn" href="${esc(storeHome(st))}" target="_blank" rel="noopener">Visit store ${I.ext}</a>${st.custom?`<button class="btn ghost" data-act="removestore" data-s="${esc(st.id)}" style="color:var(--heart)">${I.trash} Remove</button>`:''}</div></div>`);
@@ -503,7 +507,7 @@ async function addStore(raw){
     const r=await fetch(`${API}/store?url=${encodeURIComponent(raw.trim())}`); const j=await r.json();
     if(!j.ok){ m.textContent=j.error||"Couldn't add that store."; b.disabled=false; return; }
     if(STORES.some(x=>x.host===j.host)){ m.textContent=`${j.name} is already one of your stores.`; b.disabled=false; return; }
-    S.myStores=[...S.myStores,{host:j.host,name:j.name,deck:j.deck||null}]; save('myStores'); rebuildStores();
+    S.myStores=[...S.myStores,{host:j.host,name:j.name,deck:j.deck||null,logo:j.logo||null,v:2}]; save('myStores'); rebuildStores();
     for(const k in DATA) delete DATA[k];
     closeSheet(); render(); toast(j.deck?`Added ${j.name}. It has a deck list page`:`Added ${j.name}`);
     if(!j.deck) setTimeout(()=>openStore(SBY['x:'+j.host]),400);
@@ -650,7 +654,7 @@ function viewHome(){
       :`<div class="recent">${['Sol Ring','Lightning Bolt','Rhystic Study','Commander deck'].map(q=>`<button class="chip" data-act="q" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
     <button class="promo" data-act="multi"><span class="ic">${I.grid}</span><span class="grow"><b>Price a whole decklist</b><span>Paste your list and see every card at all ${STORES.length} stores</span></span>${I.chev}</button>
     <div class="h"><h2>Your stores</h2><span class="hint">${STORES.length-S.prefs.off.filter(id=>SBY[id]).length} of ${STORES.length} searched</span></div>
-    <div class="srail">${STORES.map(st=>`<button class="sbub${S.prefs.off.includes(st.id)?' off':''}" data-act="storeinfo" data-s="${esc(st.id)}"><span class="logo" style="background:${st.color}">${esc(st.name[0])}${st.deck?`<i title="Can fill its cart from a list">${I.cart.replace('width="30" height="30"','width="11" height="11"')}</i>`:''}</span><span class="nm">${esc(st.name)}</span></button>`).join('')}
+    <div class="srail">${STORES.map(st=>`<button class="sbub${S.prefs.off.includes(st.id)?' off':''}" data-act="storeinfo" data-s="${esc(st.id)}">${storeLogo(st, st.deck?`<i title="Can fill its cart from a list">${I.cart.replace('width="30" height="30"','width="11" height="11"')}</i>`:'')}<span class="nm">${esc(st.name)}</span></button>`).join('')}
       <button class="sbub" data-act="addstore"><span class="logo add">${I.plus}</span><span class="nm">Add store</span></button></div>
     ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2></div><div class="rail">${S.viewed.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
     ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use Card Hunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
@@ -836,7 +840,8 @@ function chooseList(name){
     <div class="rows">${S.lists.map(l=>`<button class="row" data-act="tolist" data-id="${l.id}" data-n="${esc(name)}"><span class="ic sq">${l.items[0]?`<img alt="" src="${esc(scry(l.items[0].name))}">`:I.grid}</span><span class="grow"><div class="t">${esc(l.name)}</div><div class="s">${countCards(l)} card${countCards(l)===1?'':'s'}</div></span></button>`).join('')}
     <button class="row" data-act="newlist" data-n="${esc(name)}"><span class="ic">${I.plus}</span><span class="grow"><div class="t">New list</div></span></button></div>`);
 }
-function storeLogo(s){return `<span class="logo" style="background:${s.color}">${esc(s.name[0])}</span>`}
+// A store's logo when we have one (white circle), otherwise its first letter on its colour.
+function storeLogo(s, extra=''){ return `<span class="logo${s.logo?' haslogo':''}" style="background:${s.logo?'#fff':s.color}" data-c="${s.color}">${esc(s.name[0])}${s.logo?`<img alt="" loading="lazy" src="${esc(s.logo)}" onload="if(this.naturalWidth<24)this.onerror()" onerror="const p=this.parentNode;p.classList.remove('haslogo');p.style.background=p.dataset.c;this.remove()">`:''}${extra}</span>`; }
 // Each store in the cart can be folded down to one line by tapping its name; this device remembers which.
 let FOLD=new Set(LS.get('fold',[]));
 const saveFold=()=>LS.set('fold',[...FOLD]);
@@ -984,6 +989,7 @@ document.addEventListener('click', e=>{
     case 'storeinfo': openStore(SBY[el.dataset.s]); break;
     case 'storetoggle': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; save('prefs'); openStore(SBY[id]); render(); break; }
     case 'addstore': openAddStore(); break;
+    case 'savename': { const st=SBY[el.dataset.s], v=$id('storename').value.trim(); if(!v) break; const m=S.myStores.find(x=>'x:'+x.host===st.id); m.name=v; save('myStores'); rebuildStores(); openStore(SBY[st.id]); render(); toast('Name saved'); break; }
     case 'savedeck': { const st=SBY[el.dataset.s]; const v=$id('decklink').value.trim(); let u=null;
       if(v){ try{ u=new URL(/^https?:/i.test(v)?v:'https://'+v); }catch(e){} if(!u||!u.pathname.startsWith('/pages/')){ toast('Paste the link to a page on the store, like …/pages/deck-list'); break; } u=u.origin+u.pathname; }
       const m=S.myStores.find(x=>'x:'+x.host===st.id); m.deck=u; save('myStores'); rebuildStores(); openStore(SBY[st.id]); render(); toast(u?'Saved. Your cart can go there in one tap':'Deck list page removed'); break; }
@@ -1019,6 +1025,11 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').inner
   render();
 })();
 if(SY) syncNow();
+// Stores added before names and logos were looked up get checked again once, in the background.
+(async()=>{ let changed=false;
+  for(const m of S.myStores.filter(x=>!x.v)){ try{ const j=await (await fetch(`${API}/store?url=${encodeURIComponent(m.host)}`)).json();
+      if(j.ok){ if(j.name&&(!m.name||m.name.includes('.'))) m.name=j.name; if(j.logo) m.logo=j.logo; if(j.deck&&!m.deck) m.deck=j.deck; m.v=2; changed=true; } }catch(e){} }
+  if(changed){ save('myStores'); rebuildStores(); render(); } })();
 document.addEventListener('visibilitychange',()=>{ if(!SY) return; if(document.visibilityState==='visible') syncNow();
   else if(SY.dirty){ clearTimeout(syncT); SY.dirty=false; saveSY(); cloudPut(SY.code,snapshot(),true).then(at=>{SY.at=at;saveSY()},()=>{SY.dirty=true;saveSY()}); } });
 setInterval(()=>{ if(SY&&document.visibilityState==='visible') syncNow(); }, 60000);
