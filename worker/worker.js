@@ -117,9 +117,48 @@ async function profile(url, ctx) {
   const policies = [['Refund policy', 'refund-policy'], ['Shipping policy', 'shipping-policy'], ['Privacy policy', 'privacy-policy'], ['Terms of service', 'terms-of-service']]
     .map(([title, slug]) => ({ title, url: `https://${host}/policies/${slug}` }));
   const ok = !p.status && !p.error;
-  const res = Response.json({ ok, host, ...p, policies }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=86400' } });
+  const res = Response.json({ ok, host, ...p, policies }, { headers: { ...CORS, 'Cache-Control': ok ? 'public, max-age=86400' : 'no-store' } });
   if (ok) ctx.waitUntil(caches.default.put(key, res.clone()));
   return res;
+}
+
+// GET /nearby?lat=&lon=&r=<metres>  ->  game, comic and hobby shops around a point, from OpenStreetMap.
+// Public Overpass servers are often busy, so this tries a few in turn and caches answers for a day.
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const TCG_NAME = /card|game|comic|hobby|tcg|magic|pok[eé]mon|collect|dragon|dice|geek|nerd|mana|deck|lounge/i;
+async function nearby(url, ctx) {
+  const lat = +url.searchParams.get('lat'), lon = +url.searchParams.get('lon');
+  const r = Math.round(Math.min(50000, Math.max(500, +url.searchParams.get('r') || 10000)) / 100) * 100;
+  if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return Response.json({ ok: false, error: 'bad location' }, { status: 400, headers: CORS });
+  const key = new Request(`https://cardhunt.cache/v1/nearby/${lat.toFixed(3)},${lon.toFixed(3)},${r}`);
+  const hit = await caches.default.match(key); if (hit) return hit;
+  const a = `(around:${r},${lat.toFixed(5)},${lon.toFixed(5)})`;
+  const q = `[out:json][timeout:20];(nwr["shop"~"^(games|hobby|comic|collector|anime|toys|trade|books|video_games|gift)$"]${a};nwr["shop"]["name"~"card|game|comic|hobby|tcg|magic|collect",i]${a};);out center tags 200;`;
+  let data = null, last = '';
+  for (const ep of OVERPASS) {
+    try {
+      const res = await fetch(ep, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'User-Agent': UA }, signal: AbortSignal.timeout(15000) });
+      if (res.ok) { data = await res.json(); if (data && Array.isArray(data.elements)) break; }
+      last = `${new URL(ep).host} ${res.status}`; data = null;
+    } catch (e) { last = `${new URL(ep).host} ${e.name}`; }
+  }
+  if (!data) return Response.json({ ok: false, error: "The map service is busy right now. Try again in a minute.", detail: last }, { headers: { ...CORS, 'Cache-Control': 'no-store' } });
+  const seen = new Set(), stores = [];
+  for (const e of data.elements) {
+    const t = e.tags || {}, name = (t.name || '').trim(); if (!name) continue;
+    const core = /^(games|hobby|comic|collector|anime)$/.test(t.shop || '');
+    if (!core && !TCG_NAME.test(name)) continue;
+    const plat = e.lat ?? e.center?.lat, plon = e.lon ?? e.center?.lon; if (plat == null) continue;
+    let web = t.website || t['contact:website'] || t.url || '';
+    if (web && !/^https?:\/\//i.test(web)) web = 'https://' + web;
+    const id = name.toLowerCase() + '|' + plat.toFixed(3); if (seen.has(id)) continue; seen.add(id);
+    const addr = [[t['addr:housenumber'], t['addr:street']].filter(Boolean).join(' '), t['addr:city']].filter(Boolean).join(', ');
+    stores.push({ name, lat: plat, lon: plon, website: web || null, shop: t.shop || null, addr: addr || null, tcg: core && TCG_NAME.test(name) || t.shop === 'games' });
+  }
+  stores.sort((x, y) => (!!y.website - !!x.website) || (y.tcg - x.tcg) || x.name.localeCompare(y.name));
+  const out = Response.json({ ok: true, stores }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=86400' } });
+  ctx.waitUntil(caches.default.put(key, out.clone()));
+  return out;
 }
 
 // Check a store someone wants to add: is it a Shopify store whose product search works from here,
@@ -183,6 +222,7 @@ export default {
     if (url.pathname === '/') return new Response('Card Hunt helper is running. Try /search?q=Lightning+Bolt', { headers: CORS });
     if (url.pathname === '/store') return checkStore(url.searchParams.get('url') || '');
     if (url.pathname === '/profile') return profile(url, ctx);
+    if (url.pathname === '/nearby') return nearby(url, ctx);
     if (url.pathname.startsWith('/sync/')) return sync(req, env, url.pathname.slice(6));
     if (url.pathname !== '/search') return new Response('Not found', { status: 404, headers: CORS });
 
