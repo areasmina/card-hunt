@@ -2,3 +2,7 @@ name = "card-hunt"
 main = "worker.js"
 compatibility_date = "2026-10-01"
 workers_dev = true
+
+[[kv_namespaces]]
+binding = "SYNC"
+id = "1e0dbcb21a114019b57d2cc7601683a7"
