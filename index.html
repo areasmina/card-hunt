@@ -65,11 +65,20 @@ svg{display:block}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px}
 @media (min-width:620px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .p{min-width:0}
-.p .img{position:relative;display:block;width:100%;aspect-ratio:1/1;border-radius:var(--r);overflow:hidden;background:var(--surface-2)}
+.p .img{touch-action:manipulation;-webkit-user-select:none;user-select:none;position:relative;display:block;width:100%;aspect-ratio:1/1;border-radius:var(--r);overflow:hidden;background:var(--surface-2)}
 .p .img img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
 .p .img .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;color:var(--muted);font-size:14px}
 .heart{position:absolute;right:10px;bottom:10px;width:44px;height:44px;border-radius:50%;background:rgba(80,80,90,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;color:#fff}
 .heart.on{color:var(--heart);background:rgba(255,255,255,.92)}
+.heart svg{transition:transform .15s}
+.heart:active svg{transform:scale(.85)}
+.heart.pop svg{animation:pop .45s cubic-bezier(.2,1.8,.4,1)}
+@keyframes pop{0%{transform:scale(.5)}55%{transform:scale(1.35)}100%{transform:scale(1)}}
+.burst{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;color:#fff;z-index:2}
+.burst svg{width:46%;height:auto;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35));animation:burst .9s ease-out forwards}
+.burst.off{color:rgba(255,255,255,.9)}
+@keyframes burst{0%{transform:scale(.2);opacity:0}15%{transform:scale(1.2);opacity:1}30%{transform:scale(.92)}45%{transform:scale(1.04)}75%{transform:scale(1);opacity:1}100%{transform:scale(1.15) translateY(-12px);opacity:0}}
+@media (prefers-reduced-motion: reduce){.heart.pop svg,.burst svg{animation:none}.burst{display:none}}
 .badge{position:absolute;left:10px;top:10px;background:rgba(20,20,24,.62);color:#fff;border-radius:999px;padding:4px 11px;font-weight:700;font-size:15px;backdrop-filter:blur(6px)}
 .tag{position:absolute;left:10px;bottom:10px;background:var(--ok);color:#fff;border-radius:999px;padding:3px 9px;font-weight:600;font-size:12px}
 .tag.sold{background:rgba(20,20,24,.7)}
@@ -409,7 +418,7 @@ function storeLinks(q){return `<div class="links">${STORES.map(s=>`<a href="${es
 function viewSaved(){
   return `<div class="h"><h2>Favorites</h2></div>
     ${S.favs.length?`<div class="grid">${S.favs.map(o=>tile(o)).join('')}</div>`
-      :`<div class="empty">No favorites yet. Tap the heart on any card to save it here.</div>`}`;
+      :`<div class="empty">No favorites yet. Tap the heart, or double-tap any card, to save it here.</div>`}`;
 }
 function listsGrid(){
   return `<div class="lcards" style="margin-top:14px">${S.lists.map(l=>`<button class="lcard" data-act="list" data-id="${l.id}">${listStack(l)}<div class="n">${esc(l.name)}</div><div class="c">${countCards(l)} card${countCards(l)===1?'':'s'}</div></button>`).join('')}
@@ -496,6 +505,18 @@ function addItem(name){
   const ex=l.items.find(i=>i.name.toLowerCase()===name.toLowerCase()); if(ex) ex.qty++; else l.items.push({name,qty:1});
   save('lists'); render(); toast(`Added ${name}`); const a=$id('addcard'); if(a){a.value='';a.focus()}
 }
+function syncHearts(o, pop){
+  const on=isFav(o);
+  document.querySelectorAll('.heart').forEach(h=>{ if(h.dataset.k!==o.url) return;
+    h.classList.toggle('on',on); h.innerHTML=on?I.heartFill:I.heart;
+    if(pop){h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop');} });
+}
+function burst(imgEl){
+  const b=document.createElement('span'); b.className='burst'; b.innerHTML=I.heartFill; imgEl.appendChild(b);
+  setTimeout(()=>b.remove(),950);
+}
+function buzz(){try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}}
+let tapT=null, tapK=null;
 function toggleFav(o){
   if(isFav(o)){S.favs=S.favs.filter(f=>f.url!==o.url); toast('Removed from favorites')}
   else {S.favs=[{...o},...S.favs]; toast('Saved to favorites')}
@@ -564,10 +585,16 @@ document.addEventListener('click', e=>{
   const el=e.target.closest('[data-act]'); if(!el) return;
   const a=el.dataset.act, k=el.dataset.k;
   if(a!=='open') e.preventDefault();
-  if(a==='fav'){ e.stopPropagation(); const o=OFFERS[k]; if(!o) return; toggleFav(o); render(); if($id('sheet').innerHTML&&$id('sheet').querySelector('.pd')) openProduct(o); return; }
+  if(a==='fav'){ e.stopPropagation(); const o=OFFERS[k]; if(!o) return; toggleFav(o); buzz();
+    if($id('sheet').querySelector('.pd')) { openProduct(o); render(); return; }
+    syncHearts(o,true); if(route.name==='saved') setTimeout(render,450); return; }
   switch(a){
     case 'go': closeSheet(); go(el.dataset.to); break;
-    case 'open': { e.preventDefault(); const o=OFFERS[k]; if(o) openProduct(o); break; }
+    case 'open': { // single tap opens, double tap favorites
+      const o=OFFERS[k]; if(!o) break;
+      if(tapT && tapK===k){ clearTimeout(tapT); tapT=null;
+        if(!isFav(o)){ toggleFav(o); } buzz(); burst(el); syncHearts(o,true); break; }
+      clearTimeout(tapT); tapK=k; tapT=setTimeout(()=>{tapT=null; openProduct(o)},260); break; }
     case 'add': { const o=OFFERS[k]; if(o){ addToCart(o); openProduct(o); } break; }
     case 'cart': openCart(); break;
     case 'clearhist': S.searches=[]; save('searches'); render(); break;
