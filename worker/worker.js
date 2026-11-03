@@ -133,7 +133,8 @@ async function nearby(url, ctx) {
   if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return Response.json({ ok: false, error: 'bad location' }, { status: 400, headers: CORS });
   const key = new Request(`https://cardhunt.cache/v1/nearby/${lat.toFixed(3)},${lon.toFixed(3)},${r}`);
   const hit = await caches.default.match(key); if (hit) return hit;
-  const a = `(around:${r},${lat.toFixed(5)},${lon.toFixed(5)})`;
+  const dLat = r / 111320, dLon = r / (111320 * Math.max(0.2, Math.cos(lat * Math.PI / 180)));
+  const a = `(${(lat - dLat).toFixed(4)},${(lon - dLon).toFixed(4)},${(lat + dLat).toFixed(4)},${(lon + dLon).toFixed(4)})`;  // a box is much faster than around: for Overpass
   const q = `[out:json][timeout:30];nwr["shop"~"^(games|hobby|comic|collector|anime|toys|trade|books|video_games|gift|second_hand)$"]${a};out center tags 300;`;
   let data = null, last = '';
   for (const ep of OVERPASS) {
@@ -151,6 +152,7 @@ async function nearby(url, ctx) {
     let web0 = t.website || t['contact:website'] || t.url || '';
     if (!core && !TCG_NAME.test(name + ' ' + web0)) continue;
     const plat = e.lat ?? e.center?.lat, plon = e.lon ?? e.center?.lon; if (plat == null) continue;
+    if (Math.hypot((plat - lat) * 111320, (plon - lon) * 111320 * Math.cos(lat * Math.PI / 180)) > r * 1.02) continue;
     let web = web0;
     if (web && !/^https?:\/\//i.test(web)) web = 'https://' + web;
     const id = name.toLowerCase() + '|' + plat.toFixed(3); if (seen.has(id)) continue; seen.add(id);

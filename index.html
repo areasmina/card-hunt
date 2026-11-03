@@ -331,7 +331,7 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 /* store page */
 .shero{position:relative;margin:-12px -16px 0;min-height:300px;padding:calc(10px + env(safe-area-inset-top)) 16px 22px;display:flex;flex-direction:column;justify-content:space-between;background-size:cover;background-position:center;color:#fff;border-radius:0 0 28px 28px;overflow:hidden}
 @media (min-width:792px){.shero{margin:0 0 0;border-radius:28px}}
-.shnav{display:flex;align-items:center}
+.shnav{display:flex;align-items:center}.shnav .grow{flex:1}
 .glass{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.38);color:#fff;display:flex;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .shin{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:70px}
 .shin .logo{width:76px;height:76px;border-radius:22px;font-size:30px;box-shadow:0 6px 20px rgba(0,0,0,.35);overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
@@ -819,7 +819,7 @@ function viewStore(){
 }
 const SOCIAL={instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',youtube:'YouTube',x:'X',discord:'Discord'};
 function aboutHTML(st){
-  const p=profOf(st); if(!p) return `<div class="sub" style="margin:4px 0 14px">${st.host?'Loading store details…':''}</div>`;
+  const p=profOf(st); if(!p) return st.host&&!PROF[st.host]?`<div class="sub" style="margin:16px 0 0">Loading store details…</div>`:'';
   const desc=(p.description||'').trim(); const showDesc=desc&&desc.toLowerCase()!==String(p.name||st.name).toLowerCase();
   const soc=Object.entries(p.socials||{}).filter(([k,u])=>SOCIAL[k]&&/^https?:/.test(u));
   return `${showDesc?`<p class="sdesc">${esc(desc)}</p>`:''}
@@ -863,7 +863,7 @@ function initMap(){
   const el=$id('nmap'); if(!el||el._leaflet_id) return;
   nearMap=L.map(el,{zoomControl:false,attributionControl:true}).setView([NEAR.lat,NEAR.lon],NEAR.z||10);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(nearMap);
-  L.control.zoom({position:'bottomright'}).addTo(nearMap);
+  L.control.zoom({position:'bottomright'}).addTo(nearMap); nearMap.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
   nearCircle=L.circle(nearMap.getCenter(),{radius:NEAR.r*1000,color:'#5433eb',weight:2,fillColor:'#5433eb',fillOpacity:.12,interactive:false}).addTo(nearMap);
   nearLayer=L.layerGroup().addTo(nearMap);
   const fit=()=>{ const b=nearCircle.getBounds(); if(!nearMap.getBounds().contains(b)) nearMap.fitBounds(b,{padding:[10,10]}); };
@@ -884,7 +884,7 @@ function km(a,b){ const R=6371, t=x=>x*Math.PI/180, dl=t(b.lat-a.lat), dn=t(b.lo
   return 2*R*Math.asin(Math.sqrt(Math.sin(dl/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dn/2)**2)); }
 const hostOf = u => { try{ return new URL(u).host.toLowerCase().replace(/^www\./,''); }catch(e){ return ''; } };
 function nearListHTML(){
-  if(nearBusy) return `<div class="sub" style="margin:16px 0">Looking for stores in the circle…</div>`;
+  if(nearBusy) return `<div class="sub" style="margin:16px 0">Looking for stores in the circle. This can take up to a minute…</div>`;
   if(!nearRes) return '';
   if(nearRes.error) return `<div class="empty">${esc(nearRes.error)}</div>`;
   const list=nearRes.stores; if(!list.length) return `<div class="empty">No card or game stores found in this circle. Try a bigger circle.</div>`;
