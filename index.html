@@ -384,7 +384,11 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 .nrow .nmsg:empty{display:none}
 .nrow .nmsg{color:var(--text)}
 .nrow .added{color:var(--ok);font-weight:650;font-size:14px;flex:none}
-.nrow .noweb{color:var(--muted);font-size:13px;flex:none}
+.nrow .noweb{color:var(--muted);font-size:13px;flex:none;text-decoration:none}
+a.noweb{color:var(--accent)!important;font-weight:600}
+.nrow .num.dim{background:#8a8a94}
+.nmore{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.nmore .btn{flex:1;min-width:150px}
 .nrow.flash{animation:flash 1.2s ease-out}
 @keyframes flash{0%{background:color-mix(in srgb,var(--accent) 22%,transparent)}100%{background:transparent}}
 .btn.small{height:38px;padding:0 16px;font-size:14px;flex:none}
@@ -1000,8 +1004,9 @@ const SOC_ICON={
 
 // ---------- find stores nearby ----------
 // A map (OpenStreetMap, through Leaflet) with a circle that stays in the middle while you move the map around.
-// "Search this area" asks the helper for game, comic and hobby shops inside the circle.
-let NEAR=LS.get('near',{lat:43.6532,lon:-79.3832,r:15,z:10}), nearMap=null, nearCircle=null, nearLayer=null, nearRes=null, nearBusy=false;
+// Card Hunt ships a ready list of Canada's game, comic and hobby shops (stores-ca.json, from OpenStreetMap), so the
+// stores in the circle show up instantly as you move. A live lookup and a Google Maps link are there as back-ups.
+let NEAR=LS.get('near',{lat:43.6532,lon:-79.3832,r:15,z:10}), nearMap=null, nearCircle=null, nearLayer=null, nearRes=null, nearBusy=false, CA=null;
 function loadLeaflet(){
   if(window.L) return Promise.resolve();
   if(loadLeaflet.p) return loadLeaflet.p;
@@ -1009,18 +1014,25 @@ function loadLeaflet(){
   return loadLeaflet.p=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
     s.onload=res; s.onerror=()=>{ loadLeaflet.p=null; rej(new Error('map')); }; document.head.appendChild(s); });
 }
+function loadCA(){
+  if(CA) return Promise.resolve(CA); if(loadCA.p) return loadCA.p;
+  return loadCA.p=fetch('stores-ca.json').then(r=>{ if(!r.ok) throw 0; return r.json(); }).then(j=>{ const sh=j.shops||[];
+    CA=j.stores.map(([name,lat,lon,website,shop,addr])=>({name,lat,lon,website:website||null,shop:sh[shop-1]||null,addr:addr||null})); CA.at=j.at; return CA; })
+    .catch(()=>{ loadCA.p=null; CA=null; return null; });
+}
 function addTabs(tab){ return `<div class="seg"><button class="${tab==='link'?'on':''}" data-act="addtab" data-t="link">Paste a link</button><button class="${tab==='near'?'on':''}" data-act="addtab" data-t="near">${I.pin} Find nearby</button></div>`; }
 function openNearby(){
-  nearMap=null;
+  nearMap=null; nearRes=null;
   sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
     <div class="h" style="margin-top:4px"><h2>Add a store</h2></div>${addTabs('near')}
-    <p class="sub" style="margin:12px 0 10px">Move the map so the circle covers your area, then search it for card and game stores.</p>
+    <p class="sub" style="margin:12px 0 10px">Move the map or tap it. Card and game stores inside the circle show up below.</p>
     <div class="nmapwrap nodrag"><div id="nmap"></div><button class="glass2" data-act="nearme" aria-label="Use my location">${I.locate}</button></div>
     <div class="nrad"><span>Circle</span><input id="nrad" type="range" min="2" max="50" step="1" value="${NEAR.r}" aria-label="Circle size in kilometres"><b id="nradv">${NEAR.r} km</b></div>
-    <button class="btn block" data-act="nearsearch" id="nearbtn">${I.search.replace('width="24" height="24"','width="20" height="20"')} Search this area</button>
-    <div id="nres">${nearListHTML()}</div>
-    <p class="note">Store locations come from OpenStreetMap, which anyone can edit, so a few shops may be missing or out of date.</p></div>`);
-  loadLeaflet().then(initMap).catch(()=>{ const m=$id('nmap'); if(m) m.innerHTML='<div class="empty">The map couldn\'t load. Check your connection and try again.</div>'; });
+    <div id="nres"><div class="sub" style="margin:16px 0">Loading stores…</div></div>
+    <div class="nmore"><button class="btn ghost small" data-act="nearsearch" id="nearbtn">${I.search.replace('width="24" height="24"','width="16" height="16"')} Check live map data</button>
+      <a class="btn ghost small" id="gmaps" href="#" target="_blank" rel="noopener">${I.pin} Look on Google Maps</a></div>
+    <p class="note">Store locations come from OpenStreetMap, which anyone can edit, so a few shops may be missing. Found one on Google Maps? Copy its website and use Paste a link.</p></div>`);
+  Promise.all([loadLeaflet(),loadCA()]).then(initMap).catch(()=>{ const m=$id('nmap'); if(m) m.innerHTML='<div class="empty">The map couldn\'t load. Check your connection and try again.</div>'; nearRefresh(); });
 }
 function initMap(){
   const el=$id('nmap'); if(!el||el._leaflet_id) return;
@@ -1030,13 +1042,24 @@ function initMap(){
   nearCircle=L.circle(nearMap.getCenter(),{radius:NEAR.r*1000,color:'#5433eb',weight:2,fillColor:'#5433eb',fillOpacity:.12,interactive:false}).addTo(nearMap);
   nearLayer=L.layerGroup().addTo(nearMap);
   const fit=()=>{ const b=nearCircle.getBounds(); if(!nearMap.getBounds().contains(b)) nearMap.fitBounds(b,{padding:[10,10]}); };
+  let t; const later=()=>{ clearTimeout(t); t=setTimeout(nearRefresh,180); };
   nearMap.on('move',()=>nearCircle.setLatLng(nearMap.getCenter()));
-  nearMap.on('moveend',()=>{ const c=nearMap.getCenter(); NEAR={...NEAR,lat:+c.lat.toFixed(5),lon:+c.lng.toFixed(5),z:nearMap.getZoom()}; LS.set('near',NEAR); });
-  nearMap.on('click',e=>nearMap.panTo(e.latlng));
-  const r=$id('nrad'); r.addEventListener('input',()=>{ NEAR.r=+r.value; $id('nradv').textContent=NEAR.r+' km'; nearCircle.setRadius(NEAR.r*1000); });
-  r.addEventListener('change',()=>{ LS.set('near',NEAR); fit(); });
-  fit(); drawMarkers();
+  nearMap.on('moveend',()=>{ const c=nearMap.getCenter(); NEAR={...NEAR,lat:+c.lat.toFixed(5),lon:+c.lng.toFixed(5),z:nearMap.getZoom()}; LS.set('near',NEAR); later(); });
+  nearMap.on('click',e=>{ if(!e.originalEvent.target.closest('.leaflet-marker-icon')) nearMap.panTo(e.latlng); });
+  const r=$id('nrad'); r.addEventListener('input',()=>{ NEAR.r=+r.value; $id('nradv').textContent=NEAR.r+' km'; nearCircle.setRadius(NEAR.r*1000); later(); });
+  r.addEventListener('change',()=>{ LS.set('near',NEAR); fit(); tick(); });
+  fit(); nearRefresh();
   if(!LS.get('nearAsked',false)){ LS.set('nearAsked',true); locateMe(true); }
+}
+// Stores in the circle, from the bundled list plus anything a live lookup found, nearest first.
+function nearRefresh(){
+  const at={lat:NEAR.lat,lon:NEAR.lon}; if(nearMap){ const c=nearMap.getCenter(); at.lat=c.lat; at.lon=c.lng; }
+  const g=$id('gmaps'); if(g) g.href=`https://www.google.com/maps/search/trading+card+game+store/@${at.lat.toFixed(4)},${at.lon.toFixed(4)},12z`;
+  const live=(nearRes&&nearRes.live)||[], seen=new Set(), all=[];
+  for(const s of [...(CA||[]),...live]){ const k=s.name.toLowerCase()+'|'+s.lat.toFixed(3); if(seen.has(k)) continue; seen.add(k); const d=km(at,s); if(d<=NEAR.r) all.push({...s,d}); }
+  all.sort((a,b)=>a.d-b.d);
+  nearRes={at,stores:all.slice(0,80),live,total:all.length,noData:!CA&&!live.length};
+  const n=$id('nres'); if(n) n.innerHTML=nearListHTML(); drawMarkers();
 }
 function locateMe(quiet){
   if(!navigator.geolocation){ if(!quiet) toast("This browser can't share your location"); return; }
@@ -1047,30 +1070,35 @@ function km(a,b){ const R=6371, t=x=>x*Math.PI/180, dl=t(b.lat-a.lat), dn=t(b.lo
   return 2*R*Math.asin(Math.sqrt(Math.sin(dl/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dn/2)**2)); }
 const hostOf = u => { try{ return new URL(u).host.toLowerCase().replace(/^www\./,''); }catch(e){ return ''; } };
 function nearListHTML(){
-  if(nearBusy) return `<div class="sub" style="margin:16px 0">Looking for stores in the circle. This can take up to a minute…</div>`;
   if(!nearRes) return '';
-  if(nearRes.error) return `<div class="empty">${esc(nearRes.error)}</div>`;
-  const list=nearRes.stores; if(!list.length) return `<div class="empty">No card or game stores found in this circle. Try a bigger circle.</div>`;
+  const busy=nearBusy?`<div class="sub" style="margin:10px 0">Checking live map data. This can take up to a minute…</div>`:'';
+  if(nearRes.error) return busy+`<div class="empty">${esc(nearRes.error)}</div>`;
+  if(nearRes.noData) return busy+`<div class="empty">The store list didn't load. Tap "Check live map data", or look on Google Maps.</div>`;
+  const list=nearRes.stores; if(!list.length) return busy+`<div class="empty">No card or game stores in this circle. Make the circle bigger or move the map.</div>`;
   const mine=new Set(STORES.map(s=>(s.host||'').replace(/^www\./,'')));
   const withWeb=list.filter(s=>s.website).length;
-  return `<div class="sub" style="margin:16px 0 6px">${list.length} store${list.length===1?'':'s'} found${withWeb<list.length?`, ${withWeb} with a website`:''}</div><div class="rows nlist">${list.map((s,i)=>{
-    const h=hostOf(s.website), added=h&&mine.has(h), d=km(nearRes.at,s);
-    return `<div class="row nrow" data-i="${i}"><span class="ic num">${i+1}</span><span class="grow"><div class="t">${esc(s.name)}</div><div class="s">${d<10?d.toFixed(1):Math.round(d)} km${s.addr?' · '+esc(s.addr):''}${h?` · ${esc(h)}`:''}</div><div class="s nmsg" id="nmsg${i}"></div></span>
-      ${added?'<span class="added">✓ Added</span>':s.website?`<button class="btn small" data-act="nearadd" data-i="${i}">Add</button>`:'<span class="noweb">No website</span>'}</div>`;}).join('')}</div>`;
+  return busy+`<div class="sub" style="margin:16px 0 6px">${nearRes.total} store${nearRes.total===1?'':'s'} in the circle${withWeb<list.length?`, ${withWeb} with a website`:''}</div><div class="rows nlist">${list.map((s,i)=>{
+    const h=hostOf(s.website), added=h&&mine.has(h);
+    return `<div class="row nrow" data-i="${i}"><span class="ic num${s.website?'':' dim'}">${i+1}</span><span class="grow"><div class="t">${esc(s.name)}</div><div class="s">${s.d<10?s.d.toFixed(1):Math.round(s.d)} km${s.addr?' · '+esc(s.addr):''}${h?` · ${esc(h)}`:''}</div><div class="s nmsg" id="nmsg${i}"></div></span>
+      ${added?'<span class="added">✓ Added</span>':s.website?`<button class="btn small" data-act="nearadd" data-i="${i}">Add</button>`:`<a class="noweb" href="https://www.google.com/search?q=${encodeURIComponent(s.name+' '+(s.addr||''))}" target="_blank" rel="noopener">Find website</a>`}</div>`;}).join('')}</div>`;
 }
 function drawMarkers(){
   if(!nearMap||!nearLayer) return; nearLayer.clearLayers(); if(!nearRes||!nearRes.stores) return;
   nearRes.stores.forEach((s,i)=>{ L.marker([s.lat,s.lon],{icon:L.divIcon({className:'npin'+(s.website?'':' dim'),html:`<span><i>${i+1}</i></span>`,iconSize:[28,28],iconAnchor:[14,28]})})
-    .on('click',()=>{ const r=document.querySelector(`.nrow[data-i="${i}"]`); if(r){ r.scrollIntoView({behavior:'smooth',block:'center'}); r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); } })
+    .on('click',()=>{ tick(); const r=document.querySelector(`.nrow[data-i="${i}"]`); if(r){ r.scrollIntoView({behavior:'smooth',block:'center'}); r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); } })
     .addTo(nearLayer); });
 }
 async function nearSearch(){
-  if(nearBusy) return; nearBusy=true; const c=nearMap?nearMap.getCenter():{lat:NEAR.lat,lng:NEAR.lon};
-  const at={lat:c.lat,lon:c.lng}; $id('nres').innerHTML=nearListHTML(); const b=$id('nearbtn'); if(b) b.disabled=true;
+  if(nearBusy) return; nearBusy=true; const at={lat:NEAR.lat,lon:NEAR.lon}; if(nearMap){ const c=nearMap.getCenter(); at.lat=c.lat; at.lon=c.lng; }
+  const b=$id('nearbtn'); if(b) b.disabled=true; const n=$id('nres'); if(n) n.innerHTML=nearListHTML();
+  let err=null, live=[];
   try{ const j=await (await fetch(`${API}/nearby?lat=${at.lat.toFixed(4)}&lon=${at.lon.toFixed(4)}&r=${NEAR.r*1000}`)).json();
-    nearRes=j.ok?{at,stores:j.stores.filter(s=>km(at,s)<=NEAR.r+0.2)}:{error:j.error||"Couldn't search this area. Try again."};
-  }catch(e){ nearRes={error:"Couldn't reach Card Hunt's helper. Try again."}; }
-  nearBusy=false; if(b) b.disabled=false; const n=$id('nres'); if(n) n.innerHTML=nearListHTML(); drawMarkers(); buzz();
+    if(j.ok) live=j.stores; else err="The live map service is busy. The stores above are still up to date, or try Google Maps.";
+  }catch(e){ err="Couldn't reach Card Hunt's helper. Try again."; }
+  nearBusy=false; if(b) b.disabled=false;
+  nearRes={...(nearRes||{}),live:[...((nearRes&&nearRes.live)||[]),...live]}; nearRefresh();
+  if(err) toast(err); else { const added=live.filter(s=>!(CA||[]).some(c=>c.name.toLowerCase()===s.name.toLowerCase())).length; toast(added?`Found ${added} more store${added===1?'':'s'}`:'No new stores found'); }
+  buzz();
 }
 async function nearAdd(i, btn){
   const s=nearRes.stores[i], msg=$id('nmsg'+i); btn.disabled=true; btn.textContent='Checking…';
