@@ -186,7 +186,16 @@ svg{display:block}
 
 /* sheets */
 .sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
-.sheet .scrim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.sheet .scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);animation:fadein .28s ease-out}
+.sheet .body{animation:slideup .38s cubic-bezier(.22,1,.36,1);transition:transform .25s cubic-bezier(.22,1,.36,1);will-change:transform}
+.sheet.closing{pointer-events:none}
+.sheet.closing .scrim{animation:fadeout .22s ease-in forwards}
+.sheet.closing .body{animation:slidedown .22s ease-in forwards}
+@keyframes fadein{from{opacity:0}}
+@keyframes fadeout{to{opacity:0}}
+@keyframes slideup{from{transform:translateY(100%)}}
+@keyframes slidedown{to{transform:translateY(100%)}}
+@media (prefers-reduced-motion: reduce){.sheet .scrim,.sheet .body{animation:none}}
 .sheet .body{position:relative;width:100%;max-width:760px;max-height:92vh;overflow-y:auto;background:var(--bg);border-radius:28px 28px 0 0;padding:14px 16px calc(28px + env(safe-area-inset-bottom))}
 .sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--surface-3);margin:0 auto 12px}
 .sheet .close{position:absolute;right:14px;top:14px;width:38px;height:38px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center}
@@ -780,11 +789,31 @@ function openWalk(){
       ${walk.i>0?'<button class="later" data-act="walkback">← Previous card</button>':''}
     </div>`,'cartsheet');
 }
+// Panels slide up when they open and slide down when they close. Updating an open panel (a cart stepper, the
+// next card in the walk-through) swaps its content in place, so it doesn't animate again or lose its scroll.
 function sheet(html, cls=''){
-  $id('sheet').innerHTML=`<div class="sheet ${cls}"><div class="scrim" data-act="close"></div><div class="body">${html}</div></div>`;
-  document.body.style.overflow='hidden';
+  const cur=$id('sheet').querySelector('.sheet');
+  if(cur){ const same=cur.dataset.cls===cls; const b=cur.querySelector('.body'), top=b.scrollTop;
+    cur.className=`sheet ${cls}`; cur.dataset.cls=cls; b.innerHTML=html; if(same) b.scrollTop=top; else b.scrollTop=0; return; }
+  $id('sheet').innerHTML=`<div class="sheet ${cls}" data-cls="${cls}"><div class="scrim" data-act="close"></div><div class="body">${html}</div></div>`;
+  document.body.style.overflow='hidden'; dragToClose($id('sheet').querySelector('.body'));
 }
-function closeSheet(){$id('sheet').innerHTML='';document.body.style.overflow=''}
+function closeSheet(){
+  const cur=$id('sheet').querySelector('.sheet'); document.body.style.overflow='';
+  if(!cur) return; $id('sheet').innerHTML='';
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  cur.classList.add('closing'); document.body.appendChild(cur);
+  const b=cur.querySelector('.body'); if(b.style.transform) b.style.transition='transform .22s ease-in';
+  setTimeout(()=>cur.remove(),240);
+}
+// Swipe a panel down from the top to close it, like a native sheet.
+function dragToClose(b){
+  let y0=null, dy=0;
+  b.addEventListener('touchstart',e=>{ y0=b.scrollTop<=0?e.touches[0].clientY:null; dy=0; b.style.transition='none'; },{passive:true});
+  b.addEventListener('touchmove',e=>{ if(y0==null) return; dy=Math.max(0,e.touches[0].clientY-y0); if(dy>0) b.style.transform=`translateY(${dy}px)`; },{passive:true});
+  b.addEventListener('touchend',()=>{ if(y0==null) return; y0=null; b.style.transition='';
+    if(dy>110){ b.style.transform=`translateY(${dy}px)`; closeSheet(); render(); } else b.style.transform=''; });
+}
 function openUrls(urls){ let blocked=false; for(const u of urls){const w=window.open(u,'_blank','noopener'); if(w===null) blocked=true;} if(blocked&&urls.length>1) toast('Allow pop-ups to open every item'); }
 function newList(withName){
   const name=prompt('Name your new list', 'My list'); if(name==null) return;
