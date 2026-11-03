@@ -125,6 +125,7 @@ async function profile(url, ctx) {
 // GET /nearby?lat=&lon=&r=<metres>  ->  game, comic and hobby shops around a point, from OpenStreetMap.
 // Public Overpass servers are often busy, so this tries a few in turn and caches answers for a day.
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const CHAINS = /^(eb games|gamestop|toys ?r ?us|indigo|chapters|coles|build-a-bear|hallmark|spencer|walmart|best buy|mastermind|dollarama|goodwill|value village)/i;
 const TCG_NAME = /card|game|comic|hobby|tcg|magic|pok[eé]mon|collect|dragon|dice|geek|nerd|mana|deck|lounge/i;
 async function nearby(url, ctx) {
   const lat = +url.searchParams.get('lat'), lon = +url.searchParams.get('lon');
@@ -133,23 +134,24 @@ async function nearby(url, ctx) {
   const key = new Request(`https://cardhunt.cache/v1/nearby/${lat.toFixed(3)},${lon.toFixed(3)},${r}`);
   const hit = await caches.default.match(key); if (hit) return hit;
   const a = `(around:${r},${lat.toFixed(5)},${lon.toFixed(5)})`;
-  const q = `[out:json][timeout:20];(nwr["shop"~"^(games|hobby|comic|collector|anime|toys|trade|books|video_games|gift)$"]${a};nwr["shop"]["name"~"card|game|comic|hobby|tcg|magic|collect",i]${a};);out center tags 200;`;
+  const q = `[out:json][timeout:30];nwr["shop"~"^(games|hobby|comic|collector|anime|toys|trade|books|video_games|gift|second_hand)$"]${a};out center tags 300;`;
   let data = null, last = '';
   for (const ep of OVERPASS) {
     try {
-      const res = await fetch(ep, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'User-Agent': UA }, signal: AbortSignal.timeout(15000) });
+      const res = await fetch(ep, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'User-Agent': UA }, signal: AbortSignal.timeout(ep.includes('overpass-api.de') ? 40000 : 20000) });
       if (res.ok) { data = await res.json(); if (data && Array.isArray(data.elements)) break; }
-      last = `${new URL(ep).host} ${res.status}`; data = null;
-    } catch (e) { last = `${new URL(ep).host} ${e.name}`; }
+      last += `${new URL(ep).host} ${res.status}; `; data = null; continue;
+    } catch (e) { last += `${new URL(ep).host} ${e.name}; `; }
   }
   if (!data) return Response.json({ ok: false, error: "The map service is busy right now. Try again in a minute.", detail: last }, { headers: { ...CORS, 'Cache-Control': 'no-store' } });
   const seen = new Set(), stores = [];
   for (const e of data.elements) {
-    const t = e.tags || {}, name = (t.name || '').trim(); if (!name) continue;
+    const t = e.tags || {}, name = (t.name || '').trim(); if (!name || CHAINS.test(name) || /^(Q|P)\d/.test(t.brand_wikidata || '') && !/^(games|comic)$/.test(t.shop || '')) continue;
     const core = /^(games|hobby|comic|collector|anime)$/.test(t.shop || '');
-    if (!core && !TCG_NAME.test(name)) continue;
+    let web0 = t.website || t['contact:website'] || t.url || '';
+    if (!core && !TCG_NAME.test(name + ' ' + web0)) continue;
     const plat = e.lat ?? e.center?.lat, plon = e.lon ?? e.center?.lon; if (plat == null) continue;
-    let web = t.website || t['contact:website'] || t.url || '';
+    let web = web0;
     if (web && !/^https?:\/\//i.test(web)) web = 'https://' + web;
     const id = name.toLowerCase() + '|' + plat.toFixed(3); if (seen.has(id)) continue; seen.add(id);
     const addr = [[t['addr:housenumber'], t['addr:street']].filter(Boolean).join(' '), t['addr:city']].filter(Boolean).join(', ');
