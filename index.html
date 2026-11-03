@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Card Hunt</title>
+<meta name="description" content="Search several Canadian MTG stores at once for singles and sealed product.">
+<style>
+:root{
+  --bg:#f6f6f8; --surface:#ffffff; --surface-2:#efeff3; --text:#16161a; --muted:#6b6b76;
+  --line:#e2e2e8; --accent:#5a31f4; --accent-text:#ffffff; --ok:#1f8a4c; --radius:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e0e11; --surface:#1a1a1f; --surface-2:#25252c; --text:#f2f2f5; --muted:#9d9daa;
+    --line:#2f2f38; --accent:#7b5cff; --accent-text:#ffffff; --ok:#4cc27e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e0e11; --surface:#1a1a1f; --surface-2:#25252c; --text:#f2f2f5; --muted:#9d9daa;
+  --line:#2f2f38; --accent:#7b5cff; --accent-text:#ffffff; --ok:#4cc27e;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 96px}
+header{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
+header h1{font-size:22px;margin:0;letter-spacing:-.01em}
+header .tag{color:var(--muted);font-size:14px}
+.search{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+.search textarea{width:100%;min-height:96px;resize:vertical;border:0;outline:0;background:transparent;color:var(--text);font:inherit}
+.search .hint{color:var(--muted);font-size:13px;margin-top:4px}
+.suggest{position:absolute;left:12px;right:12px;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);overflow:hidden;display:none}
+.suggest button{display:block;width:100%;text-align:left;padding:10px 12px;border:0;background:transparent;color:var(--text);font:inherit;cursor:pointer}
+.suggest button.on,.suggest button:hover{background:var(--surface-2)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 4px;scrollbar-width:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer}
+.chip.off{opacity:.45;text-decoration:line-through}
+.chip.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.section{display:flex;align-items:baseline;justify-content:space-between;margin:18px 2px 10px}
+.section h2{font-size:18px;margin:0}
+.section .muted{color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (min-width:640px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:900px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+.card.done{opacity:.5}
+.art{position:relative;aspect-ratio:488/680;background:var(--surface-2)}
+.art img{width:100%;height:100%;object-fit:cover;display:block}
+.art .noimg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;color:var(--muted);font-size:14px}
+.check{position:absolute;right:8px;top:8px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer}
+.card.done .check{background:var(--ok)}
+.qty{position:absolute;left:8px;top:8px;background:rgba(0,0,0,.6);color:#fff;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600}
+.body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.name{font-weight:650;line-height:1.25;overflow-wrap:anywhere}
+.card.done .name{text-decoration:line-through}
+.stores{display:flex;flex-wrap:wrap;gap:6px}
+.stores a{font-size:12.5px;text-decoration:none;color:var(--text);background:var(--surface-2);border-radius:999px;padding:5px 9px}
+.stores a:hover{background:var(--line)}
+.openall{margin-top:auto;border:0;border-radius:12px;padding:9px;background:var(--accent);color:var(--accent-text);font:inherit;font-weight:600;cursor:pointer}
+.recent{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:6px}
+.recent button{display:flex;justify-content:space-between;gap:10px;text-align:left;border:0;background:transparent;color:var(--text);font:inherit;padding:10px;border-radius:12px;cursor:pointer}
+.recent button:hover{background:var(--surface-2)}
+.recent .when{color:var(--muted);font-size:13px;flex:none}
+.empty{color:var(--muted);text-align:center;padding:28px 12px}
+.note{color:var(--muted);font-size:13px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Card Hunt</h1><span class="tag">search 5 stores at once</span>
+  </header>
+
+  <div class="search">
+    <textarea id="list" placeholder="One card or product per line, e.g.&#10;Decaying Time Loop&#10;Whitemane Lion&#10;Bloomburrow collector booster" spellcheck="false" autocomplete="off"></textarea>
+    <div class="suggest" id="suggest"></div>
+    <div class="hint">Moxfield and ManaBox lists work as-is. Quantities, set codes and foil tags are removed.</div>
+  </div>
+
+  <div class="chips" id="storeChips"></div>
+  <div class="chips">
+    <button class="chip" id="clearDone">Clear checked</button>
+    <button class="chip" id="saveRecent">Save as recent</button>
+    <button class="chip" id="clearAll">Clear list</button>
+  </div>
+
+  <div class="section"><h2>Results</h2><span class="muted" id="count"></span></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">Type a card name above to start.</div>
+  <p class="note">"Open all" opens each store's search in a new tab. Allow pop-ups for this site the first time.</p>
+
+  <div class="section"><h2>Recent searches</h2></div>
+  <div class="recent" id="recent"></div>
+</div>
+
+<script>
+const STORES = [
+  {id:'ea',   name:'EA Collectibles', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'lamood',name:'La Mood',        url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
+  {id:'mana', name:'Mana Lounge',     url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'ge',   name:'Gamers Emporium', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'players',name:'Players',       url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`},
+];
+function enc(s){return encodeURIComponent(s).replace(/%20/g,'+')}
+
+const store = {
+  get(k,d){try{const v=localStorage.getItem('cardhunt.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('cardhunt.'+k,JSON.stringify(v))}catch(e){}}
+};
+let off = new Set(store.get('off',[]));
+let done = new Set(store.get('done',[]));
+let recent = store.get('recent',[]);
+
+const $ = id=>document.getElementById(id);
+const list = $('list');
+list.value = store.get('list','');
+
+// Parse a decklist line into {qty,name}
+function parse(line){
+  let s=line.trim();
+  if(!s||/^(\/\/|#)/.test(s)||/^(deck|sideboard|commander|companion|maybeboard)\s*:?$/i.test(s))return null;
+  let qty=1; const m=s.match(/^(\d+)\s*x?\s+(.*)$/i); if(m){qty=+m[1];s=m[2]}
+  s=s.replace(/\s*\*[^*]*\*\s*/g,' ')         // *F* *E*
+     .replace(/\s*\([A-Za-z0-9]{2,6}\)\s*[\w★-]*\s*$/,'') // (SET) 123
+     .replace(/\s*\[[^\]]*\]\s*$/,'')        // [SET]
+     .replace(/\s+#\S+$/,'')
+     .trim();
+  return s?{qty,name:s}:null;
+}
+function items(){
+  const map=new Map();
+  for(const l of list.value.split('\n')){const p=parse(l);if(!p)continue;const k=p.name.toLowerCase();
+    if(map.has(k))map.get(k).qty+=p.qty;else map.set(k,{...p})}
+  return [...map.values()];
+}
+
+function renderChips(){
+  const c=$('storeChips');c.innerHTML='';
+  for(const s of STORES){const b=document.createElement('button');b.className='chip'+(off.has(s.id)?' off':'');b.textContent=s.name;
+    b.onclick=()=>{off.has(s.id)?off.delete(s.id):off.add(s.id);store.set('off',[...off]);renderChips();render()};c.appendChild(b)}
+}
+function imgUrl(name){return `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}&format=image&version=normal`}
+
+function render(){
+  const its=items(), g=$('grid'); g.innerHTML='';
+  $('empty').style.display=its.length?'none':'block';
+  $('count').textContent=its.length?`${its.length} item${its.length>1?'s':''}`:'';
+  const active=STORES.filter(s=>!off.has(s.id));
+  for(const it of its){
+    const key=it.name.toLowerCase();
+    const el=document.createElement('div');el.className='card'+(done.has(key)?' done':'');
+    el.innerHTML=`<div class="art"><div class="noimg"></div><img alt="" loading="lazy"></div>
+      <div class="body"><div class="name"></div><div class="stores"></div><button class="openall">Open all ${active.length}</button></div>`;
+    el.querySelector('.noimg').textContent=it.name;
+    const img=el.querySelector('img');img.src=imgUrl(it.name);img.onerror=()=>img.remove();
+    if(it.qty>1){const q=document.createElement('span');q.className='qty';q.textContent='×'+it.qty;el.querySelector('.art').appendChild(q)}
+    const ck=document.createElement('button');ck.className='check';ck.title='Mark found';ck.textContent='✓';
+    ck.onclick=()=>{done.has(key)?done.delete(key):done.add(key);store.set('done',[...done]);render()};
+    el.querySelector('.art').appendChild(ck);
+    el.querySelector('.name').textContent=it.name;
+    const st=el.querySelector('.stores');
+    for(const s of active){const a=document.createElement('a');a.href=s.url(it.name);a.target='_blank';a.rel='noopener';a.textContent=s.name;st.appendChild(a)}
+    el.querySelector('.openall').onclick=()=>{for(const s of active)window.open(s.url(it.name),'_blank','noopener')};
+    g.appendChild(el);
+  }
+}
+
+function renderRecent(){
+  const r=$('recent');r.innerHTML='';
+  if(!recent.length){r.innerHTML='<div class="empty">Saved searches show up here.</div>';return}
+  for(const x of recent){const b=document.createElement('button');
+    const t=document.createElement('span');t.textContent=x.title;const w=document.createElement('span');w.className='when';w.textContent=ago(x.at);
+    b.append(t,w);b.onclick=()=>{list.value=x.text;save();render();window.scrollTo({top:0,behavior:'smooth'})};r.appendChild(b)}
+}
+function ago(t){const m=Math.round((Date.now()-t)/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.round(m/60);if(h<24)return h+'h ago';return new Date(t).toLocaleDateString()}
+
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>store.set('list',list.value),200)}
+
+$('clearDone').onclick=()=>{const keep=list.value.split('\n').filter(l=>{const p=parse(l);return !p||!done.has(p.name.toLowerCase())});list.value=keep.join('\n');done.clear();store.set('done',[]);save();render()};
+$('clearAll').onclick=()=>{if(!list.value.trim())return;list.value='';done.clear();store.set('done',[]);save();render()};
+$('saveRecent').onclick=()=>{const its=items();if(!its.length)return;
+  const title=its.length===1?its[0].name:`${its[0].name} + ${its.length-1} more`;
+  recent=[{title,text:list.value,at:Date.now()},...recent.filter(x=>x.text!==list.value)].slice(0,10);store.set('recent',recent);renderRecent()};
+
+// Autocomplete (Scryfall)
+const sug=$('suggest');let sugItems=[],sugIdx=-1,sugT,sugReq=0;
+function curLine(){const v=list.value,p=list.selectionStart;const a=v.lastIndexOf('\n',p-1)+1;let b=v.indexOf('\n',p);if(b<0)b=v.length;return{a,b,text:v.slice(a,b)}}
+function hideSug(){sug.style.display='none';sugItems=[];sugIdx=-1}
+function showSug(){
+  sug.innerHTML='';if(!sugItems.length){hideSug();return}
+  sugItems.forEach((n,i)=>{const b=document.createElement('button');b.type='button';b.textContent=n;if(i===sugIdx)b.className='on';
+    b.onmousedown=e=>{e.preventDefault();pick(n)};sug.appendChild(b)});
+  const lines=list.value.slice(0,list.selectionStart).split('\n').length;
+  const lh=parseFloat(getComputedStyle(list).lineHeight)||23;
+  sug.style.top=Math.min(10+lines*lh+4-list.scrollTop, list.offsetHeight+10)+'px';sug.style.display='block';
+}
+function pick(n){const {a,b,text}=curLine();const m=text.match(/^(\s*\d+\s*x?\s+)/i);const pre=m?m[1]:'';
+  const v=list.value;const ins=pre+n;const after=v.slice(b);const nl=after.startsWith('\n')?'':'\n';
+  list.value=v.slice(0,a)+ins+nl+after;const pos=a+ins.length+1;list.setSelectionRange(pos,pos);hideSug();save();render();list.focus()}
+list.addEventListener('input',()=>{save();render();clearTimeout(sugT);
+  const p=parse(curLine().text);const q=p?p.name:'';if(q.length<2){hideSug();return}
+  sugT=setTimeout(async()=>{const id=++sugReq;
+    try{const r=await fetch('https://api.scryfall.com/cards/autocomplete?q='+encodeURIComponent(q));const j=await r.json();
+      if(id!==sugReq)return;sugItems=(j.data||[]).slice(0,8).filter(n=>n.toLowerCase()!==q.toLowerCase());sugIdx=-1;showSug()}catch(e){hideSug()}},160)});
+list.addEventListener('keydown',e=>{if(sug.style.display!=='block')return;
+  if(e.key==='ArrowDown'){e.preventDefault();sugIdx=(sugIdx+1)%sugItems.length;showSug()}
+  else if(e.key==='ArrowUp'){e.preventDefault();sugIdx=(sugIdx-1+sugItems.length)%sugItems.length;showSug()}
+  else if((e.key==='Enter'||e.key==='Tab')&&sugIdx>=0){e.preventDefault();pick(sugItems[sugIdx])}
+  else if(e.key==='Escape')hideSug()});
+list.addEventListener('blur',()=>setTimeout(hideSug,100));
+
+renderChips();render();renderRecent();
+</script>
+</body>
+</html>
