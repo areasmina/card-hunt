@@ -457,34 +457,59 @@ def txt(body, size, m, loc, f, align='LEFT', valign='CENTER'):
     return ob
 
 
+def sky_mat():
+    m = bpy.data.materials.new('Sky')
+    nt = NT(m)
+    uv = nt.n('ShaderNodeUVMap')
+    sep = nt.n('ShaderNodeSeparateXYZ'); nt.l(uv.outputs[0], sep.inputs[0])
+    nt.emit(nt.ramp(sep.outputs['Y'], [(0.0, '#e2733a'), (0.25, '#c8553a'), (0.55, '#4a3a6e'), (1.0, '#141c3c')]))
+    return m
+
+
+def hills(m, y0, x0, x1, z):
+    import random
+    rnd = random.Random(3)
+    pts = [(x0, y0 - 0.2)]
+    n = 14
+    for i in range(n + 1):
+        x = x0 + (x1 - x0) * i / n
+        pts.append((x, y0 + rnd.uniform(0.02, 0.22) + (0.25 if 9 <= i <= 11 else 0)))
+    pts.append((x1, y0 - 0.2))
+    me = bpy.data.meshes.new('Hills')
+    me.from_pydata([(x, y, 0) for x, y in pts], [], [list(range(len(pts)))])
+    me.materials.append(m)
+    ob = link(bpy.data.objects.new('Hills', me)); ob.location = (0, 0, z)
+
+
+THEMES = {
+    #        frame tile,        box tile,       box burn, title ink, rule ink, bevel
+    'dark':     ('frame-black', 'box-black',    0.6, '#f1e9d8', '#1a1208', '#3a3a38'),
+    'light':    ('frame-white', 'box-white',    0.0, '#1a1814', '#1a1814', '#8a877f'),
+    'blue':     ('frame-blue',  'box-blue',     0.0, '#f4f8fb', '#10202a', '#24525e'),
+    'artifact': ('frame-artifact', 'box-artifact', 0.0, '#f1e9d8', '#1a1814', '#3d2c1e'),
+}
+
+
 def build_mock():
     tex = lambda n: os.path.join(OUT, f'{n}.png')
-    for theme in ('dark', 'light'):
+    T = 0.83                                  # one tile = a third of the card width
+    for theme, (ft, bt, burn, title, rule, bev) in THEMES.items():
         sc = reset((1000, 1400))
         camera_top(3.5)
         bold, ital = load_font(SERIF), load_font(SERIF_I)
-        if theme == 'dark':
-            frame = img_mat('Frame', tex('frame-black'), (2.3 / 0.83, 3.3 / 0.83))
-            box = img_mat('Box', tex('box-black'), (1.94 / 0.83, 1.06 / 0.83), vignette=0.6)
-            ink, inv = flat('Ink', '#1a1208'), flat('InkLight', '#f1e9d8')
-            bevel = flat('Bevel', '#3a3a38')
-        else:
-            frame = img_mat('Frame', tex('frame-white'), (2.3 / 0.83, 3.3 / 0.83))
-            box = img_mat('Box', tex('box-white'), (1.94 / 0.83, 1.06 / 0.83))
-            ink, inv = flat('Ink', '#1a1814'), flat('InkDark', '#1a1814')
-            bevel = flat('Bevel', '#8a877f')
+        frame = img_mat('Frame', tex(ft), (2.3 / T, 3.3 / T))
+        box = img_mat('Box', tex(bt), (1.94 / T, 1.06 / T), vignette=burn)
+        inv, ink, bevel = flat('Title', title), flat('Rule', rule), flat('Bevel', bev)
         rr_obj('Edge', 2.5, 3.5, 0.13, flat('Edge', '#0b0b0b'), (0, 0, -0.02))
         rr_obj('Frame', 2.3, 3.3, 0.06, frame, (0, 0, -0.01))
-        # title and cost symbols
         txt('Card Hunt', 0.17, inv, (-1.02, 1.47, 0.01), bold)
         for i, cx in enumerate((0.98, 0.76)):
             rr_obj(f'Cost{i}', 0.17, 0.17, 0.085, flat('CostDisc', '#efe6d2'), (cx, 1.48, 0.01))
-            # our own symbol: a tiny magnifier
             rr_obj(f'CostRing{i}', 0.09, 0.09, 0.045, flat('CostInk', '#1a1814'), (cx - 0.01, 1.49, 0.02))
             rr_obj(f'CostHole{i}', 0.05, 0.05, 0.025, flat('CostDisc2', '#efe6d2'), (cx - 0.01, 1.49, 0.03))
-        # art window with a simple original painting placeholder
         rr_obj('ArtBevel', 2.0, 1.62, 0.02, bevel, (0, 0.53, 0.0))
-        rr_obj('Art', 1.92, 1.54, 0.015, img_mat('Art', tex('frame-blue'), (1.92 / 0.83, 1.54 / 0.83)), (0, 0.53, 0.01))
+        rr_obj('Art', 1.92, 1.54, 0.015, sky_mat(), (0, 0.53, 0.01))
+        hills(flat('Hill', '#0e0e12'), -0.05, -0.96, 0.96, 0.015)
         txt('Artifact', 0.12, inv, (-0.98, -0.4, 0.01), bold)
         rr_obj('BoxBevel', 2.0, 1.12, 0.03, bevel, (0, -1.05, 0.0))
         rr_obj('Box', 1.94, 1.06, 0.03, box, (0, -1.05, 0.01))
