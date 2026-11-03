@@ -192,6 +192,25 @@ svg{display:block}
 .sc .subt{display:flex;justify-content:space-between;font-size:17px;margin:12px 0}
 .sc .co{display:block;width:100%;height:54px;border-radius:999px;background:var(--sheet-2);color:var(--sheet-text);font-weight:650;font-size:17px}
 .sc .info{display:flex;align-items:center;gap:10px;color:var(--sheet-muted);font-size:14px;margin-top:12px}
+.ci .added{color:#4ade80;font-size:14px;font-weight:600;margin-top:4px}
+.grandrow{display:flex;justify-content:space-between;font-size:18px;font-weight:700;padding:6px 6px 4px}
+.walk .shd{display:flex;align-items:center;gap:12px;margin:4px 0 14px}
+.walk .logo{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:none}
+.cartsheet .btn.ghost{background:var(--sheet-2);color:var(--sheet-text)}
+.walk .sn{font-size:18px;font-weight:650}
+.walk .cd{color:var(--sheet-muted);font-size:15px}
+.walk .bar{height:6px;border-radius:3px;background:var(--sheet-2);overflow:hidden;margin-bottom:16px}
+.walk .bar span{display:block;height:100%;background:var(--accent);transition:width .3s}
+.walk .wi{display:flex;gap:14px;align-items:center;background:var(--sheet);border-radius:22px;padding:14px}
+.walk .wi img{width:96px;height:134px;border-radius:12px;object-fit:cover;object-position:top;flex:none}
+.walk .nm{font-size:17px;font-weight:650;line-height:1.25}
+.walk .qtyneed{margin-top:8px;font-size:15px}
+.walk .steps{color:var(--sheet-muted);font-size:15px;line-height:1.6;padding-left:22px;margin:16px 0}
+.walk .steps b{color:var(--sheet-text)}
+.walk .later{height:40px;padding:0 14px;border-radius:999px;background:var(--sheet-2);font-size:14px;font-weight:600;margin-top:12px}
+.walk.done{text-align:center;padding:20px 0}
+.walk.done .big{font-size:56px}
+.walk.done .sub{color:var(--sheet-muted)}
 .coall{position:sticky;bottom:0;display:flex;gap:10px;padding-top:10px}
 .coall .btn{flex:1;height:56px;font-size:17px}
 .cartsheet .empty{color:var(--sheet-muted)}
@@ -568,16 +587,45 @@ function openCart(){
     ${groups.length?groups.map(({s,items})=>{const sub=items.reduce((a,c)=>a+c.price*c.qty,0); return `<div class="sc">
       <div class="shd">${storeLogo(s)}<div class="sn">${esc(s.name)}</div></div>
       ${items.map(c=>`<div class="ci">${imgTag(c)}<div class="grow"><div class="top2"><div class="nm">${esc(c.title)}</div><div class="pp">${esc(money(c.price*c.qty))}</div></div>
-        <div class="cd">${c.foil?'Foil · ':''}${esc(priceText(c))} each</div>
+        <div class="cd">${c.foil?'Foil · ':''}${esc(priceText(c))} each</div>${c.added?'<div class="added">✓ Added at the store</div>':''}
         <div class="ctl"><div class="stepper"><button data-act="cq" data-k="${esc(c.url)}" data-d="-1">${c.qty>1?I.minus:I.trash}</button><span>${c.qty}</span><button data-act="cq" data-k="${esc(c.url)}" data-d="1">${I.plus}</button></div>
         <button class="later" data-act="later" data-k="${esc(c.url)}">Save for later</button></div></div></div>`).join('')}
       <div class="subt"><span>Subtotal from</span><span>${money(sub)}</span></div>
-      <button class="co" data-act="checkout" data-s="${s.id}">${s.deck?`Send to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart`:`Continue to ${esc(s.name)}`}</button>
-      ${s.deck?`<div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} Opens the store's deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store's cart.</div>`:''}
+      <button class="co" data-act="checkout" data-s="${s.id}">${s.deck?`Send to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart`:`Add to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart, one by one`}</button>
+      <div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} ${s.deck?'Opens the store\'s deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store\'s cart.':'Card Hunt opens each card on the store\'s site, one at a time. Add it to their cart, come back, and tap Next.'}</div>
       <div class="info">${I.ship} Each store ships and checks out separately.</div></div>`}).join('')
-      +`<div class="coall"><button class="btn" data-act="checkoutall">${I.cart.replace('width="30" height="30"','width="22" height="22"')} Open all ${S.cart.reduce((a,c)=>a+c.qty,0)} · from ${money(grand)}</button></div>
-      <p class="note">Mana Lounge and Players can load your cards straight into their own cart. For the other stores, "Continue" opens each item's page, and you add it there. Allow pop-ups the first time.</p>`
+      +`<div class="grandrow"><span>Total from, all stores</span><span>${money(grand)}</span></div>`
     :`<div class="empty">Your cart is empty.<br>Tap a card, then "Add to cart".</div>`}`, 'cartsheet');
+}
+// ---------- guided one-by-one checkout ----------
+let walk=null; // {store, i}
+function walkItems(){ return S.cart.filter(c=>c.store===walk.store); }
+function storeHome(st){ const c=S.cart.find(x=>x.store===st.id); try{ return new URL(c.url).origin; }catch(e){ return ''; } }
+function openWalk(){
+  const st=SBY[walk.store], its=walkItems(), n=its.length;
+  if(!n){ walk=null; return openCart(); }
+  if(walk.i>=n){
+    const home=storeHome(st);
+    return sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button>
+      <div class="walk done"><div class="big">🎉</div><h2>${its.filter(c=>c.added).length} of ${n} added</h2>${its.some(c=>!c.added)?`<div class="sub">You skipped ${its.filter(c=>!c.added).length}. Tap the cart button again to go back to them.</div>`:""}
+      <div class="sub">Your ${esc(st.name)} cart should now have everything. Finish paying on their site.</div>
+      ${home?`<a class="btn block" href="${esc(home)}/cart" target="_blank" rel="noopener" style="text-decoration:none">${I.ext} Go to ${esc(st.name)} checkout</a>`:''}
+      <button class="btn ghost block" style="margin-top:10px" data-act="cart">Back to my cart</button></div>`,'cartsheet');
+  }
+  const c=its[walk.i];
+  sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button>
+    <div class="walk">
+      <div class="shd">${storeLogo(st)}<div><div class="sn">${esc(st.name)}</div><div class="cd">Card ${walk.i+1} of ${n}</div></div></div>
+      <div class="bar"><span style="width:${Math.round(walk.i/n*100)}%"></span></div>
+      <div class="wi">${imgTag(c)}<div><div class="nm">${esc(c.title)}</div><div class="cd">${c.foil?'Foil · ':''}${esc(priceText(c))}</div><div class="qtyneed">Add <b>${c.qty}</b> to the store's cart</div></div></div>
+      <ol class="steps"><li>Tap <b>Open at ${esc(st.name)}</b>.</li><li>Pick the condition and tap their <b>Add to cart</b>${c.qty>1?` (quantity ${c.qty})`:''}.</li><li>Come back here and tap <b>Added, next</b>.</li></ol>
+      <a class="btn block" href="${esc(c.url)}" target="_blank" rel="noopener" style="text-decoration:none" data-act="walkopen">${I.ext} Open at ${esc(st.name)}</a>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn ${c.opened?'':'ghost'}" style="flex:2" data-act="walknext">✓ Added, next</button>
+        <button class="btn ghost" style="flex:1" data-act="walkskip">Skip</button>
+      </div>
+      ${walk.i>0?'<button class="later" data-act="walkback">← Previous card</button>':''}
+    </div>`,'cartsheet');
 }
 function sheet(html, cls=''){
   $id('sheet').innerHTML=`<div class="sheet ${cls}"><div class="scrim" data-act="close"></div><div class="body">${html}</div></div>`;
@@ -594,7 +642,7 @@ function newList(withName){
 document.addEventListener('click', e=>{
   const el=e.target.closest('[data-act]'); if(!el) return;
   const a=el.dataset.act, k=el.dataset.k;
-  if(a!=='open') e.preventDefault();
+  if(a!=='open'&&a!=='walkopen') e.preventDefault();
   if(a==='fav'){ e.stopPropagation(); const o=OFFERS[k]; if(!o) return; toggleFav(o); buzz();
     if($id('sheet').querySelector('.pd')) { openProduct(o); render(); return; }
     syncHearts(o,true); if(route.name==='saved') setTimeout(render,450); return; }
@@ -630,12 +678,14 @@ document.addEventListener('click', e=>{
     case 'cq': { const c=S.cart.find(x=>x.url===k); c.qty+=+el.dataset.d; if(c.qty<1) S.cart=S.cart.filter(x=>x!==c); save('cart'); openCart(); render(); break; }
     case 'later': { const c=S.cart.find(x=>x.url===k); S.cart=S.cart.filter(x=>x!==c); if(!isFav(c)){const {qty,...o}=c; S.favs=[o,...S.favs]; save('favs');} save('cart'); openCart(); render(); toast('Moved to favorites'); break; }
     case 'checkout': { const st=SBY[el.dataset.s], its=S.cart.filter(c=>c.store===st.id);
+      if(!st.deck){ const first=its.findIndex(c=>!c.added); walk={store:st.id, i:first<0?0:first}; openWalk(); break; }
       if(st.deck){ const m=new Map(); for(const c of its){const n=c.name||c.title; m.set(n,(m.get(n)||0)+c.qty)} openUrls([deckUrl(st,[...m].map(([name,qty])=>({name,qty})))]); }
       else openUrls(its.map(c=>c.url)); break; }
+    case 'walkopen': { const c=walkItems()[walk.i]; c.opened=true; save('cart'); setTimeout(openWalk,300); break; }
+    case 'walknext': { const c=walkItems()[walk.i]; c.added=true; save('cart'); walk.i++; openWalk(); break; }
+    case 'walkskip': walk.i++; openWalk(); break;
+    case 'walkback': walk.i=Math.max(0,walk.i-1); openWalk(); break;
     case 'senddeck': { const st=SBY[el.dataset.s]; openUrls([deckUrl(st, curList().items)]); break; }
-    case 'checkoutall': { const urls=[]; for(const st of STORES){ const its=S.cart.filter(c=>c.store===st.id); if(!its.length) continue;
-        if(st.deck){ const m=new Map(); for(const c of its){const n=c.name||c.title; m.set(n,(m.get(n)||0)+c.qty)} urls.push(deckUrl(st,[...m].map(([name,qty])=>({name,qty})))); } else urls.push(...its.map(c=>c.url)); }
-      openUrls(urls); break; }
   }
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').innerHTML) closeSheet(); });
