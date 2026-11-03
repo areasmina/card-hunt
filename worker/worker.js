@@ -29,8 +29,12 @@ function setLabel(title, body) {
 const num = v => (v == null || v === '') ? null : Number(v);
 const img = u => !u ? null : (u.startsWith('//') ? 'https:' + u : u);
 
+// Stores people add themselves are passed as ?extra=host1,host2 and get the id "x:<host>".
+const HOST_RE = /^(?=.{4,100}$)([a-z0-9-]+\.)+[a-z]{2,}$/;
+const storeFor = id => STORES[id] || (id.startsWith('x:') && HOST_RE.test(id.slice(2)) ? { name: id.slice(2), host: id.slice(2) } : null);
+
 async function searchStore(id, q) {
-  const s = STORES[id];
+  const s = storeFor(id);
   const u = `https://${s.host}/search/suggest.json?q=${encodeURIComponent(q)}&resources[type]=product&resources[limit]=10&resources[options][unavailable_products]=last`;
   const r = await fetch(u, { headers: { 'User-Agent': UA, Accept: 'application/json' }, cf: { cacheTtl: 300, cacheEverything: true } });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -53,6 +57,27 @@ async function searchStore(id, q) {
       available: !!p.available,
     };
   });
+}
+
+// Check a store someone wants to add: is it a Shopify store whose product search works from here,
+// what is it called, and does it have a BinderPOS deck-list page that can fill its cart?
+const DECK_PATHS = ['/pages/deck-list', '/pages/multi-card-search', '/pages/decklist', '/pages/deck-builder', '/pages/deckbuilder', '/pages/buylist-deck', '/pages/card-list', '/pages/multi-search'];
+async function checkStore(raw) {
+  let host = String(raw).trim().toLowerCase().replace(/^[a-z]+:\/\//, '').split(/[/?#]/)[0];
+  if (!HOST_RE.test(host)) return Response.json({ ok: false, error: "That doesn't look like a website address." }, { headers: CORS });
+  const get = (h, path, accept = 'application/json') => fetch(`https://${h}${path}`, { headers: { 'User-Agent': UA, Accept: accept }, redirect: 'follow' });
+  let r;
+  try { r = await get(host, '/search/suggest.json?q=sol%20ring&resources[type]=product&resources[limit]=1'); } catch { r = null; }
+  if (r && r.url) { try { const h = new URL(r.url).host; if (HOST_RE.test(h)) host = h; } catch {} } // follow e.g. shop.com -> www.shop.com
+  let ok = false; try { ok = !!(r && r.ok && (await r.json()).resources); } catch {}
+  if (!ok) return Response.json({ ok: false, host, error: "Card Hunt can only search stores built on Shopify, and this one didn't answer like a Shopify store." }, { headers: CORS });
+  let name = host.replace(/^www\./, '');
+  try { const m = await get(host, '/meta.json'); if (m.ok) { const j = await m.json(); if (j.name) name = j.name; } } catch {}
+  let deck = null;
+  for (const path of DECK_PATHS) {
+    try { const d = await get(host, path, 'text/html'); if (d.ok && new URL(d.url).pathname === path) { const t = await d.text(); if (/binder|deck ?list|decklist|multi.?card/i.test(t)) { deck = `https://${host}${path}`; break; } } } catch {}
+  }
+  return Response.json({ ok: true, host, name, deck }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=3600' } });
 }
 
 // Sync: a device keeps a random secret code; the saved data is stored in KV under a hash of it.
@@ -83,12 +108,14 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
     const url = new URL(req.url);
     if (url.pathname === '/') return new Response('Card Hunt helper is running. Try /search?q=Lightning+Bolt', { headers: CORS });
+    if (url.pathname === '/store') return checkStore(url.searchParams.get('url') || '');
     if (url.pathname.startsWith('/sync/')) return sync(req, env, url.pathname.slice(6));
     if (url.pathname !== '/search') return new Response('Not found', { status: 404, headers: CORS });
 
     const q = (url.searchParams.get('q') || '').trim().slice(0, 120);
     if (q.length < 2) return Response.json({ error: 'q is required' }, { status: 400, headers: CORS });
-    const ids = (url.searchParams.get('stores') || Object.keys(STORES).join(',')).split(',').filter(id => STORES[id]);
+    const extra = (url.searchParams.get('extra') || '').toLowerCase().split(',').map(h => h.trim()).filter(h => HOST_RE.test(h)).slice(0, 10).map(h => 'x:' + h);
+    const ids = [...new Set([...(url.searchParams.get('stores') || Object.keys(STORES).join(',')).split(',').filter(id => STORES[id]), ...extra])];
 
     const cache = caches.default;
     const key = new Request(`https://cardhunt.cache/v2/search?q=${encodeURIComponent(norm(q))}&s=${ids.sort().join(',')}`);
