@@ -83,7 +83,8 @@ async function checkStore(raw) {
       if (d.ok && new URL(d.url).pathname === path && /binderpos/i.test(await d.text())) { deck = `https://${new URL(d.url).host}${path}`; break; }
     } catch (e) { tried.push(`${path}:err`); }
   }
-  return Response.json({ ok: true, host, name, deck, tried }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=3600' } });
+  // Shopify often rate-limits these page loads from Cloudflare, so say when the answer is a guess.
+  return Response.json({ ok: true, host, name, deck, deckUnsure: !deck && tried.some(t => t.endsWith(':429')), tried }, { headers: { ...CORS, 'Cache-Control': 'no-store' } });
 }
 
 // Sync: a device keeps a random secret code; the saved data is stored in KV under a hash of it.

@@ -464,7 +464,9 @@ function openStore(st){
   sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
     <div class="sthead"><span class="logo" style="background:${st.color}">${esc(st.name[0])}</span><div><h2>${esc(st.name)}</h2><div class="sub" style="margin:0">${esc(st.host)}</div></div></div>
     <button class="row" data-act="storetoggle" data-s="${esc(st.id)}"><span class="grow"><div class="t">Include in searches</div><div class="s">${on?'Card Hunt checks this store every time you search':'Skipped when you search'}</div></span><span class="switch${on?' on':''}"><i></i></span></button>
-    <div class="row" style="cursor:default"><span class="grow"><div class="t">Checking out</div><div class="s">${st.deck?'Has a deck list page, so Card Hunt can send your whole cart there in one tap':'No deck list page, so Card Hunt walks you through adding each card'}</div></span></div>
+    <div class="row" style="cursor:default"><span class="grow"><div class="t">Checking out</div><div class="s">${st.deck?'Has a deck list page, so Card Hunt can send your whole cart there in one tap':'Card Hunt walks you through adding each card to its cart'}</div></span></div>
+    ${st.custom?`<div class="sub" style="margin:10px 0 0">${st.deck?'Deck list page:':'Does this store have a deck list or multi-card search page? Paste its link and Card Hunt can send your whole cart there.'}</div>
+      <div class="field"><input id="decklink" placeholder="https://…/pages/deck-list" value="${esc(st.deck||'')}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn ghost" data-act="savedeck" data-s="${esc(st.id)}">Save</button></div>`:''}
     <div class="actions" style="margin-top:14px"><a class="btn" href="${esc(storeHome(st))}" target="_blank" rel="noopener">Visit store ${I.ext}</a>${st.custom?`<button class="btn ghost" data-act="removestore" data-s="${esc(st.id)}" style="color:var(--heart)">${I.trash} Remove</button>`:''}</div></div>`);
 }
 function openAddStore(msg=''){
@@ -486,6 +488,7 @@ async function addStore(raw){
     S.myStores=[...S.myStores,{host:j.host,name:j.name,deck:j.deck||null}]; save('myStores'); rebuildStores();
     for(const k in DATA) delete DATA[k];
     closeSheet(); render(); toast(j.deck?`Added ${j.name}. It has a deck list page`:`Added ${j.name}`);
+    if(!j.deck) setTimeout(()=>openStore(SBY['x:'+j.host]),400);
   }catch(e){ m.textContent="Couldn't reach Card Hunt's helper. Try again."; b.disabled=false; }
 }
 function openSync(){
@@ -951,6 +954,9 @@ document.addEventListener('click', e=>{
     case 'storeinfo': openStore(SBY[el.dataset.s]); break;
     case 'storetoggle': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; save('prefs'); openStore(SBY[id]); render(); break; }
     case 'addstore': openAddStore(); break;
+    case 'savedeck': { const st=SBY[el.dataset.s]; const v=$id('decklink').value.trim(); let u=null;
+      if(v){ try{ u=new URL(/^https?:/i.test(v)?v:'https://'+v); }catch(e){} if(!u||!u.pathname.startsWith('/pages/')){ toast('Paste the link to a page on the store, like …/pages/deck-list'); break; } u=u.origin+u.pathname; }
+      const m=S.myStores.find(x=>'x:'+x.host===st.id); m.deck=u; save('myStores'); rebuildStores(); openStore(SBY[st.id]); render(); toast(u?'Saved. Your cart can go there in one tap':'Deck list page removed'); break; }
     case 'storeadd': addStore($id('storeurl').value); break;
     case 'removestore': { const st=SBY[el.dataset.s]; if(!confirm(`Remove ${st.name} from your stores?`)) break; S.myStores=S.myStores.filter(m=>'x:'+m.host!==st.id); save('myStores'); rebuildStores(); for(const k in DATA) delete DATA[k]; closeSheet(); render(); toast(`Removed ${st.name}`); break; }
     case 'favsort': { const k=Object.keys(FAVSORT); favF.sort=k[(k.indexOf(favF.sort)+1)%k.length]; render(); break; }
