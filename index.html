@@ -231,7 +231,25 @@ a.btn{text-decoration:none}
 .cartsheet .close{background:var(--sheet-2);color:var(--sheet-text)}
 .cartsheet h2{margin:4px 0 14px;font-size:24px}
 .sc{background:var(--sheet);border-radius:28px;padding:18px;margin-bottom:14px}
-.sc .shd{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sc .shd{display:flex;align-items:center;gap:12px;width:100%;text-align:left;color:inherit;padding:0}
+.sc .shd .grow{flex:1;min-width:0}
+.sc .shd .sum{font-size:14px;color:var(--sheet-muted);max-height:0;opacity:0;overflow:hidden;transition:max-height .3s,opacity .25s}
+.sc.folded .shd .sum{max-height:22px;opacity:1}
+.sc .shd .chev{flex:none;width:36px;height:36px;border-radius:50%;background:var(--sheet-2);display:flex;align-items:center;justify-content:center;transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.sc.folded .shd .chev{transform:rotate(-90deg)}
+.sc .scb{display:grid;grid-template-rows:1fr;transition:grid-template-rows .35s cubic-bezier(.22,1,.36,1)}
+.sc .scb>div{overflow:hidden;min-height:0;padding-top:12px;transition:padding .35s}
+.sc.folded .scb{grid-template-rows:0fr}
+.sc.folded .scb>div{padding-top:0}
+.cjump{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 14px;padding:8px 16px;position:sticky;top:-14px;z-index:3;background:#0b0b0d}
+.cartsheet .sc{scroll-margin-top:66px}
+.cjump::-webkit-scrollbar{display:none}
+.cjump button{flex:none;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:999px;background:var(--sheet-2);color:var(--sheet-text);font-size:14px;font-weight:600}
+.cjump button.on{background:#fff;color:#121214}
+.cjump button.on b{background:rgba(0,0,0,.1)}
+.cjump .dot{width:12px;height:12px;border-radius:50%}
+.cjump b{background:rgba(255,255,255,.14);border-radius:999px;padding:1px 8px;font-size:13px}
+@media (prefers-reduced-motion: reduce){.sc .scb,.sc .shd .chev,.sc .shd .sum{transition:none}}
 .sc .logo{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:none}
 .sc .sn{font-size:18px;font-weight:650}
 .ci{display:flex;gap:14px;padding:10px 0}
@@ -819,12 +837,18 @@ function chooseList(name){
     <button class="row" data-act="newlist" data-n="${esc(name)}"><span class="ic">${I.plus}</span><span class="grow"><div class="t">New list</div></span></button></div>`);
 }
 function storeLogo(s){return `<span class="logo" style="background:${s.color}">${esc(s.name[0])}</span>`}
+// Each store in the cart can be folded down to one line by tapping its name; this device remembers which.
+let FOLD=new Set(LS.get('fold',[]));
+const saveFold=()=>LS.set('fold',[...FOLD]);
+function setFold(sc,fold){ sc.classList.toggle('folded',fold); sc.querySelector('.shd').setAttribute('aria-expanded',String(!fold)); if(fold) FOLD.add(sc.dataset.s); else FOLD.delete(sc.dataset.s); }
 function openCart(){
   const groups=STORES.map(s=>({s,items:S.cart.filter(c=>c.store===s.id)})).filter(g=>g.items.length);
   const grand=S.cart.reduce((a,c)=>a+c.price*c.qty,0);
   sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><h2>Cart</h2>
-    ${groups.length?groups.map(({s,items})=>{const sub=items.reduce((a,c)=>a+c.price*c.qty,0); return `<div class="sc">
-      <div class="shd">${storeLogo(s)}<div class="sn">${esc(s.name)}</div></div>
+    ${groups.length>1?`<div class="cjump">${groups.map(({s,items})=>`<button data-act="cjump" data-s="${esc(s.id)}"><span class="dot" style="background:${s.color}"></span>${esc(s.name)} <b>${items.reduce((a,c)=>a+c.qty,0)}</b></button>`).join('')}</div>`:''}
+    ${groups.length?groups.map(({s,items})=>{const sub=items.reduce((a,c)=>a+c.price*c.qty,0), n=items.reduce((a,c)=>a+c.qty,0), fold=groups.length>1&&FOLD.has(s.id); return `<div class="sc${fold?' folded':''}" data-s="${esc(s.id)}">
+      <button class="shd" data-act="fold" aria-expanded="${!fold}">${storeLogo(s)}<div class="grow"><div class="sn">${esc(s.name)}</div><div class="sum">${n} item${n===1?'':'s'} · from ${money(sub)}</div></div><span class="chev">${I.down}</span></button>
+      <div class="scb"><div>
       ${items.map(c=>`<div class="ci">${imgTag(c)}<div class="grow"><div class="top2"><div class="nm">${esc(c.title)}</div><div class="pp">${esc(money(c.price*c.qty))}</div></div>
         <div class="cd">${c.foil?'Foil · ':''}${esc(priceText(c))} each</div>${c.added?'<div class="added">✓ Added at the store</div>':''}
         <div class="ctl"><div class="stepper"><button data-act="cq" data-k="${esc(c.url)}" data-d="-1">${c.qty>1?I.minus:I.trash}</button><span>${c.qty}</span><button data-act="cq" data-k="${esc(c.url)}" data-d="1">${I.plus}</button></div>
@@ -833,7 +857,7 @@ function openCart(){
       <button class="co" data-act="checkout" data-s="${s.id}">${s.deck?`Send to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart`:`Add to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart, one by one`}</button>
       <div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} ${s.deck?'Opens the store\'s deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store\'s cart.':'Card Hunt opens each card on the store\'s site, one at a time. Add it to their cart, come back, and tap Next.'}</div>
       <div class="info">${I.ship} Each store ships and checks out separately.</div>
-      <button class="later" style="margin-top:12px" data-act="bought" data-s="${s.id}">✓ I bought these, clear them</button></div>`}).join('')
+      <button class="later" style="margin-top:12px" data-act="bought" data-s="${s.id}">✓ I bought these, clear them</button></div></div></div>`}).join('')
       +`<div class="grandrow"><span>Total from, all stores</span><span>${money(grand)}</span></div>`
     :`<div class="empty">Your cart is empty.<br>Tap a card, then "Add to cart".</div>`}`, 'cartsheet');
 }
@@ -951,6 +975,12 @@ document.addEventListener('click', e=>{
     case 'walkskip': walk.i++; openWalk(); break;
     case 'walkback': walk.i=Math.max(0,walk.i-1); openWalk(); break;
     case 'sync': openSync(); break;
+    case 'fold': { const sc=el.closest('.sc'); setFold(sc,!sc.classList.contains('folded')); saveFold(); buzz(); break; }
+    case 'cjump': { const id=el.dataset.s; let target;
+      document.querySelectorAll('#sheet .sc').forEach(sc=>{ const me=sc.dataset.s===id; setFold(sc,!me); if(me) target=sc; }); saveFold();
+      document.querySelectorAll('#sheet .cjump button').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
+      setTimeout(()=>{ if(!target) return; const body=target.closest('.body'), chips=body.querySelector('.cjump');
+        body.scrollTo({top:target.offsetTop-(chips?chips.offsetHeight+8:0), behavior:'smooth'}); },380); break; }
     case 'storeinfo': openStore(SBY[el.dataset.s]); break;
     case 'storetoggle': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; save('prefs'); openStore(SBY[id]); render(); break; }
     case 'addstore': openAddStore(); break;
