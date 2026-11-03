@@ -260,7 +260,7 @@ def ink(name, hexcol, wear=0.0):
     add = nt.nodes.new('ShaderNodeMath'); add.operation = 'MULTIPLY_ADD'
     add.inputs[1].default_value = 0.6
     gt = nt.nodes.new('ShaderNodeMath'); gt.operation = 'GREATER_THAN'
-    gt.inputs[1].default_value = 0.98 - wear
+    gt.inputs[1].default_value = 1.0 - wear * 0.25
     nt.links.new(tc.outputs['Window'], fine.inputs['Vector'])
     nt.links.new(tc.outputs['Window'], coarse.inputs['Vector'])
     nt.links.new(coarse.outputs['Fac'], add.inputs[0])
@@ -342,6 +342,8 @@ def emblem(parent, pal, wear=0.18, z=0.0):
     rr('Line2', 0.46, 0.065, 0.032, p, card, (-0.16, -0.52, 0.01))
     c = Vector((0.45, -0.45, 0.05))
     ring('Knockout', 0.44, 0.2, p, root, c - Vector((0, 0, 0.01)))
+    disc('Glass', 0.3, p, root, c - Vector((0, 0, 0.005)))
+    disc('GlassDots', 0.3, halftone('GlassDots', pal['ink'], 30, 0.22), root, c - Vector((0, 0, 0.003)))
     ring('Lens', 0.36, 0.26, a, root, c)
     d = Vector((math.cos(math.radians(-45)), math.sin(math.radians(-45)), 0))
     rr('HandleKnock', 0.5, 0.22, 0.11, p, root, c + d * 0.57 - Vector((0, 0, 0.01)), rot=-45)
@@ -355,13 +357,13 @@ def badge(parent, pal, wear=0.18, top='CARD HUNT', bottom='SINGLES  SEALED  DECK
     root = empty('Badge', parent)
     ring('Outer', 2.0, 1.92, k, root)
     ring('Inner', 1.4, 1.34, k, root)
-    arc_text(top, 0.44, k, root, 1.5, 90)
+    arc_text(top, 0.5, k, root, 1.47, 90)
     arc_text(bottom, 0.21, k, root, 1.79, 270, bottom=True, tracking=0.12)
     star('StarL', 0.12, 0.045, k, root, (-1.66, 0.0, 0))
     star('StarR', 0.12, 0.045, k, root, (1.66, 0.0, 0))
     em = emblem(root, pal, wear, 0.1)
-    em.scale = (0.86, 0.86, 0.86)
-    em.location = (0.03, 0.0, 0.1)
+    em.scale = (1.12, 1.12, 1.12)
+    em.location = (0.0, 0.02, 0.1)
     return root
 
 
@@ -383,9 +385,9 @@ def build_logo():
             badge(None, pal)
         else:
             sc = reset(res=(2400, 900), transparent=not sheet)
-            camera((0, 0, 10), ortho=6.4)
-            root = empty('Wordmark', None, (-3.0, 0, 0))
-            b = badge(root, pal, top='CARD HUNT', bottom='EST  2026')
+            camera((0, 0, 10), ortho=8.3)
+            root = empty('Wordmark', None, (-2.45, 0, 0))
+            b = badge(root, pal, wear=0.12, top='SINGLES  SEALED', bottom='EST  2026')
             b.scale = (0.62, 0.62, 0.62)
             k = ink('WordInk', pal['ink'], 0.16)
             a = ink('WordAccent', pal['accent'], 0.12)
