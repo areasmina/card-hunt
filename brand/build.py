@@ -293,7 +293,7 @@ def mark_mats():
 # ---------------------------------------------------------------- logo
 def build_logo():
     for variant, txt_color in (('light', ACCENT), ('dark', WHITE)):
-        sc = reset(res=(2400, 800))
+        sc = reset(res=(2400, 900))
         root = empty('Logo')
         mm = mark_mats()
         if variant == 'dark':
@@ -305,10 +305,10 @@ def build_logo():
         m.scale = (0.78, 0.78, 0.78)
         m.location = (-0.12, 0.05, 0)
         tm = mat('Word', txt_color, 0.25, coat=0.6)
-        text('Card Hunt', 1.25, tm, root, (1.55, -0.02, -0.05), extrude=0.14, bevel=0.03, align='LEFT')
+        text('Card Hunt', 1.25, tm, root, (1.55, -0.02, -0.05), extrude=0.14, bevel=0.018, align='LEFT', spacing=1.06)
         root.rotation_euler = (math.radians(90), 0, 0)
-        root.location = (-3.65, 0, 0)
-        camera((-1.6, -26, 2.4), (0, 0, 0.05), lens=90)
+        root.location = (-1.95, 0, 0)
+        camera((-1.6, -26, 2.4), (0, 0, 0.05), lens=115)
         area('Key', (-6, -8, 7), 1400, 6)
         area('Fill', (7, -9, 1), 500, 8)
         area('Rim', (2, 6, 5), 900, 5)
