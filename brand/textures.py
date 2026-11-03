@@ -159,6 +159,7 @@ TARGET = {
     'box-artifact': ['#c8c3b6', '#cdc9bc', '#d3cebf', '#d7d3c4', '#dedacb'],
     'frame-white':  ['#a4998f', '#c0b2a5', '#cdbfb3', '#d9c9be', '#e7ded5'],
     'box-white':    ['#afa7a5', '#c4bcba', '#d2cac8', '#ded6d4', '#ede5e3'],
+    'frame-black':  ['#161d18', '#1d221d', '#202621', '#262d28', '#3b4642', '#d6e0dc'],   # + bead glint
 }
 # One tile = about 20 mm of a real card (a third of its width).
 
@@ -202,7 +203,7 @@ def grey(nt, *terms):
 
 def lit_relief(nt, height, strength=0.6, rough=0.6):
     bump = nt.n('ShaderNodeBump'); bump.inputs['Strength'].default_value = strength
-    bump.inputs['Distance'].default_value = 0.02
+    bump.inputs['Distance'].default_value = 0.004
     nt.l(height, bump.inputs['Height'])
     p = nt.n('ShaderNodeBsdfPrincipled')
     p.inputs['Base Color'].default_value = (0.6, 0.6, 0.6, 1)
@@ -233,7 +234,7 @@ def p_box_white(nt):
 
 
 def p_box_black(nt):
-    grey(nt, (nt.noise(6, 10, 0.6), 0.65), (nt.noise(26, 6, 0.6, offset=3), 0.35))
+    grey(nt, (nt.noise(4, 12, 0.5), 0.6), (nt.noise(18, 6, 0.55, offset=3), 0.15), (nt.noise(90, 3, 0.7, offset=7), 0.25))
 
 
 def p_frame_artifact(nt):
@@ -291,7 +292,7 @@ def t_frame_black(nt):
 TILES = {
     'frame-blue': (t_frame_blue, None),
     'box-blue': (p_box_blue, 'box-blue'),
-    'frame-black': (t_frame_black, None),
+    'frame-black': (t_frame_black, 'frame-black'),
     'box-black': (p_box_black, 'box-black'),
     'frame-white': (p_frame_white, 'frame-white'),
     'box-white': (p_box_white, 'box-white'),
@@ -312,8 +313,14 @@ def rank_map(path, stops):
     rank = np.empty(len(lum), np.float32); rank[np.argsort(lum, kind='stable')] = np.linspace(0, 1, len(lum))
     cols = np.array([[int(c[i:i + 2], 16) / 255 for i in (1, 3, 5)] for c in stops], np.float32)
     lo, hi = cols[0] - (cols[1] - cols[0]) * 0.4, cols[-1] + (cols[-1] - cols[-2]) * 0.4
-    xs = np.array([0, .03, .2, .5, .8, .97, 1], np.float32)
-    ys = np.vstack([lo, cols, hi]).clip(0, 1)
+    if len(cols) == 6:            # last stop is a highlight for the top 0.4 %
+        glint = cols[5]; cols = cols[:5]
+        lo = cols[0] - (cols[1] - cols[0]) * 0.4
+        xs = np.array([0, .03, .2, .5, .8, .97, .996, 1], np.float32)
+        ys = np.vstack([lo, cols, cols[4] * 1.15, glint]).clip(0, 1)
+    else:
+        xs = np.array([0, .03, .2, .5, .8, .97, 1], np.float32)
+        ys = np.vstack([lo, cols, hi]).clip(0, 1)
     for c in range(3):
         a[:, c] = np.interp(rank, xs, ys[:, c])
     a[:, 3] = 1
@@ -340,10 +347,10 @@ def build_tiles(size):
         fn(NT(m))
         plane('Tile', 1, 1, m)
         if name in LIT:
-            for nm, loc, e in (('Key', (-3, 3, 4), 70 if name == 'frame-black' else 30), ('Fill', (3, -2, 3), 6)):
-                l = bpy.data.lights.new(nm, 'AREA'); l.energy = e; l.size = 3 if name == 'frame-black' else 1.5
-                o = link(bpy.data.objects.new(nm, l)); o.location = loc
-                o.rotation_euler = (Vector((0, 0, 0)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+            # sun = same light everywhere, so the tile stays seamless
+            l = bpy.data.lights.new('Sun', 'SUN'); l.energy = 4.0; l.angle = math.radians(3)
+            o = link(bpy.data.objects.new('Sun', l)); o.location = (0, 0, 5)
+            o.rotation_euler = (Vector((0, 0, 0)) - Vector((-1, 1, 0.9))).to_track_quat('-Z', 'Y').to_euler()
         path = os.path.join(OUT, f'{name}.png')
         sc.render.filepath = path
         bpy.ops.render.render(write_still=True)
