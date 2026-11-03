@@ -464,8 +464,10 @@ def card_front(W=500, H=700):
     art = _rr_mask(H, W, ax0, ay0, ax1, ay1, 10)
     t = np.clip((yy - ay0) / (ay1 - ay0), 0, 1)
     _paint(img, art, 0.0)
-    img[..., :3] += (art * (0.55 + 0.4 * t))[..., None]                         # sky gradient (dithers)
-    _paint(img, np.clip(52 - np.sqrt((xx - 320) ** 2 + (yy - 430) ** 2) + .5, 0, 1) * art, 1.0)
+    img[..., :3] += (art * (0.22 + 0.42 * t))[..., None]                         # sky gradient (dithers)
+    sd = np.sqrt((xx - 320) ** 2 + (yy - 440) ** 2)
+    _paint(img, np.clip(60 - sd + .5, 0, 1) * art, 0.0)
+    _paint(img, np.clip(52 - sd + .5, 0, 1) * art, 1.0)
     x = np.arange(W, dtype=np.float32)
     for base, amp, per, ph, v in ((350, 90, 170, 20, 0.32), (300, 60, 120, 70, 0.1)):
         ridge = base + amp * (1 - np.abs(((x + ph) % per) / per * 2 - 1))
@@ -582,7 +584,7 @@ def build_anim():
         for kp in fc.keyframe_points:
             kp.interpolation = 'LINEAR'
     camera((0, -15.5, 1.2), (0, 0, 0), lens=125)
-    area('Key', (-5, -7, 6), 1600, 5)
+    area('Key', (-5, -7, 6), 1000, 5)
     area('Fill', (6, -6, 0), 350, 7)
     area('Rim', (0, 7, 4), 1400, 6)
     raw = os.path.join(OUT, 'raw')
