@@ -37,7 +37,8 @@ body{background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMac
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 a{color:inherit}
 svg{display:block}
-.app{max-width:760px;margin:0 auto;padding:12px 16px 120px}
+.app{max-width:760px;margin:0 auto;padding:12px 16px calc(104px + env(safe-area-inset-bottom))}
+.lrail .lcard{flex:none;width:170px}
 .hidden{display:none!important}
 
 /* search pill */
@@ -86,7 +87,6 @@ svg{display:block}
 .burst.off{color:rgba(255,255,255,.9)}
 @keyframes burst{0%{transform:scale(.2);opacity:0}15%{transform:scale(1.2);opacity:1}30%{transform:scale(.92)}45%{transform:scale(1.04)}75%{transform:scale(1);opacity:1}100%{transform:scale(1.15) translateY(-12px);opacity:0}}
 @media (prefers-reduced-motion: reduce){.heart.pop svg,.burst svg{animation:none}.burst{display:none}}
-.badge{position:absolute;left:10px;top:10px;background:rgba(20,20,24,.62);color:#fff;border-radius:999px;padding:4px 11px;font-weight:700;font-size:15px;backdrop-filter:blur(6px)}
 .tag{position:absolute;left:10px;bottom:10px;background:var(--ok);color:#fff;border-radius:999px;padding:3px 9px;font-weight:600;font-size:12px}
 .tag.sold{background:rgba(20,20,24,.7)}
 .p .meta{padding:8px 2px 0}
@@ -99,7 +99,8 @@ svg{display:block}
 .rail{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 4px}
 .rail::-webkit-scrollbar{display:none}
 .rail .p{flex:none;width:132px}
-.rail .p .img{border-radius:22px}
+.rail .p .img{border-radius:14px;aspect-ratio:488/680}
+.rail .p .img img{object-fit:cover;object-position:center}
 .rail .heart{width:38px;height:38px;right:8px;bottom:8px}
 
 /* rows */
@@ -527,11 +528,10 @@ function tile(o, opts={}){
   const fav=isFav(o);
   return `<div class="p${o.available?'':' out'}">
     <button class="img" data-act="open" data-k="${esc(o.url)}">${imgTag(o)}
-      ${opts.badge?`<span class="badge">${esc(priceText(o))}</span>`:''}
       ${opts.cheapest?'<span class="tag">Cheapest</span>':''}${!o.available?'<span class="tag sold">Sold out</span>':''}
       <span class="heart${fav?' on':''}" data-act="fav" data-k="${esc(o.url)}">${fav?I.heartFill:I.heart}</span>
     </button>
-    ${opts.badge?'':`<div class="meta"><div class="store">${esc(o.storeName)}</div><div class="title">${esc(o.title)}</div><div class="price">${esc(priceText(o))}</div></div>`}
+    ${opts.rail?'':`<div class="meta"><div class="store">${esc(o.storeName)}</div><div class="title">${esc(o.title)}</div><div class="price">${esc(priceText(o))}</div></div>`}
   </div>`;
 }
 function skeletons(n=4){return Array.from({length:n},()=>'<div class="p"><div class="skel"></div><div class="skel t"></div><div class="skel t" style="width:45%"></div></div>').join('')}
@@ -570,7 +570,9 @@ function viewHome(){
     ${recent.length?`<div class="recent">${recent.map(x=>`<button class="chip" data-act="q" data-q="${esc(x.q)}">${esc(x.q)}</button>`).join('')}<button class="chip clear" data-act="clearhist" aria-label="Clear recent searches">${I.x}</button></div>`
       :`<div class="recent">${['Sol Ring','Lightning Bolt','Rhystic Study','Commander deck'].map(q=>`<button class="chip" data-act="q" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
     <button class="promo" data-act="multi"><span class="ic">${I.grid}</span><span class="grow"><b>Price a whole decklist</b><span>Paste your list and see every card at all 5 stores</span></span>${I.chev}</button>
-    ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2></div><div class="rail">${S.viewed.slice(0,15).map(o=>tile(o,{badge:true})).join('')}</div>`:''}
+    ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2></div><div class="rail">${S.viewed.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
+    ${S.favs.length?`<div class="h"><h2>Your favorites</h2><button class="right" data-act="go" data-to="saved">See all</button></div><div class="rail">${S.favs.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
+    ${S.lists.some(l=>l.items.length)?`<div class="h"><h2>Your lists</h2><button class="right" data-act="go" data-to="lists">See all</button></div><div class="rail lrail">${S.lists.filter(l=>l.items.length).map(l=>`<button class="lcard" data-act="list" data-id="${l.id}">${listStack(l)}<div class="n">${esc(l.name)}</div><div class="c">${countCards(l)} card${countCards(l)===1?'':'s'}</div></button>`).join('')}</div>`:''}
     ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use Card Hunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
     ${installEvt&&!standalone()?`<button class="promo soft" data-act="install"><span class="ic">${I.phone}</span><span class="grow"><b>Install the app</b><span>Open Card Hunt from your home screen or taskbar</span></span>${I.chev}</button>`:''}`;
 }
