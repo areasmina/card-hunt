@@ -159,7 +159,7 @@ TARGET = {
     'box-artifact': ['#c8c3b6', '#cdc9bc', '#d3cebf', '#d7d3c4', '#dedacb'],
     'frame-white':  ['#a4998f', '#c0b2a5', '#cdbfb3', '#d9c9be', '#e7ded5'],
     'box-white':    ['#afa7a5', '#c4bcba', '#d2cac8', '#ded6d4', '#ede5e3'],
-    'frame-black':  ['#161d18', '#1d221d', '#202621', '#262d28', '#3b4642', '#d6e0dc'],   # + bead glint
+    'frame-black':  ['#161d18', '#1d221d', '#202621', '#262d28', '#3b4642'],
 }
 # One tile = about 20 mm of a real card (a third of its width).
 
@@ -213,7 +213,7 @@ def lit_relief(nt, height, strength=0.6, rough=0.6):
 
 
 def p_frame_white(nt):
-    grey(nt, (nt.noise(7, 12, 0.62), 0.7), (nt.noise(28, 6, 0.6, offset=4), 0.3))
+    grey(nt, (nt.noise(5, 12, 0.5), 0.75), (nt.noise(30, 5, 0.55, offset=4), 0.12), (nt.noise(110, 2, 0.6, offset=8), 0.13))
 
 
 def p_box_white(nt):
@@ -234,7 +234,7 @@ def p_box_white(nt):
 
 
 def p_box_black(nt):
-    grey(nt, (nt.noise(4, 12, 0.5), 0.6), (nt.noise(18, 6, 0.55, offset=3), 0.15), (nt.noise(90, 3, 0.7, offset=7), 0.25))
+    grey(nt, (nt.noise(3.5, 12, 0.45), 0.6), (nt.noise(16, 6, 0.5, offset=3), 0.12), (nt.noise(120, 2, 0.6, offset=7), 0.28))
 
 
 def p_frame_artifact(nt):
@@ -253,8 +253,8 @@ def p_box_blue(nt):
 
 def t_frame_blue(nt):
     """Paper-marbling: turquoise with thin indigo/purple veins flowing in long curves."""
-    n = noise2(nt, 2.0, 3.2, 6, 0.55, distortion=2.2)
-    s = nt.math('ABSOLUTE', nt.math('SINE', nt.math('MULTIPLY', n, 26.0)))
+    n = noise2(nt, 1.3, 2.4, 5, 0.5, distortion=1.3)
+    s = nt.math('ABSOLUTE', nt.math('SINE', nt.math('MULTIPLY', n, 17.0)))
     vein = nt.ramp(s, [(0.0, '#3b3f99'), (0.07, '#4a5aa8'), (0.16, '#2c7f9c'), (0.4, '#2fa3b8'),
                        (0.75, '#3cb3c4'), (1.0, '#57bcc6')])
     shade = nt.ramp(nt.noise(3, 5, 0.55, offset=4), [(0.3, '#7d93a0'), (0.6, '#ffffff')])
@@ -262,44 +262,67 @@ def t_frame_blue(nt):
     nt.emit(nt.mixc(0.35, nt.mixc(0.5, vein, shade, 'MULTIPLY'), speck, 'MULTIPLY'))
 
 
-def t_frame_black(nt):
-    """Near-black green stone with sparse glossy beads."""
-    v, w = nt.torus(5.5)
-    vo = nt.n('ShaderNodeTexVoronoi'); vo.voronoi_dimensions = '4D'
-    vo.inputs['Scale'].default_value = 1.0
-    vo.inputs['Randomness'].default_value = 0.9
-    nt.l(v, vo.inputs['Vector']); nt.l(w, vo.inputs['W'])
-    sep = nt.n('ShaderNodeSeparateColor'); nt.l(vo.outputs['Color'], sep.inputs[0])
-    r = nt.math('MULTIPLY_ADD', sep.outputs[0], 0.09, None)
-    nt.t.nodes[-1].inputs[2].default_value = 0.06                     # bead radius 0.06..0.15 of a cell
-    q = nt.math('DIVIDE', vo.outputs['Distance'], r)
-    h = nt.math('SQRT', nt.math('MAXIMUM', nt.math('SUBTRACT', 1.0, nt.math('MULTIPLY', q, q)), 0.0))
-    inside = nt.math('GREATER_THAN', h, 0.0)
-    ground = nt.ramp(nt.noise(7, 12, 0.65), [(0.3, '#121813'), (0.5, '#1d221d'), (0.7, '#2a312c')])
-    speck = nt.ramp(nt.noise(70, 4, 0.6, offset=12), [(0.6, '#ffffff'), (0.75, '#a9b7ae')])
-    bead = nt.ramp(nt.noise(4, 4, 0.5, offset=3), [(0.3, '#1a201c'), (0.7, '#27302b')])
-    col = nt.mixc(inside, nt.mixc(0.5, ground, speck, 'SCREEN'), bead)
-    bump = nt.n('ShaderNodeBump'); bump.inputs['Strength'].default_value = 1.0
-    bump.inputs['Distance'].default_value = 0.05
-    nt.l(h, bump.inputs['Height'])
-    p = nt.n('ShaderNodeBsdfPrincipled')
-    nt.l(col, p.inputs['Base Color'])
-    nt.l(nt.math('SUBTRACT', 0.6, nt.math('MULTIPLY', inside, 0.48)), p.inputs['Roughness'])
-    nt.l(bump.outputs[0], p.inputs['Normal'])
-    nt.l(p.outputs[0], nt.out.inputs['Surface'])
+def p_frame_black(nt):
+    """Near-black green stone; the glossy beads are added afterwards in add_beads()."""
+    grey(nt, (nt.noise(6, 12, 0.6), 0.7), (nt.noise(60, 4, 0.65, offset=12), 0.3))
+
+
+def add_beads(path, count=12, rmin=0.022, rmax=0.04, seed=5):
+    """Paint raised glossy beads, wrapping round the edges so the tile stays seamless."""
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    im = bpy.data.images.load(path)
+    w, h = im.size
+    a = np.empty(w * h * 4, np.float32); im.pixels.foreach_get(a)
+    a = a.reshape(h, w, 4)
+    L = np.array([-0.55, 0.55, 0.63]); L /= np.linalg.norm(L)
+    H = L + np.array([0, 0, 1.0]); H /= np.linalg.norm(H)
+    base = np.array([0.09, 0.115, 0.10])
+    pts = []
+    while len(pts) < count:                       # loose Poisson-disc spacing
+        p = rng.random(2)
+        if all(min(abs(p[0] - q[0]), 1 - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), 1 - abs(p[1] - q[1])) ** 2
+               > 0.18 ** 2 for q in pts):
+            pts.append(p)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    for (px, py) in pts:
+        r = rng.uniform(rmin, rmax) * w
+        cx, cy = px * w, py * h
+        for ox in (-w, 0, w):
+            for oy in (-h, 0, h):
+                dx, dy = xx - (cx + ox), yy - (cy + oy)
+                # soft shadow, down-right
+                sd = np.sqrt((dx - r * 0.35) ** 2 + (dy + r * 0.35) ** 2) / (r * 1.25)
+                shadow = np.clip(1 - sd, 0, 1) ** 1.5 * 0.55
+                a[..., :3] *= (1 - shadow)[..., None]
+                d2 = (dx ** 2 + dy ** 2) / r ** 2
+                inside = d2 < 1
+                if not inside.any():
+                    continue
+                nz = np.sqrt(np.clip(1 - d2, 0, 1))
+                nx, ny = dx / r, dy / r            # image y grows upward in Blender pixels
+                diff = np.clip(nx * L[0] + ny * L[1] + nz * L[2], 0, 1)
+                spec = np.clip(nx * H[0] + ny * H[1] + nz * H[2], 0, 1) ** 60
+                rim = np.clip(1 - nz, 0, 1) ** 3 * 0.35
+                col = base * (0.35 + 0.9 * diff)[..., None] + (spec * 0.95)[..., None] + (rim * 0.12)[..., None]
+                edge = np.clip((1 - np.sqrt(d2)) * r, 0, 1)[..., None]   # 1px antialias
+                a[..., :3] = np.where(inside[..., None], a[..., :3] * (1 - edge) + col * edge, a[..., :3])
+    im.pixels.foreach_set(a.ravel())
+    im.save()
+    bpy.data.images.remove(im)
 
 
 TILES = {
     'frame-blue': (t_frame_blue, None),
     'box-blue': (p_box_blue, 'box-blue'),
-    'frame-black': (t_frame_black, 'frame-black'),
+    'frame-black': (p_frame_black, 'frame-black'),
     'box-black': (p_box_black, 'box-black'),
     'frame-white': (p_frame_white, 'frame-white'),
     'box-white': (p_box_white, 'box-white'),
     'frame-artifact': (p_frame_artifact, 'frame-artifact'),
     'box-artifact': (p_box_artifact, 'box-artifact'),
 }
-LIT = {'frame-black', 'box-white'}
+LIT = {'box-white'}
 
 
 def rank_map(path, stops):
@@ -356,6 +379,8 @@ def build_tiles(size):
         bpy.ops.render.render(write_still=True)
         if target:
             rank_map(path, TARGET[target])
+        if name == 'frame-black':
+            add_beads(path)
         stats(path)
 
 
