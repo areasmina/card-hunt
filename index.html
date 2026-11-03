@@ -141,6 +141,7 @@ svg{display:block}
 .field textarea{min-height:130px;resize:vertical}
 .field .suggest{top:52px}
 .btn{height:48px;border-radius:999px;padding:0 20px;background:var(--accent);color:var(--accent-text);font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn{transition:transform .12s}
 a.btn{text-decoration:none}
 .btn.ghost{background:var(--surface-2);color:var(--text);font-weight:550}
 .btn.block{width:100%}
@@ -153,8 +154,27 @@ a.btn{text-decoration:none}
 .skel.t{aspect-ratio:auto;height:14px;border-radius:7px;margin-top:10px;width:70%}
 @keyframes pulse{50%{opacity:.45}}
 .note{color:var(--muted);font-size:13px;margin-top:18px}
-.incart{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:999px;padding:4px 4px 4px 18px;font-weight:650}
-.incart .stepper{background:var(--surface)}
+.buy{margin-top:18px}
+.btn.big{height:58px;font-size:18px;border-radius:18px}
+.incart{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:18px;padding:8px 8px 8px 18px;min-height:58px}
+.incart>div:first-child{flex:1;display:flex;flex-direction:column}
+.incart b{font-size:17px}
+.incart>div:first-child span{font-size:13px;color:var(--muted)}
+.bigstep{display:flex;align-items:center;gap:4px;background:var(--surface);border-radius:14px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.bigstep button{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--text);transition:transform .12s,background .15s}
+.bigstep button:last-child{background:var(--accent);color:var(--accent-text)}
+.bigstep button svg{width:20px;height:20px}
+.bigstep span{min-width:34px;text-align:center;font-size:20px;font-weight:750;font-variant-numeric:tabular-nums}
+.bigstep span.bump{animation:bump .25s}
+@keyframes bump{40%{transform:scale(1.35)}}
+.soldnote{text-align:center;color:var(--warn);font-weight:600;padding:14px;background:var(--surface-2);border-radius:18px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.tile2{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:78px;border-radius:18px;background:var(--surface-2);color:var(--text);font-size:13.5px;font-weight:600;text-decoration:none;transition:transform .12s}
+.tile2.on{color:var(--heart)}
+.tile2.on span{color:var(--text)}
+.btn,.tile2,.bigstep button,.sbub,.chip,.promo{-webkit-tap-highlight-color:transparent}
+.btn:active,.tile2:active,.bigstep button:active,.sbub:active,.promo:active,.chip:active{transform:scale(.95)}
+@media (prefers-reduced-motion: reduce){.btn:active,.tile2:active,.bigstep button:active,.sbub:active,.promo:active,.chip:active{transform:none}.bigstep span.bump{animation:none}}
 .ci .ciimg{flex:none;padding:0;display:block;border-radius:12px;overflow:hidden}
 .ci button.nm{text-align:left;color:inherit;padding:0;font:inherit}
 .h .hint{margin-left:auto;color:var(--muted);font-size:14px}
@@ -223,13 +243,13 @@ a.btn{text-decoration:none}
 .sheet .body{position:relative;width:100%;max-width:760px;max-height:92vh;overflow-y:auto;background:var(--bg);border-radius:28px 28px 0 0;padding:14px 16px calc(28px + env(safe-area-inset-bottom))}
 .sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--surface-3);margin:0 auto 12px}
 .sheet .close{position:absolute;right:14px;top:14px;width:38px;height:38px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center}
-.pd .big{width:100%;max-width:360px;margin:6px auto 0;display:block;border-radius:18px;aspect-ratio:488/680;object-fit:cover;background:var(--surface-2)}
-.pd .store{color:var(--muted);margin-top:14px}
+.pd .big{height:min(36vh,460px);width:auto;max-width:100%;margin:6px auto 0;display:block;border-radius:18px;aspect-ratio:488/680;object-fit:cover;background:var(--surface-2)}
+.pd .store{color:var(--muted);margin-top:12px;font-size:14px}
 .pd h3{margin:2px 0 4px;font-size:22px;letter-spacing:-.01em}
 .pd .pr{font-size:22px;font-weight:750}
 .pd .st{font-size:14px;font-weight:600;color:var(--ok);margin-top:2px}
 .pd .st.sold{color:var(--warn)}
-.pd .hint{color:var(--muted);font-size:14px;margin-top:8px}
+.pd .hint{color:var(--muted);font-size:13px;margin-top:4px}
 
 /* cart (dark, like Shop) */
 .cartsheet .body{background:#0b0b0d;color:var(--sheet-text)}
@@ -831,17 +851,19 @@ function openProduct(o, fromCart=productFromCart){
     <div class="pr">${esc(priceText(o))}</div>
     <div class="st${o.available?'':' sold'}">${o.available?'In stock':'Sold out'}${o.foil?' · Foil':''}</div>
     <div class="hint">${o.priceMax>o.price+0.001?'Price depends on condition. You choose the condition on the store\'s page.':'Check the condition on the store\'s page.'}</div>
-    <div class="actions" style="margin-top:16px">
-      ${c?`<div class="incart"><span>In your cart</span><div class="stepper"><button data-act="pq" data-k="${esc(o.url)}" data-d="-1" title="${c.qty>1?'One fewer':'Remove from cart'}">${c.qty>1?I.minus:I.trash}</button><span>${c.qty}</span><button data-act="pq" data-k="${esc(o.url)}" data-d="1" title="One more">${I.plus}</button></div></div>`
-        :o.available?`<button class="btn" data-act="add" data-k="${esc(o.url)}">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Add to cart</button>`:''}
-      <button class="btn ghost" data-act="fav" data-k="${esc(o.url)}">${isFav(o)?I.heartFill:I.heart} ${isFav(o)?'Saved':'Favorite'}</button>
-      <a class="btn ghost" href="${esc(o.url)}" target="_blank" rel="noopener" style="text-decoration:none">${I.ext} View at store</a>
+    <div class="buy">
+      ${c?`<div class="incart"><div><b>In your cart</b><span>${esc(money(c.price*c.qty))} from</span></div><div class="bigstep">
+          <button data-act="pq" data-k="${esc(o.url)}" data-d="-1" aria-label="${c.qty>1?'One fewer':'Remove from cart'}">${c.qty>1?I.minus:I.trash}</button><span>${c.qty}</span><button data-act="pq" data-k="${esc(o.url)}" data-d="1" aria-label="One more">${I.plus}</button></div></div>`
+        :o.available?`<button class="btn block big" data-act="add" data-k="${esc(o.url)}">${I.cart.replace('width="30" height="30"','width="22" height="22"')} Add to cart</button>`
+        :`<div class="soldnote">Sold out here right now</div>`}
     </div>
-    <div class="actions">
-      <button class="btn ghost" data-act="wishname" data-n="${esc(o.name||o.title)}">${I.plus} Add to a list</button>
-      ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
+    <div class="tiles">
+      <button class="tile2${isFav(o)?' on':''}" data-act="fav" data-k="${esc(o.url)}">${isFav(o)?I.heartFill:I.heart}<span>${isFav(o)?'Saved':'Favorite'}</span></button>
+      <button class="tile2" data-act="wishname" data-n="${esc(o.name||o.title)}">${I.grid.replace('width="26" height="26"','width="24" height="24"')}<span>Add to list</span></button>
+      <a class="tile2" href="${esc(o.url)}" target="_blank" rel="noopener">${I.ext.replace('width="16" height="16"','width="24" height="24"')}<span>View at store</span></a>
     </div>
-    ${fromCart?`<button class="btn block" style="margin-top:14px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
+    ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost block" style="margin-top:10px" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
+    ${fromCart?`<button class="btn ghost block" style="margin-top:10px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
   </div>`);
 }
 function chooseList(name){
@@ -924,13 +946,16 @@ function closeSheet(){
   const b=cur.querySelector('.body'); if(b.style.transform) b.style.transition='transform .22s ease-in';
   setTimeout(()=>cur.remove(),240);
 }
+// A card opened from the cart goes back to the cart when it's closed, instead of closing everything.
+function backToCart(){ if(productFromCart && $id('sheet').querySelector('.pd')){ productFromCart=false; openCart(); render(); return true; } return false; }
+function dismissSheet(){ if(backToCart()) return; productFromCart=false; closeSheet(); render(); }
 // Swipe a panel down from the top to close it, like a native sheet.
 function dragToClose(b){
   let y0=null, dy=0;
   b.addEventListener('touchstart',e=>{ y0=b.scrollTop<=0?e.touches[0].clientY:null; dy=0; b.style.transition='none'; },{passive:true});
   b.addEventListener('touchmove',e=>{ if(y0==null) return; dy=Math.max(0,e.touches[0].clientY-y0); if(dy>0) b.style.transform=`translateY(${dy}px)`; },{passive:true});
   b.addEventListener('touchend',()=>{ if(y0==null) return; y0=null; b.style.transition='';
-    if(dy>110){ b.style.transform=`translateY(${dy}px)`; closeSheet(); render(); } else b.style.transform=''; });
+    if(dy>110){ if(backToCart()){ b.style.transform=''; return; } b.style.transform=`translateY(${dy}px)`; closeSheet(); render(); } else b.style.transform=''; });
 }
 function openUrls(urls){ let blocked=false; for(const u of urls){const w=window.open(u,'_blank','noopener'); if(w===null) blocked=true;} if(blocked&&urls.length>1) toast('Allow pop-ups to open every item'); }
 function newList(withName){
@@ -953,18 +978,18 @@ document.addEventListener('click', e=>{
       if(tapT && tapK===k){ clearTimeout(tapT); tapT=null;
         if(!isFav(o)){ toggleFav(o); } buzz(); burst(el); syncHearts(o,true); break; }
       clearTimeout(tapT); tapK=k; tapT=setTimeout(()=>{tapT=null; openProduct(o)},260); break; }
-    case 'add': { const o=offerOf(k); if(o){ addToCart(o); openProduct(o); } break; }
+    case 'add': { const o=offerOf(k); if(o){ addToCart(o); openProduct(o); buzz(); } break; }
     case 'cart': productFromCart=false; openCart(); break;
     case 'cartopen': { const o=offerOf(k); if(o) openProduct(o,true); break; }
     case 'pq': { const c=S.cart.find(x=>x.url===k); if(!c) break; const d=+el.dataset.d;
       if(c.qty+d<1){ undoToast(`Removed ${c.name||c.title}`); S.cart=S.cart.filter(x=>x!==c); } else c.qty+=d;
-      save('cart'); $id('cartCount').textContent=S.cart.reduce((a,x)=>a+x.qty,0); openProduct(offerOf(k)); render(); break; }
+      save('cart'); $id('cartCount').textContent=S.cart.reduce((a,x)=>a+x.qty,0); openProduct(offerOf(k)); render(); buzz(); const sp=document.querySelector('.bigstep span'); if(sp) sp.classList.add('bump'); break; }
     case 'multi': go('list',{id:'temp'}); setTimeout(()=>{const t=$id('pastetext'); if(t&&!S.temp.items.length) t.focus()},0); break;
     case 'savetemp': { const name=prompt('Name this list', 'My deck'); if(name==null) break; const l={id:uid(),name:name.trim()||'My deck',items:S.temp.items.map(i=>({...i})),at:Date.now()}; S.lists.push(l); S.temp.items=[]; save('lists'); toast('Saved to your lists'); go('list',{id:l.id}); break; }
     case 'cleartemp': S.temp.items=[]; save('lists'); render(); break;
     case 'clearhist': S.searches=[]; save('searches'); render(); break;
     case 'theme': S.theme={auto:'light',light:'dark',dark:'auto'}[S.theme]; save('theme'); applyTheme(); render(); toast(S.theme==='auto'?'Theme follows your device':S.theme==='light'?'Light mode':'Dark mode'); break;
-    case 'close': productFromCart=false; closeSheet(); render(); break;
+    case 'close': dismissSheet(); break;
     case 'q': closeSheet(); doSearch(el.dataset.q); break;
     case 'clearq': searchQ=''; go('home'); setTimeout(()=>$id('q')&&$id('q').focus(),0); break;
     case 'pref': { const p=el.dataset.p; if(p==='sort') S.prefs.sort=S.prefs.sort==='low'?'high':'low'; else S.prefs[p]=!S.prefs[p]; save('prefs'); render(); break; }
@@ -1023,7 +1048,7 @@ document.addEventListener('click', e=>{
     case 'senddeck': { const st=SBY[el.dataset.s]; openUrls([deckUrl(st, curList().items)]); break; }
   }
 });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').innerHTML) closeSheet(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').innerHTML) dismissSheet(); });
 
 // ---------- boot ----------
 (function boot(){
