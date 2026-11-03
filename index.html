@@ -820,47 +820,54 @@ function skeletons(n=4){return Array.from({length:n},()=>'<div class="p"><div cl
 // update behind it as you tap, so you can see the effect right away.
 let PF={lo:null,hi:null,q:''};            // price range, for this search only
 const SORTS={low:'Price: low to high',high:'Price: high to low',name:'Name: A to Z'};
-function activeFilters(){ const p=S.prefs; return (p.inStock?1:0)+(p.foil?1:0)+(PF.lo!=null||PF.hi!=null?1:0)+(p.off.filter(id=>SBY[id]).length?1:0)+(p.sort!=='low'?1:0); }
-function priceMax(){ const d=DATA[searchQ.toLowerCase()]; const m=d&&d.offers?Math.max(0,...d.offers.map(o=>o.price)):0; return Math.max(5,Math.ceil(m)); }
-function chipsHTML(){
-  const p=S.prefs, n=activeFilters(), on=STORES.filter(s=>!p.off.includes(s.id)).length;
-  if(PF.q!==searchQ.toLowerCase()){ PF={lo:null,hi:null,q:searchQ.toLowerCase()}; }
-  const pr=PF.lo!=null||PF.hi!=null;
+const FAVSORTS={new:'Newest first',...SORTS};
+// The same filter row and panel serve search results ('search') and favorites ('favs').
+let FM='search';
+function fstate(m){ return m==='favs'
+  ? {p:favF, pr:favF, sorts:FAVSORTS, def:'new', items:()=>S.favs, list:favList, stores:STORES.filter(st=>S.favs.some(x=>x.store===st.id)), save:()=>{}, show:()=>{ const g=$id('favgrid'); if(g) g.innerHTML=favGrid(); else render(); }}
+  : {p:S.prefs, pr:PF, sorts:SORTS, def:'low', items:()=>{ const d=DATA[searchQ.toLowerCase()]; return d&&d.offers||[]; }, list:()=>filtered(fstate('search').items()), stores:STORES, save:()=>save('prefs'), show:()=>render()}; }
+function activeFilters(m){ const f=fstate(m), p=f.p; return (p.inStock?1:0)+(p.foil?1:0)+(f.pr.lo!=null||f.pr.hi!=null?1:0)+(p.off.filter(id=>SBY[id]).length?1:0)+(p.sort!==f.def?1:0); }
+function priceMax(m){ const it=fstate(m).items(); const mx=it.length?Math.max(0,...it.map(o=>o.price)):0; return Math.max(5,Math.ceil(mx)); }
+function chipsHTML(m='search'){
+  const f=fstate(m), p=f.p, n=activeFilters(m), all=f.stores.length, on=f.stores.filter(s=>!p.off.includes(s.id)).length;
+  if(m==='search'&&PF.q!==searchQ.toLowerCase()){ PF={lo:null,hi:null,q:searchQ.toLowerCase()}; }
+  const pr=f.pr.lo!=null||f.pr.hi!=null, M=`data-m="${m}"`;
   return `<div class="chips fchips">
-    <button class="chip icon${n?' on':''}" data-act="filt" aria-label="Filters">${I.filter.replace('width="22" height="22"','width="20" height="20"')}${n?`<b class="fbadge">${n}</b>`:''}</button>
-    <button class="chip${p.inStock?' on':''}" data-act="pref" data-p="inStock">In stock</button>
-    <button class="chip${pr?' on':''}" data-act="filt" data-sec="price">${pr?`${money(PF.lo||0)} to ${money(PF.hi??priceMax())}`:'Price'} ${I.down}</button>
-    <button class="chip${on<STORES.length?' on':''}" data-act="filt" data-sec="stores">${on<STORES.length?`${on} store${on===1?'':'s'}`:'All stores'} ${I.down}</button>
-    <button class="chip${p.sort!=='low'?' on':''}" data-act="filt" data-sec="sort">${p.sort==='low'?'Sort':esc(SORTS[p.sort].split(':')[0]+(p.sort==='high'?' high first':' A to Z'))} ${I.down}</button>
-    <button class="chip${p.foil?' on':''}" data-act="pref" data-p="foil">Foil</button>
+    <button class="chip icon${n?' on':''}" data-act="filt" ${M} aria-label="Filters">${I.filter.replace('width="22" height="22"','width="20" height="20"')}${n?`<b class="fbadge">${n}</b>`:''}</button>
+    <button class="chip${p.inStock?' on':''}" data-act="fq" ${M} data-p="inStock">In stock</button>
+    <button class="chip${pr?' on':''}" data-act="filt" ${M} data-sec="price">${pr?`${money(f.pr.lo||0)} to ${money(f.pr.hi??priceMax(m))}`:'Price'} ${I.down}</button>
+    ${all>1?`<button class="chip${on<all?' on':''}" data-act="filt" ${M} data-sec="stores">${on<all?`${on} store${on===1?'':'s'}`:'All stores'} ${I.down}</button>`:''}
+    <button class="chip${p.sort!==f.def?' on':''}" data-act="filt" ${M} data-sec="sort">${p.sort===f.def?'Sort':esc(f.sorts[p.sort])} ${I.down}</button>
+    <button class="chip${p.foil?' on':''}" data-act="fq" ${M} data-p="foil">Foil</button>
   </div>`;
 }
-function resultCount(){ const d=DATA[searchQ.toLowerCase()]; return d&&d.offers?filtered(d.offers).length:0; }
-function openFilter(sec){
-  const p=S.prefs, mx=priceMax(), lo=PF.lo??0, hi=PF.hi??mx, n=resultCount();
-  const q=(cls,on,act,attrs,label)=>`<button class="chip ${cls}${on?' on':''}" data-act="${act}" ${attrs}>${label}</button>`;
-  sheet(`<div class="filt"><div class="fhead"><h2>Filter</h2><button class="sibtn" data-act="close" aria-label="Close">${I.x.replace('width="16" height="16"','width="20" height="20"')}</button></div>
+function resultCount(m=FM){ return fstate(m).list().length; }
+function openFilter(sec, m=FM){
+  FM=m; const f=fstate(m), p=f.p, mx=priceMax(m), lo=f.pr.lo??0, hi=f.pr.hi??mx, n=resultCount(m);
+  const q=(cls,on,act,attrs,label)=>`<button class="chip ${cls}${on?' on':''}" data-act="${act}" data-m="${m}" ${attrs}>${label}</button>`;
+  sheet(`<div class="filt"><div class="fhead"><h2>${m==='favs'?'Filter favorites':'Filter'}</h2><button class="sibtn" data-act="close" aria-label="Close">${I.x.replace('width="16" height="16"','width="20" height="20"')}</button></div>
     <div class="chips">${q('',p.inStock,'fq','data-p="inStock"','In stock')}${q('',p.foil,'fq','data-p="foil"','Foil')}</div>
-    <section id="f-stores"><h4>Stores</h4><div class="fwrap">${STORES.map(st=>q('fst',!p.off.includes(st.id),'fstore',`data-s="${esc(st.id)}"`,`${storeLogo(st)}${esc(st.name)}`)).join('')}</div></section>
+    ${f.stores.length>1?`<section id="f-stores"><h4>Stores</h4><div class="fwrap">${f.stores.map(st=>q('fst',!p.off.includes(st.id),'fstore',`data-s="${esc(st.id)}"`,`${storeLogo(st)}${esc(st.name)}`)).join('')}</div></section>`:''}
     <section id="f-price"><h4>Price</h4><div class="prange"><b id="prlab">${money(lo)} - ${money(hi)}${hi>=mx?'+':''}</b>
       <div class="dual" style="--a:${lo/mx*100}%;--b:${hi/mx*100}%"><i></i><input id="plo" type="range" min="0" max="${mx}" step="${mx>50?1:.5}" value="${lo}" aria-label="Lowest price"><input id="phi" type="range" min="0" max="${mx}" step="${mx>50?1:.5}" value="${hi}" aria-label="Highest price"></div></div></section>
-    <section id="f-sort"><h4>Sort by</h4><div class="fwrap">${Object.entries(SORTS).map(([k,v])=>q('',p.sort===k,'fsort',`data-v="${k}"`,esc(v))).join('')}</div></section>
-    <div class="fbar"><button class="btn ghost" data-act="fclear">Clear all</button><button class="btn dark" data-act="close" id="fdone">Show ${n} result${n===1?'':'s'}</button></div></div>`,'filtsheet');
-  wirePrice(mx);
+    <section id="f-sort"><h4>Sort by</h4><div class="fwrap">${Object.entries(f.sorts).map(([k,v])=>q('',p.sort===k,'fsort',`data-v="${k}"`,esc(v))).join('')}</div></section>
+    <div class="fbar"><button class="btn ghost" data-act="fclear" data-m="${m}">Clear all</button><button class="btn dark" data-act="close" id="fdone">Show ${n} ${m==='favs'?'favorite':'result'}${n===1?'':'s'}</button></div></div>`,'filtsheet');
+  wirePrice(mx,m);
   if(sec){ const el=$id('f-'+sec); if(el) setTimeout(()=>{ el.scrollIntoView({behavior:'smooth',block:'start'}); el.classList.add('flash'); },280); }
 }
-function wirePrice(mx){
-  const a=$id('plo'), b=$id('phi'); if(!a) return; let t;
+function wirePrice(mx,m){
+  const a=$id('plo'), b=$id('phi'); if(!a) return; let t; const f=fstate(m);
   const upd=(e)=>{ let lo=+a.value, hi=+b.value; if(lo>hi){ if(e&&e.target===a) a.value=lo=hi; else b.value=hi=lo; }
     a.parentElement.style.setProperty('--a',lo/mx*100+'%'); a.parentElement.style.setProperty('--b',hi/mx*100+'%');
     $id('prlab').textContent=`${money(lo)} - ${money(hi)}${hi>=mx?'+':''}`;
-    PF.lo=lo>0?lo:null; PF.hi=hi<mx?hi:null; clearTimeout(t); t=setTimeout(()=>{ render(); updCount(); },60); };
+    f.pr.lo=lo>0?lo:null; f.pr.hi=hi<mx?hi:null; clearTimeout(t); t=setTimeout(()=>{ render(); updCount(); },60); };
   a.addEventListener('input',upd); b.addEventListener('input',upd);
   a.addEventListener('change',tick); b.addEventListener('change',tick);
 }
-function updCount(){ const d=$id('fdone'); if(!d) return; const n=resultCount(); const t=`Show ${n} result${n===1?'':'s'}`; if(d.textContent!==t){ d.textContent=t; bounce(d); } }
+function updCount(){ const d=$id('fdone'); if(!d) return; const n=resultCount(); const t=`Show ${n} ${FM==='favs'?'favorite':'result'}${n===1?'':'s'}`; if(d.textContent!==t){ d.textContent=t; bounce(d); } }
 function bounce(el){ if(!el) return; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
-function refilter(sel){ openFilter(); render(); updCount(); if(sel) bounce(document.querySelector('#sheet '+sel)); }
+// After a change: redraw the panel if it's open, the results behind it, and bounce what was tapped.
+function refilter(sel){ const open=!!$id('sheet').querySelector('.filt'); if(open) openFilter(null,FM); render(); updCount(); bounce(document.querySelector((open?'#sheet ':'#app ')+sel)); }
 function searchPill(value, ph='Search cards or products'){
   return `<div class="top"><div class="pill">${I.search}
     <input id="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="${esc(ph)}" value="${esc(value)}">
@@ -1118,11 +1125,12 @@ function viewSearch(){
   return searchPill(searchQ)+body;
 }
 function storeLinks(q){return `<div class="links">${STORES.map(s=>`<a href="${esc(s.url(q))}" target="_blank" rel="noopener">${esc(s.name)} ${I.ext.replace('width="16" height="16"','width="12" height="12" style="display:inline;vertical-align:-1px"')}</a>`).join('')}</div>`}
-let favF={q:'',store:'',inStock:false,sort:'new'};
-const FAVSORT={new:'Newest',low:'Price low to high',high:'Price high to low',name:'A to Z'};
+// Favorites use the same filter row and panel as search, with their own settings (and "Newest" as a sort).
+let favF={q:'',inStock:false,foil:false,off:[],sort:'new',lo:null,hi:null};
 function favList(){
   const q=favF.q.trim().toLowerCase();
-  let o=S.favs.filter(x=>(!q||`${x.title} ${x.name} ${x.set}`.toLowerCase().includes(q))&&(!favF.store||x.store===favF.store)&&(!favF.inStock||x.available));
+  let o=S.favs.filter(x=>(!q||`${x.title} ${x.name} ${x.set}`.toLowerCase().includes(q))&&!favF.off.includes(x.store)&&(!favF.inStock||x.available)&&(!favF.foil||x.foil)
+    &&(favF.lo==null||x.price>=favF.lo)&&(favF.hi==null||x.price<=favF.hi));
   if(favF.sort==='low') o=[...o].sort((a,b)=>a.price-b.price);
   else if(favF.sort==='high') o=[...o].sort((a,b)=>b.price-a.price);
   else if(favF.sort==='name') o=[...o].sort((a,b)=>(a.name||a.title).localeCompare(b.name||b.title));
@@ -1131,18 +1139,13 @@ function favList(){
 function favGrid(){
   const o=favList();
   return o.length?`<div class="sub" style="margin-top:12px">${o.length} of ${S.favs.length} favorite${S.favs.length===1?'':'s'}</div><div class="grid">${o.map(x=>tile(x)).join('')}</div>`
-    :`<div class="empty">No favorites match. <button class="right" data-act="favreset" style="color:var(--accent);font-weight:600">Clear filters</button></div>`;
+    :`<div class="empty">No favorites match. <button class="right" data-act="fclear" data-m="favs" style="color:var(--accent);font-weight:600">Clear filters</button></div>`;
 }
 function viewSaved(){
   if(!S.favs.length) return `<div class="h"><h2>Favorites</h2></div><div class="empty">No favorites yet. Tap the heart, or double-tap any card, to save it here.</div>`;
-  const stores=STORES.filter(st=>S.favs.some(x=>x.store===st.id));
   return `<div class="h"><h2>Favorites</h2></div>
     <div class="pill" style="height:46px">${I.search}<input id="favq" type="search" autocomplete="off" spellcheck="false" placeholder="Filter your favorites" value="${esc(favF.q)}"></div>
-    <div class="chips">
-      <button class="chip" data-act="favsort">${esc(FAVSORT[favF.sort])} ${I.down}</button>
-      <button class="chip${favF.inStock?' on':''}" data-act="favstock">In stock</button>
-      ${stores.length>1?`<button class="chip${!favF.store?' on':''}" data-act="favstore" data-s="">All stores</button>${stores.map(st=>`<button class="chip${favF.store===st.id?' on':''}" data-act="favstore" data-s="${st.id}">${esc(st.name)}</button>`).join('')}`:''}
-    </div>
+    ${chipsHTML('favs')}
     <div id="favgrid">${favGrid()}</div>`;
 }
 function listsGrid(){
@@ -1321,7 +1324,7 @@ function openCart(){
       <button class="co" data-act="checkout" data-s="${s.id}">${s.deck?`Send to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart`:`Add to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart, one by one`}</button>
       <div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} ${s.deck?'Opens the store\'s deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store\'s cart.':'Card Hunt opens each card on the store\'s site, one at a time. Add it to their cart, come back, and tap Next.'}</div>
       <div class="info">${I.ship} Each store ships and checks out separately.</div>
-      <div class="cfoot"><button class="later" data-act="bought" data-s="${s.id}">✓ I bought these, clear them</button><button class="later" data-act="gostore" data-s="${esc(s.id)}">Store page ${I.chev}</button></div></div></div></div>`}).join('')
+      <button class="later" style="margin-top:12px" data-act="bought" data-s="${s.id}">✓ I bought these, clear them</button></div></div></div>`}).join('')
       +`<div class="grandrow"><span>${picking?`Total from, ${shown.length} store${shown.length===1?'':'s'} (${shownN} item${shownN===1?'':'s'})`:'Total from, all stores'}</span><span>${money(grand)}</span></div>`
     :`<div class="empty">Your cart is empty.<br>Tap a card, then "Add to cart".</div>`}`, 'cartsheet');
 }
@@ -1462,11 +1465,11 @@ document.addEventListener('click', e=>{
     case 'csel': { const id=el.dataset.s; if(!id) CSEL.clear(); else if(CSEL.has(id)) CSEL.delete(id); else CSEL.add(id); buzz(); openCart();
       const b=$id('sheet').querySelector('.body'), c=b&&b.querySelector('.cjump'); if(b&&c&&b.scrollTop>c.offsetTop) b.scrollTo({top:c.offsetTop-8,behavior:'smooth'}); break; }
     case 'storeinfo': openStore(SBY[el.dataset.s]); break;
-    case 'filt': openFilter(el.dataset.sec); break;
-    case 'fq': { const p=el.dataset.p; S.prefs[p]=!S.prefs[p]; save('prefs'); refilter(`[data-act="fq"][data-p="${p}"]`); break; }
-    case 'fstore': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; if(STORES.every(s=>S.prefs.off.includes(s.id))){ S.prefs.off=off; toast('Keep at least one store'); break; } save('prefs'); refilter(`[data-act="fstore"][data-s="${CSS.escape(id)}"]`); break; }
-    case 'fsort': S.prefs.sort=el.dataset.v; save('prefs'); refilter(`[data-act="fsort"][data-v="${el.dataset.v}"]`); break;
-    case 'fclear': S.prefs.inStock=false; S.prefs.foil=false; S.prefs.sort='low'; S.prefs.off=[]; PF.lo=PF.hi=null; save('prefs'); refilter('#fdone'); buzz(); break;
+    case 'filt': openFilter(el.dataset.sec, el.dataset.m||'search'); break;
+    case 'fq': { FM=el.dataset.m||'search'; const f=fstate(FM), p=el.dataset.p; f.p[p]=!f.p[p]; f.save(); refilter(`[data-act="fq"][data-p="${p}"]`); break; }
+    case 'fstore': { FM=el.dataset.m||'search'; const f=fstate(FM), id=el.dataset.s, off=f.p.off; f.p.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; if(f.stores.every(s=>f.p.off.includes(s.id))){ f.p.off=off; toast('Keep at least one store'); break; } f.save(); refilter(`[data-act="fstore"][data-s="${CSS.escape(id)}"]`); break; }
+    case 'fsort': { FM=el.dataset.m||'search'; const f=fstate(FM); f.p.sort=el.dataset.v; f.save(); refilter(`[data-act="fsort"][data-v="${el.dataset.v}"]`); break; }
+    case 'fclear': { FM=el.dataset.m||'search'; const f=fstate(FM); f.p.inStock=false; f.p.foil=false; f.p.sort=f.def; f.p.off=[]; f.pr.lo=f.pr.hi=null; f.save(); refilter('#fdone'); buzz(); break; }
     case 'seeviewed': go('viewed'); break;
     case 'clearviewed': if(confirm('Clear your recently viewed cards?')){ S.viewed=[]; save('viewed'); render(); } break;
     case 'storeshare': { const st=SBY[el.dataset.s], u=storeHome(st); if(navigator.share) navigator.share({title:st.name,url:u}).catch(()=>{}); else (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Store link copied'),()=>prompt('Store link',u)); break; }
@@ -1490,10 +1493,6 @@ document.addEventListener('click', e=>{
       rebuildStores(); openStore(SBY[st.id]); render(); buzz(); toast(u?'Saved. Your cart can go there in one tap':'Deck list link removed. Checkout goes one card at a time'); break; }
     case 'storeadd': addStore($id('storeurl').value); break;
     case 'removestore': { const st=SBY[el.dataset.s]; if(!confirm(`Remove ${st.name} from your stores?`)) break; S.myStores=S.myStores.filter(m=>'x:'+m.host!==st.id); save('myStores'); rebuildStores(); for(const k in DATA) delete DATA[k]; closeSheet(); render(); toast(`Removed ${st.name}`); break; }
-    case 'favsort': { const k=Object.keys(FAVSORT); favF.sort=k[(k.indexOf(favF.sort)+1)%k.length]; render(); break; }
-    case 'favstock': favF.inStock=!favF.inStock; render(); break;
-    case 'favstore': favF.store=el.dataset.s; render(); break;
-    case 'favreset': favF={q:'',store:'',inStock:false,sort:favF.sort}; render(); break;
     case 'syncon': turnOnSync(); break;
     case 'synclink': linkCode($id('synccode').value); break;
     case 'synccopy': { const u=syncLink(SY.code); (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copied'),()=>prompt('Copy this link',u)); break; }
