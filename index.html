@@ -254,7 +254,11 @@ svg{display:block}
 .cartsheet .empty{color:var(--sheet-muted)}
 .cartsheet .note{color:var(--sheet-muted)}
 
-.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:60;box-shadow:var(--shadow);transition:opacity .2s;max-width:calc(100% - 32px);text-align:center}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:60;box-shadow:var(--shadow);transition:opacity .2s;max-width:calc(100% - 32px);text-align:center;display:flex;align-items:center;gap:14px;white-space:nowrap}
+.toast span{overflow:hidden;text-overflow:ellipsis}
+body:has(#sheet .cartsheet) .toast{background:#fff;color:#121214}
+body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
+.toast button{color:var(--accent);font-weight:750;font-size:15px;padding:4px 2px;flex:none;filter:brightness(1.35)}
 </style>
 </head>
 <body>
@@ -335,7 +339,12 @@ const LS = {
   get(k,d){try{const v=localStorage.getItem('cardhunt2.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
   set(k,v){try{localStorage.setItem('cardhunt2.'+k,JSON.stringify(v))}catch(e){}}
 };
-let toastT; function toast(msg){const t=$id('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add('hidden'),1800)}
+let toastT, undoFn=null; function toast(msg){const t=$id('toast');undoFn=null;t.textContent=msg;t.classList.remove('hidden');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add('hidden'),1800)}
+// A toast with an Undo button. It stays up for 6 seconds; undo puts the cart and favorites back as they were.
+function undoToast(msg){ const before=JSON.stringify({cart:S.cart,favs:S.favs}); const t=$id('toast');
+  t.innerHTML=`<span>${esc(msg)}</span><button data-act="undo">Undo</button>`; t.classList.remove('hidden'); clearTimeout(toastT);
+  undoFn=()=>{ const b=JSON.parse(before); S.cart=b.cart; S.favs=b.favs; save('cart'); save('favs'); };
+  toastT=setTimeout(()=>{t.classList.add('hidden'); undoFn=null},6000); return before; }
 
 // ---------- state ----------
 const S = {
@@ -444,7 +453,13 @@ let installEvt=null;
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); installEvt=e; if(route&&route.name==='home') render(); });
 addEventListener('appinstalled',()=>{ installEvt=null; toast('Card Hunt is installed'); render(); });
-if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});
+// An installed app can stay open for days. When it comes back to the screen, check whether a newer version
+// of Card Hunt is live, and if so reload into it (only when no panel is open, so nothing is interrupted).
+let pageTag=null; const getTag=()=>fetch(location.pathname,{method:'HEAD',cache:'no-store'}).then(r=>r.headers.get('etag')||r.headers.get('last-modified')).catch(()=>null);
+if(location.protocol==='https:') getTag().then(t=>pageTag=t);
+document.addEventListener('visibilitychange',async()=>{ if(document.visibilityState!=='visible'||!pageTag) return;
+  const t=await getTag(); if(t&&t!==pageTag&&!$id('sheet').innerHTML){ if(SY&&SY.dirty) await syncNow(); location.reload(); } });
 
 const OFFERS = {};                     // url -> offer (everything seen this session)
 const DATA = {};                       // lower name -> {state, offers}
@@ -857,14 +872,16 @@ document.addEventListener('click', e=>{
     case 'liq': { const l=curList(), it=l.items[+el.dataset.i]; it.qty+=+el.dataset.d; if(it.qty<1) l.items.splice(+el.dataset.i,1); save('lists'); render(); break; }
     case 'findall': { const l=curList(); fetchMany(l.items.map(i=>i.name).filter(n=>!DATA[n.toLowerCase()])); break; }
     case 'dellist': { const l=curList(); if(confirm(`Delete "${l.name}"?`)){ S.lists=S.lists.filter(x=>x!==l); if(!S.lists.length) S.lists=[{id:'wish',name:'Wishlist',items:[],at:Date.now()}]; save('lists'); go('lists'); } break; }
-    case 'cq': { const c=S.cart.find(x=>x.url===k); c.qty+=+el.dataset.d; if(c.qty<1) S.cart=S.cart.filter(x=>x!==c); save('cart'); openCart(); render(); break; }
-    case 'later': { const c=S.cart.find(x=>x.url===k); S.cart=S.cart.filter(x=>x!==c); if(!isFav(c)){const {qty,...o}=c; S.favs=[o,...S.favs]; save('favs');} save('cart'); openCart(); render(); toast('Moved to favorites'); break; }
+    case 'cq': { const c=S.cart.find(x=>x.url===k); const removing=c.qty+(+el.dataset.d)<1; if(removing) undoToast(`Removed ${c.name||c.title}`);
+      c.qty+=+el.dataset.d; if(c.qty<1) S.cart=S.cart.filter(x=>x!==c); save('cart'); openCart(); render(); break; }
+    case 'later': { const c=S.cart.find(x=>x.url===k); undoToast('Moved to favorites'); S.cart=S.cart.filter(x=>x!==c); if(!isFav(c)){const {qty,...o}=c; S.favs=[o,...S.favs]; save('favs');} save('cart'); openCart(); render(); break; }
+    case 'undo': { const f=undoFn; if(!f) break; f(); undoFn=null; $id('toast').classList.add('hidden'); if($id('sheet').querySelector('.cartsheet')) openCart(); render(); buzz(); break; }
     case 'checkout': { const st=SBY[el.dataset.s], its=S.cart.filter(c=>c.store===st.id);
       if(!st.deck){ const first=its.findIndex(c=>!c.added); walk={store:st.id, i:first<0?0:first}; openWalk(); break; }
       if(st.deck){ const m=new Map(); for(const c of its){const n=c.name||c.title; m.set(n,(m.get(n)||0)+c.qty)} openUrls([deckUrl(st,[...m].map(([name,qty])=>({name,qty})))]); }
       else openUrls(its.map(c=>c.url)); break; }
     case 'bought': { const st=SBY[el.dataset.s]; const gone=S.cart.filter(c=>c.store===st.id); if(!confirm(`Clear ${gone.length} item${gone.length===1?'':'s'} from ${st.name}? Do this once you've paid on their site.`)) break;
-      S.cart=S.cart.filter(c=>c.store!==st.id); save('cart'); walk=null; openCart(); render(); toast(`${st.name} cleared`); break; }
+      undoToast(`${st.name} cleared`); S.cart=S.cart.filter(c=>c.store!==st.id); save('cart'); walk=null; openCart(); render(); break; }
     case 'walkopen': { const c=walkItems()[walk.i]; c.opened=true; save('cart'); setTimeout(openWalk,300); break; }
     case 'walknext': { const c=walkItems()[walk.i]; c.added=true; save('cart'); walk.i++; openWalk(); break; }
     case 'walkskip': walk.i++; openWalk(); break;
