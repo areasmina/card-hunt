@@ -593,7 +593,8 @@ function openCart(){
       <div class="subt"><span>Subtotal from</span><span>${money(sub)}</span></div>
       <button class="co" data-act="checkout" data-s="${s.id}">${s.deck?`Send to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart`:`Add to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart, one by one`}</button>
       <div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} ${s.deck?'Opens the store\'s deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store\'s cart.':'Card Hunt opens each card on the store\'s site, one at a time. Add it to their cart, come back, and tap Next.'}</div>
-      <div class="info">${I.ship} Each store ships and checks out separately.</div></div>`}).join('')
+      <div class="info">${I.ship} Each store ships and checks out separately.</div>
+      <button class="later" style="margin-top:12px" data-act="bought" data-s="${s.id}">✓ I bought these, clear them</button></div>`}).join('')
       +`<div class="grandrow"><span>Total from, all stores</span><span>${money(grand)}</span></div>`
     :`<div class="empty">Your cart is empty.<br>Tap a card, then "Add to cart".</div>`}`, 'cartsheet');
 }
@@ -610,6 +611,7 @@ function openWalk(){
       <div class="walk done"><div class="big">🎉</div><h2>${its.filter(c=>c.added).length} of ${n} added</h2>${its.some(c=>!c.added)?`<div class="sub">You skipped ${its.filter(c=>!c.added).length}. Tap the cart button again to go back to them.</div>`:""}
       <div class="sub">Your ${esc(st.name)} cart should now have everything. Finish paying on their site.</div>
       ${home?`<a class="btn block" href="${esc(home)}/cart" target="_blank" rel="noopener" style="text-decoration:none">${I.ext} Go to ${esc(st.name)} checkout</a>`:''}
+      <button class="btn ghost block" style="margin-top:10px" data-act="bought" data-s="${st.id}">✓ I paid, clear these from Card Hunt</button>
       <button class="btn ghost block" style="margin-top:10px" data-act="cart">Back to my cart</button></div>`,'cartsheet');
   }
   const c=its[walk.i];
@@ -681,6 +683,8 @@ document.addEventListener('click', e=>{
       if(!st.deck){ const first=its.findIndex(c=>!c.added); walk={store:st.id, i:first<0?0:first}; openWalk(); break; }
       if(st.deck){ const m=new Map(); for(const c of its){const n=c.name||c.title; m.set(n,(m.get(n)||0)+c.qty)} openUrls([deckUrl(st,[...m].map(([name,qty])=>({name,qty})))]); }
       else openUrls(its.map(c=>c.url)); break; }
+    case 'bought': { const st=SBY[el.dataset.s]; const gone=S.cart.filter(c=>c.store===st.id); if(!confirm(`Clear ${gone.length} item${gone.length===1?'':'s'} from ${st.name}? Do this once you've paid on their site.`)) break;
+      S.cart=S.cart.filter(c=>c.store!==st.id); save('cart'); walk=null; openCart(); render(); toast(`${st.name} cleared`); break; }
     case 'walkopen': { const c=walkItems()[walk.i]; c.opened=true; save('cart'); setTimeout(openWalk,300); break; }
     case 'walknext': { const c=walkItems()[walk.i]; c.added=true; save('cart'); walk.i++; openWalk(); break; }
     case 'walkskip': walk.i++; openWalk(); break;
