@@ -284,7 +284,7 @@ def mark_mats():
     return {
         'back': mat('BackCard', LAV2, 0.4, coat=0.3),
         'card': mat('Card', WHITE, 0.35, coat=0.4),
-        'art': mat('Art', LAV, 0.4),
+        'art': mat('Art', lin('c9bdff'), 0.4),
         'ring': mat('Ring', WHITE, 0.2, coat=0.6),
         'lens': mat('Lens', ACCENT, 0.15, coat=0.8),
     }
@@ -340,8 +340,8 @@ def build_icon():
         m.scale = (scale, scale, scale)
         m.location = (-0.06 * scale / 0.62, 0.04, 0.02)
         camera((0, 0, 12), (0, 0, 0), ortho=2.04)
-        area('Key', (-4, 5, 8), 2200, 5)
-        area('Fill', (5, -4, 6), 500, 6)
+        area('Key', (-4, 5, 8), 900, 5)
+        area('Fill', (5, -4, 6), 220, 6)
         render(os.path.join(OUT, name))
         if name == 'icon-1024.png':
             save_blend('icon.blend')
