@@ -43,7 +43,7 @@ svg{display:block}
 /* search pill */
 .top{position:sticky;top:0;z-index:15;background:var(--bg);padding:8px 0 6px;margin:0 -16px;padding-left:16px;padding-right:16px;display:flex;gap:10px;align-items:center}
 .top .pill{flex:1;min-width:0}
-.themebtn{flex:none;height:52px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;gap:6px;padding:0 14px;font-size:14px;font-weight:600;color:var(--text)}
+
 .pill{display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:999px;padding:0 14px;height:52px;position:relative}
 .pill input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:18px}
 .pill input::-webkit-search-cancel-button,.pill input::-webkit-search-decoration{-webkit-appearance:none;display:none}
@@ -98,7 +98,7 @@ svg{display:block}
 /* horizontal rail */
 .rail{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 4px}
 .rail::-webkit-scrollbar{display:none}
-.rail .p{flex:none;width:150px}
+.rail .p{flex:none;width:132px}
 .rail .p .img{border-radius:22px}
 .rail .heart{width:38px;height:38px;right:8px;bottom:8px}
 
@@ -151,6 +151,26 @@ svg{display:block}
 .skel.t{aspect-ratio:auto;height:14px;border-radius:7px;margin-top:10px;width:70%}
 @keyframes pulse{50%{opacity:.45}}
 .note{color:var(--muted);font-size:13px;margin-top:18px}
+.hello{display:flex;align-items:center;gap:8px;padding:14px 0 2px}
+.hello>div{flex:1;min-width:0}
+.hello h1{margin:0;font-size:30px;letter-spacing:-.03em;line-height:1.1}
+.hello p{margin:2px 0 0;color:var(--muted);font-size:15px}
+.iconbtn{position:relative;width:44px;height:44px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--text);flex:none}
+.iconbtn.on{color:var(--accent)}
+.iconbtn i{position:absolute;top:9px;right:9px;width:9px;height:9px;border-radius:50%;background:var(--ok);border:2px solid var(--surface-2)}
+.recent{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:4px -16px 0;padding:6px 16px 2px}
+.recent::-webkit-scrollbar{display:none}
+.recent .chip{height:38px;font-size:14px;padding:0 14px}
+.recent .chip.clear{padding:0;width:38px;justify-content:center;color:var(--muted)}
+.promo{display:flex;align-items:center;gap:14px;width:100%;text-align:left;margin-top:18px;padding:16px;border-radius:22px;background:var(--accent);color:var(--accent-text)}
+.promo .ic{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:none}
+.promo .ic svg{width:24px;height:24px}
+.promo .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.promo b{font-size:17px}
+.promo .grow span{font-size:14px;opacity:.85}
+.promo.soft{background:var(--surface);color:var(--text);border:1.5px solid var(--line)}
+.promo.soft .ic{background:var(--surface-2);color:var(--accent)}
+.promo.soft .grow span{color:var(--muted);opacity:1}
 .row>svg{color:var(--muted);flex:none}
 .syncs .code{font:700 20px/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em;background:var(--surface-2);border-radius:16px;padding:16px;text-align:center;margin:10px 0 4px;word-break:break-all;user-select:all}
 .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -505,7 +525,7 @@ function searchPill(value, ph='Search cards or products'){
     <input id="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="${esc(ph)}" value="${esc(value)}">
     <button class="x${value?'':' hidden'}" data-act="clearq" title="Clear">${I.x}</button>
     <div class="suggest hidden" id="sug"></div></div>
-    ${route.name==='home'||(route.name==='search'&&!value)?`<button class="themebtn" data-act="theme" title="Change light or dark mode">${themeIcon()}<span>${{auto:'Auto',light:'Light',dark:'Dark'}[S.theme]}</span></button>`:''}</div>`;
+    </div>`;
 }
 function listStack(l){
   const imgs=l.items.slice(0,4).map(i=>`<img alt="" loading="lazy" src="${esc(scry(i.name))}">`).join('');
@@ -515,19 +535,20 @@ const countCards = l => l.items.reduce((a,i)=>a+i.qty,0);
 
 // ---------- views ----------
 function viewHome(){
-  return `${searchPill('')}
+  const sm=w=>w.replace(/width="\d+" height="\d+"/,'width="22" height="22"');
+  const recent=S.searches.slice(0,8);
+  return `<header class="hello">
+      <div><h1>Card Hunt</h1><p>5 Canadian stores, one search</p></div>
+      <button class="iconbtn${SY?' on':''}" data-act="sync" title="Sync across devices" aria-label="Sync across devices">${sm(I.cloud)}${SY?'<i></i>':''}</button>
+      <button class="iconbtn" data-act="theme" title="Light or dark mode: ${({auto:'follows device',light:'light',dark:'dark'})[S.theme]}" aria-label="Change light or dark mode">${themeIcon()}</button>
+    </header>
+    ${searchPill('')}
+    ${recent.length?`<div class="recent">${recent.map(x=>`<button class="chip" data-act="q" data-q="${esc(x.q)}">${esc(x.q)}</button>`).join('')}<button class="chip clear" data-act="clearhist" aria-label="Clear recent searches">${I.x}</button></div>`
+      :`<div class="recent">${['Sol Ring','Lightning Bolt','Rhystic Study','Commander deck'].map(q=>`<button class="chip" data-act="q" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
+    <button class="promo" data-act="multi"><span class="ic">${I.grid}</span><span class="grow"><b>Price a whole decklist</b><span>Paste your list and see every card at all 5 stores</span></span>${I.chev}</button>
     ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2></div><div class="rail">${S.viewed.slice(0,15).map(o=>tile(o,{badge:true})).join('')}</div>`:''}
-    <button class="btn ghost block" style="margin-top:8px" data-act="multi">${I.grid.replace('width="26" height="26"','width="18" height="18"')} Search a list of cards</button>
-    <div class="rows" style="margin-top:6px">
-      <button class="row" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><div class="t">Sync across devices</div><div class="s" id="syncstatus">${esc(syncLabel())}</div></span>${I.chev}</button>
-      ${installEvt&&!standalone()?`<button class="row" data-act="install"><span class="ic">${I.phone}</span><span class="grow"><div class="t">Install the app</div><div class="s">Open Card Hunt from your home screen or taskbar</div></span>${I.chev}</button>`:''}
-    </div>
-    <div class="h"><h2>Keep shopping</h2>${S.searches.length?'<button class="right" data-act="clearhist">Clear</button>':''}</div>
-    <div class="rows">
-      ${S.searches.length?S.searches.slice(0,8).map(s=>`<button class="row" data-act="q" data-q="${esc(s.q)}"><span class="ic">${I.chat}</span><span class="grow"><div class="t">${esc(s.q)}</div><div class="s">${esc(ago(s.at))}</div></span></button>`).join('')
-        :`<div class="empty">Search any card or product to compare all 5 stores. Try "Lightning Bolt".</div>`}
-    </div>
-    <p class="note">Prices come from each store's website. Each one is the range across conditions, and you pick the condition on the store's page.</p>`;
+    ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use Card Hunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
+    ${installEvt&&!standalone()?`<button class="promo soft" data-act="install"><span class="ic">${I.phone}</span><span class="grow"><b>Install the app</b><span>Open Card Hunt from your home screen or taskbar</span></span>${I.chev}</button>`:''}`;
 }
 function viewSearch(){
   if(!searchQ) return viewHome();
