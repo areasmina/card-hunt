@@ -12,7 +12,7 @@ const STORES = {
 };
 const OTHER_GAMES = /pok[eé]mon|yu-?gi-?oh|lorcana|one piece|flesh and blood|digimon|dragon ball|star wars unlimited/i;
 const UA = 'Mozilla/5.0 (compatible; CardHunt/1.0; +https://areasmina.github.io/card-hunt/)';
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, OPTIONS' };
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' };
 
 const norm = s => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
@@ -55,11 +55,35 @@ async function searchStore(id, q) {
   });
 }
 
+// Sync: a device keeps a random secret code; the saved data is stored in KV under a hash of it.
+// GET /sync/<code> -> {at, data} or 404. PUT /sync/<code> with {at, data} stores it.
+async function sync(req, env, code) {
+  if (!/^[a-z0-9]{16,64}$/.test(code)) return Response.json({ error: 'bad code' }, { status: 400, headers: CORS });
+  if (!env.SYNC) return Response.json({ error: 'sync storage not set up' }, { status: 503, headers: CORS });
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cardhunt:' + code));
+  const key = 'u:' + [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, '0')).join('');
+  const nc = { ...CORS, 'Cache-Control': 'no-store' };
+  if (req.method === 'GET') {
+    const v = await env.SYNC.get(key);
+    return v ? new Response(v, { headers: { ...nc, 'Content-Type': 'application/json' } }) : Response.json({ error: 'not found' }, { status: 404, headers: nc });
+  }
+  if (req.method === 'PUT') {
+    const body = await req.text();
+    if (body.length > 1_000_000) return Response.json({ error: 'too big' }, { status: 413, headers: nc });
+    let j; try { j = JSON.parse(body); } catch { return Response.json({ error: 'bad json' }, { status: 400, headers: nc }); }
+    if (typeof j.at !== 'number' || typeof j.data !== 'object') return Response.json({ error: 'bad shape' }, { status: 400, headers: nc });
+    await env.SYNC.put(key, body);
+    return Response.json({ ok: true, at: j.at }, { headers: nc });
+  }
+  return new Response('Method not allowed', { status: 405, headers: nc });
+}
+
 export default {
   async fetch(req, env, ctx) {
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
     const url = new URL(req.url);
     if (url.pathname === '/') return new Response('Card Hunt helper is running. Try /search?q=Lightning+Bolt', { headers: CORS });
+    if (url.pathname.startsWith('/sync/')) return sync(req, env, url.pathname.slice(6));
     if (url.pathname !== '/search') return new Response('Not found', { status: 404, headers: CORS });
 
     const q = (url.searchParams.get('q') || '').trim().slice(0, 120);

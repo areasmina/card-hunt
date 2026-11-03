@@ -6,6 +6,13 @@
 <meta name="theme-color" content="#f6f6f8">
 <script>try{var t=JSON.parse(localStorage.getItem('cardhunt2.theme')||'"auto"');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 <title>Card Hunt</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Card Hunt">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="description" content="Search five Canadian MTG stores at once, save favorites, wishlists and decks.">
 <style>
 :root{
@@ -144,6 +151,8 @@ svg{display:block}
 .skel.t{aspect-ratio:auto;height:14px;border-radius:7px;margin-top:10px;width:70%}
 @keyframes pulse{50%{opacity:.45}}
 .note{color:var(--muted);font-size:13px;margin-top:18px}
+.row>svg{color:var(--muted);flex:none}
+.syncs .code{font:700 20px/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em;background:var(--surface-2);border-radius:16px;padding:16px;text-align:center;margin:10px 0 4px;word-break:break-all;user-select:all}
 .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .links a{font-size:13px;text-decoration:none;background:var(--surface-2);border-radius:999px;padding:6px 11px}
 
@@ -265,6 +274,8 @@ const I = {
   plus:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   minus:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg>',
   ship:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 7V5.5a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 1 16 5.5V7"/></svg>',
+  cloud:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.4 9.1 4.7 4.7 0 0 0 7 18.5z"/><path d="m9.5 13.5 2 2 3.5-3.5"/></svg>',
+  phone:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="6.5" y="2.5" width="11" height="19" rx="3"/><path d="M12 7v7m-3-3 3 3 3-3"/></svg>',
   ext:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>',
 };
 $id('nav-home').innerHTML=I.home; $id('nav-saved').innerHTML=I.heart; $id('nav-lists').innerHTML=I.grid;
@@ -314,7 +325,98 @@ if(!S.lists){
   S.lists=[{id:'wish',name:'Wishlist',items:parseList(old||''),at:Date.now()}];
   LS.set('lists',S.lists);
 }
-const save = k => { LS.set(k, S[k]); if(k==='lists') LS.set('temp', S.temp); };
+const save = k => { LS.set(k, S[k]); if(k==='lists') LS.set('temp', S.temp); if(SYNCED.includes(k)) markDirty(); };
+// ---------- sync across devices ----------
+// Each person gets a secret sync code. Every device that has the code shares the same favorites, lists and cart.
+const SYNCED=['favs','cart','viewed','searches','lists','temp'];
+let SY=LS.get('sync',null);            // {code, at (last server version we have), dirty}
+let syncState='idle', syncT=null, syncBusy=false;
+const ALPH='abcdefghjkmnpqrstuvwxyz23456789';
+const newCode=()=>[...crypto.getRandomValues(new Uint8Array(20))].map(b=>ALPH[b%ALPH.length]).join('');
+const cleanCode=c=>String(c||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const prettyCode=c=>c.match(/.{1,4}/g).join('-');
+const syncLink=c=>`${location.origin}${location.pathname}#sync/${c}`;
+const snapshot=()=>Object.fromEntries(SYNCED.map(k=>[k,S[k]]));
+const saveSY=()=>LS.set('sync',SY);
+function markDirty(){ if(!SY) return; SY.dirty=true; saveSY(); clearTimeout(syncT); syncT=setTimeout(syncNow,3000); }
+function unionBy(a,b,key,pick){ const m=new Map(); for(const x of [...(a||[]),...(b||[])]){ const k=key(x); m.set(k, m.has(k)?(pick?pick(m.get(k),x):m.get(k)):x); } return [...m.values()]; }
+function mergeItems(a,b){ return unionBy(a,b,i=>i.name.toLowerCase(),(x,y)=>({...x,qty:Math.max(x.qty,y.qty)})); }
+function mergeData(a,b){ // a = this device, b = the cloud; nothing is lost from either side
+  return {
+    favs: unionBy(a.favs,b.favs,o=>o.url),
+    cart: unionBy(a.cart,b.cart,o=>o.url,(x,y)=>({...x,qty:Math.max(x.qty,y.qty),added:x.added||y.added})),
+    viewed: unionBy(a.viewed,b.viewed,o=>o.url).slice(0,30),
+    searches: unionBy(a.searches,b.searches,x=>x.q.toLowerCase(),(x,y)=>x.at>y.at?x:y).sort((x,y)=>y.at-x.at).slice(0,20),
+    lists: unionBy(a.lists,b.lists,l=>l.id,(x,y)=>({...((x.at||0)>=(y.at||0)?x:y),items:mergeItems(x.items,y.items)})),
+    temp: {...(a.temp||b.temp||{id:'temp',name:'Card list'}), items:mergeItems(a.temp&&a.temp.items,b.temp&&b.temp.items)},
+  };
+}
+function applyData(d){
+  for(const k of SYNCED) if(d[k]!=null){ S[k]=d[k]; LS.set(k,S[k]); }
+  if(!Array.isArray(S.lists)||!S.lists.length){ S.lists=[{id:'wish',name:'Wishlist',items:[],at:Date.now()}]; LS.set('lists',S.lists); }
+}
+async function cloudGet(code){ const r=await fetch(`${API}/sync/${code}`,{cache:'no-store'}); if(r.status===404) return null; if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
+async function cloudPut(code,data,keepalive){ const at=Date.now(); const r=await fetch(`${API}/sync/${code}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({at,data}),keepalive:!!keepalive}); if(!r.ok) throw new Error('HTTP '+r.status); return at; }
+function setSyncState(st){ syncState=st; const el=$id('syncstatus'); if(el) el.textContent=syncLabel(); }
+function syncLabel(){
+  if(!SY) return 'Off. Turn on to see your cards on every device';
+  if(syncState==='busy') return 'Syncing…';
+  if(syncState==='err') return "Couldn't sync, will retry";
+  return SY.at?`On, synced ${ago(SY.at).toLowerCase()}`:'On';
+}
+// Pull the cloud copy; if this device also changed, merge both; then push if anything is new here.
+async function syncNow(){
+  if(!SY) return; if(syncBusy){ clearTimeout(syncT); syncT=setTimeout(syncNow,2000); return; } syncBusy=true; clearTimeout(syncT); setSyncState('busy');
+  try{
+    const remote=await cloudGet(SY.code); let changed=false;
+    if(remote && remote.at>(SY.at||0)){
+      applyData(SY.dirty?mergeData(snapshot(),remote.data):remote.data); SY.at=remote.at; changed=true;
+      if(!SY.dirty) saveSY();
+    }
+    if(SY.dirty||!remote){ SY.dirty=false; saveSY(); try{ SY.at=await cloudPut(SY.code,snapshot()); }catch(e){ SY.dirty=true; throw e; } }
+    saveSY(); setSyncState('ok');
+    if(changed){ render(); if($id('sheet').querySelector('.cartsheet')) openCart(); }
+  }catch(e){ setSyncState('err'); clearTimeout(syncT); syncT=setTimeout(syncNow,30000); }
+  finally{ syncBusy=false; }
+}
+async function turnOnSync(){
+  SY={code:newCode(),at:0,dirty:true}; saveSY(); await syncNow();
+  if(syncState==='err'){ SY=null; LS.set('sync',null); toast("Couldn't reach the sync service. Try again"); } else toast('Sync is on');
+  openSync();
+}
+async function linkCode(raw){
+  const code=cleanCode(raw); if(code.length<16){ toast("That doesn't look like a sync code"); return; }
+  setSyncState('busy');
+  let remote; try{ remote=await cloudGet(code); }catch(e){ setSyncState('err'); toast("Couldn't reach the sync service. Try again"); return; }
+  if(!remote){ setSyncState('idle'); toast("We couldn't find that sync code"); return; }
+  applyData(mergeData(snapshot(),remote.data)); SY={code,at:remote.at,dirty:true}; saveSY();
+  await syncNow(); render(); toast('This device is synced'); openSync();
+}
+function openSync(){
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(!SY){ sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
+    <div class="h" style="margin-top:4px"><h2>Sync across devices</h2></div>
+    <p class="sub">Right now your favorites, lists and cart are saved in this browser only. Turn on sync to see them on your phone, computer and any browser.</p>
+    <button class="btn block" data-act="syncon">${I.cloud.replace('width="26" height="26"','width="20" height="20"')} Turn on sync</button>
+    <div class="sub" style="margin:22px 0 4px">Already turned it on somewhere else? Enter that sync code:</div>
+    <div class="field"><input id="synccode" placeholder="xxxx-xxxx-xxxx-xxxx-xxxx" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn" data-act="synclink">Link</button></div>
+    <p class="note">No account or password. Your sync code is the key, so only share it with your own devices.</p></div>`); return; }
+  sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
+    <div class="h" style="margin-top:4px"><h2>Sync across devices</h2></div>
+    <p class="sub" id="syncstatus">${esc(syncLabel())}</p>
+    <div class="sub" style="margin-top:16px">To add another device, open this link on it, or type the code there:</div>
+    <div class="code">${esc(prettyCode(SY.code))}</div>
+    <div class="actions"><button class="btn" data-act="synccopy">Copy link</button>${navigator.share?'<button class="btn ghost" data-act="syncshare">Share</button>':''}<button class="btn ghost" data-act="syncnow">Sync now</button></div>
+    <p class="note">Everything you save syncs on its own. Only share this code with your own devices, because anyone with it can see and change your lists.${ios?' On iPhone, an app you add to the home screen keeps its own copy, so link it with this code too.':''}</p>
+    <button class="btn ghost block" style="margin-top:22px" data-act="syncoff">Turn off sync on this device</button></div>`);
+}
+// ---------- install as an app ----------
+let installEvt=null;
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); installEvt=e; if(route&&route.name==='home') render(); });
+addEventListener('appinstalled',()=>{ installEvt=null; toast('Card Hunt is installed'); render(); });
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+
 const OFFERS = {};                     // url -> offer (everything seen this session)
 const DATA = {};                       // lower name -> {state, offers}
 const remember = o => (OFFERS[o.url]=o, o);
@@ -416,6 +518,10 @@ function viewHome(){
   return `${searchPill('')}
     ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2></div><div class="rail">${S.viewed.slice(0,15).map(o=>tile(o,{badge:true})).join('')}</div>`:''}
     <button class="btn ghost block" style="margin-top:8px" data-act="multi">${I.grid.replace('width="26" height="26"','width="18" height="18"')} Search a list of cards</button>
+    <div class="rows" style="margin-top:6px">
+      <button class="row" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><div class="t">Sync across devices</div><div class="s" id="syncstatus">${esc(syncLabel())}</div></span>${I.chev}</button>
+      ${installEvt&&!standalone()?`<button class="row" data-act="install"><span class="ic">${I.phone}</span><span class="grow"><div class="t">Install the app</div><div class="s">Open Card Hunt from your home screen or taskbar</div></span>${I.chev}</button>`:''}
+    </div>
     <div class="h"><h2>Keep shopping</h2>${S.searches.length?'<button class="right" data-act="clearhist">Clear</button>':''}</div>
     <div class="rows">
       ${S.searches.length?S.searches.slice(0,8).map(s=>`<button class="row" data-act="q" data-q="${esc(s.q)}"><span class="ic">${I.chat}</span><span class="grow"><div class="t">${esc(s.q)}</div><div class="s">${esc(ago(s.at))}</div></span></button>`).join('')
@@ -689,6 +795,14 @@ document.addEventListener('click', e=>{
     case 'walknext': { const c=walkItems()[walk.i]; c.added=true; save('cart'); walk.i++; openWalk(); break; }
     case 'walkskip': walk.i++; openWalk(); break;
     case 'walkback': walk.i=Math.max(0,walk.i-1); openWalk(); break;
+    case 'sync': openSync(); break;
+    case 'syncon': turnOnSync(); break;
+    case 'synclink': linkCode($id('synccode').value); break;
+    case 'synccopy': { const u=syncLink(SY.code); (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copied'),()=>prompt('Copy this link',u)); break; }
+    case 'syncshare': navigator.share({title:'Card Hunt sync',url:syncLink(SY.code)}).catch(()=>{}); break;
+    case 'syncnow': syncNow().then(()=>toast(syncState==='ok'?'Synced':"Couldn't sync")); break;
+    case 'syncoff': if(confirm('Turn off sync on this device? Your saved cards stay here, and your other devices keep their copy.')){ SY=null; LS.set('sync',null); closeSheet(); render(); toast('Sync is off on this device'); } break;
+    case 'install': if(installEvt){ installEvt.prompt(); installEvt.userChoice.finally(()=>{installEvt=null; render();}); } break;
     case 'senddeck': { const st=SBY[el.dataset.s]; openUrls([deckUrl(st, curList().items)]); break; }
   }
 });
@@ -698,11 +812,19 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').inner
 (function boot(){
   applyTheme();
   const h=decodeURIComponent(location.hash.slice(1));
+  if(h.startsWith('sync/')){ const c=cleanCode(h.slice(5)); history.replaceState(null,'',location.pathname); route={name:'home'}; render();
+    if(SY&&SY.code===c) toast('This device is already synced');
+    else if(confirm(SY?'Switch this device to the other sync code? What you saved here is kept and added to it.':'Sync this device? What you saved here is kept and added to your other devices.')) linkCode(c);
+    return; }
   if(h.startsWith('list/')) route={name:'list',id:h.slice(5)};
   else if(h.startsWith('search/')){ searchQ=h.slice(7); route={name:'search'}; fetchCard(searchQ); }
   else if(['saved','lists'].includes(h)) route={name:h};
   render();
 })();
+if(SY) syncNow();
+document.addEventListener('visibilitychange',()=>{ if(!SY) return; if(document.visibilityState==='visible') syncNow();
+  else if(SY.dirty){ clearTimeout(syncT); SY.dirty=false; saveSY(); cloudPut(SY.code,snapshot(),true).then(at=>{SY.at=at;saveSY()},()=>{SY.dirty=true;saveSY()}); } });
+setInterval(()=>{ if(SY&&document.visibilityState==='visible') syncNow(); }, 60000);
 </script>
 </body>
 </html>
