@@ -462,6 +462,11 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 @keyframes pop{0%{transform:scale(.88)}55%{transform:scale(1.07)}100%{transform:scale(1)}}
 .chip{transition:background .18s,color .18s,border-color .18s,transform .12s}
 @media (prefers-reduced-motion: reduce){.pop{animation:none}}
+
+.okpill{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok);font-size:12px;font-weight:700;vertical-align:2px}
+.chev2{color:var(--muted);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.row.open .chev2{transform:rotate(90deg)}
+.deckbox{padding:0 0 10px}
 </style>
 </head>
 <body>
@@ -494,7 +499,7 @@ let STORES=[], SBY={};
 function rebuildStores(){
   const mine=(S.myStores||[]).map((m,i)=>({id:'x:'+m.host, name:m.name, host:m.host, deck:m.deck||undefined, logo:m.logo||`https://www.google.com/s2/favicons?domain=${m.host}&sz=128`, custom:true, color:PALETTE[i%PALETTE.length],
     url:q=>`https://${m.host}/search?q=${enc(q)}`}));
-  STORES=[...BUILTIN,...mine]; SBY=Object.fromEntries(STORES.map(s=>[s.id,s]));
+  STORES=[...BUILTIN,...mine].map(st=>{ const ov=(S.deckOv||{})[st.id]; return ov===undefined||st.custom?st:{...st,deck:ov||undefined}; }); SBY=Object.fromEntries(STORES.map(s=>[s.id,s]));
 }
 // Mana Lounge and Players have a deck-list page that adds cards straight to their own cart.
 function deckUrl(store, items){ return store.deck + '?game=mtg&' + items.map(i=>'cards='+encodeURIComponent(`${i.qty} ${i.name}`)).join('&'); }
@@ -577,7 +582,8 @@ const S = {
   prefs: LS.get('prefs', {off:[], inStock:true, foil:false, sort:'low'}),
   theme: LS.get('theme', 'auto'),
   temp: LS.get('temp', {id:'temp', name:'Card list', items:[]}),   // the quick multi-card search
-  myStores: LS.get('myStores', []),   // {host, name, deck}
+  myStores: LS.get('myStores', []),
+  deckOv: LS.get('deckOv', {}),        // deck list links set by hand for built-in stores ('' = none)   // {host, name, deck}
 };
 rebuildStores();
 if(!S.lists){
@@ -589,7 +595,7 @@ if(!S.lists){
 const save = k => { LS.set(k, S[k]); if(k==='lists') LS.set('temp', S.temp); if(SYNCED.includes(k)) markDirty(); };
 // ---------- sync across devices ----------
 // Each person gets a secret sync code. Every device that has the code shares the same favorites, lists and cart.
-const SYNCED=['favs','cart','viewed','searches','lists','temp','myStores'];
+const SYNCED=['favs','cart','viewed','searches','lists','temp','myStores','deckOv'];
 let SY=LS.get('sync',null);            // {code, at (last server version we have), dirty}
 let syncState='idle', syncT=null, syncBusy=false;
 const ALPH='abcdefghjkmnpqrstuvwxyz23456789';
@@ -606,10 +612,11 @@ function mergeData(a,b){ // a = this device, b = the cloud; nothing is lost from
   return {
     favs: unionBy(a.favs,b.favs,o=>o.url),
     cart: unionBy(a.cart,b.cart,o=>o.url,(x,y)=>({...x,qty:Math.max(x.qty,y.qty),added:x.added||y.added})),
-    viewed: unionBy(a.viewed,b.viewed,o=>o.url).slice(0,30),
+    viewed: unionBy(a.viewed,b.viewed,o=>o.url).sort((x,y)=>(y.at||0)-(x.at||0)).slice(0,60),
     searches: unionBy(a.searches,b.searches,x=>x.q.toLowerCase(),(x,y)=>x.at>y.at?x:y).sort((x,y)=>y.at-x.at).slice(0,20),
     lists: unionBy(a.lists,b.lists,l=>l.id,(x,y)=>({...((x.at||0)>=(y.at||0)?x:y),items:mergeItems(x.items,y.items)})),
     myStores: unionBy(a.myStores,b.myStores,x=>x.host),
+    deckOv: {...(b.deckOv||{}),...(a.deckOv||{})},
     temp: {...(a.temp||b.temp||{id:'temp',name:'Card list'}), items:mergeItems(a.temp&&a.temp.items,b.temp&&b.temp.items)},
   };
 }
@@ -666,11 +673,12 @@ function openStore(st){
     ${here?'':`<button class="sicard silink" data-act="gostore" data-s="${esc(st.id)}"><span>Open store page in Card Hunt</span>${I.chev.replace('width="16" height="16"','width="20" height="20"')}</button>`}
     <div class="sicard"><h3>In Card Hunt</h3>
       <button class="row" data-act="storetoggle" data-s="${esc(st.id)}"><span class="grow"><div class="t">Include in searches</div><div class="s">${on?'Card Hunt checks this store every time you search':'Skipped when you search'}</div></span><span class="switch${on?' on':''}"><i></i></span></button>
-      <div class="row" style="cursor:default"><span class="grow"><div class="t">Checking out</div><div class="s">${st.deck?'Has a deck list page, so Card Hunt can send your whole cart there in one tap':'Card Hunt walks you through adding each card to its cart'}</div></span></div>
+      <button class="row" data-act="deckedit" aria-expanded="false"><span class="grow"><div class="t">Checking out ${st.deck?'<span class="okpill">One tap</span>':''}</div><div class="s">${st.deck?'Sends your whole cart to the store\'s deck list page. Tap to change it':'One card at a time. Tap to add the store\'s deck list page and send your whole cart in one tap'}</div></span><span class="chev2">${I.chev}</span></button>
+      <div class="deckbox hidden" id="deckbox"><div class="sub" style="margin:4px 0 0">Find the store's deck list, multi-card search or "deck builder" page on their site and paste its link here. It usually looks like …/pages/deck-list.</div>
+        <div class="field"><input id="decklink" placeholder="https://…/pages/deck-list" value="${esc(st.deck||'')}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn" data-act="savedeck" data-s="${esc(st.id)}">Save</button></div>
+        <div class="actions" style="margin:0">${st.host?`<a class="btn ghost small" href="https://${esc(st.host)}/search?q=deck" target="_blank" rel="noopener">${I.search.replace('width="24" height="24"','width="16" height="16"')} Look on their site</a>`:''}${st.deck?`<button class="btn ghost small" data-act="deckclear" data-s="${esc(st.id)}">Remove link</button>`:''}</div></div>
       ${st.custom?`<div class="sub" style="margin:14px 0 0">Store name</div>
         <div class="field"><input id="storename" value="${esc(st.name)}" autocomplete="off"><button class="btn ghost" data-act="savename" data-s="${esc(st.id)}">Save</button></div>
-        <div class="sub" style="margin:10px 0 0">${st.deck?'Deck list page:':'Does this store have a deck list or multi-card search page? Paste its link and Card Hunt can send your whole cart there.'}</div>
-        <div class="field"><input id="decklink" placeholder="https://…/pages/deck-list" value="${esc(st.deck||'')}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn ghost" data-act="savedeck" data-s="${esc(st.id)}">Save</button></div>
         <button class="btn ghost block" data-act="removestore" data-s="${esc(st.id)}" style="color:var(--heart);margin-top:6px">${I.trash} Remove store</button>`:''}
     </div></div>`, 'storesheet');
   if(!profOf(st)) loadProfile(st).then(()=>{ const a=$id('about'); if(a&&a.dataset.s===st.id) a.innerHTML=aboutHTML(st); });
@@ -1473,9 +1481,13 @@ document.addEventListener('click', e=>{
     case 'nearsearch': nearSearch(); break;
     case 'nearadd': nearAdd(+el.dataset.i, el); break;
     case 'savename': { const st=SBY[el.dataset.s], v=$id('storename').value.trim(); if(!v) break; const m=S.myStores.find(x=>'x:'+x.host===st.id); m.name=v; save('myStores'); rebuildStores(); openStore(SBY[st.id]); render(); toast('Name saved'); break; }
+    case 'deckedit': { const bx=$id('deckbox'); const open=bx.classList.toggle('hidden'); el.setAttribute('aria-expanded',String(!open)); el.classList.toggle('open',!open); if(!open){ bounce(bx); setTimeout(()=>{ const i=$id('decklink'); if(i){ i.focus(); i.scrollIntoView({block:'center',behavior:'smooth'}); } },120); } break; }
+    case 'deckclear': $id('decklink').value=''; /* falls through */
     case 'savedeck': { const st=SBY[el.dataset.s]; const v=$id('decklink').value.trim(); let u=null;
-      if(v){ try{ u=new URL(/^https?:/i.test(v)?v:'https://'+v); }catch(e){} if(!u||!u.pathname.startsWith('/pages/')){ toast('Paste the link to a page on the store, like …/pages/deck-list'); break; } u=u.origin+u.pathname; }
-      const m=S.myStores.find(x=>'x:'+x.host===st.id); m.deck=u; save('myStores'); rebuildStores(); openStore(SBY[st.id]); render(); toast(u?'Saved. Your cart can go there in one tap':'Deck list page removed'); break; }
+      if(v){ try{ u=new URL(/^https?:/i.test(v)?v:'https://'+v); }catch(e){} if(!u||!/^\/pages\//.test(u.pathname)){ toast('Paste the link to a page on the store, like …/pages/deck-list'); break; } u=u.origin+u.pathname; }
+      if(st.custom){ const m=S.myStores.find(x=>'x:'+x.host===st.id); m.deck=u; save('myStores'); }
+      else { const b=BUILTIN.find(x=>x.id===st.id); S.deckOv={...S.deckOv}; if((u||undefined)===(b.deck||undefined)) delete S.deckOv[st.id]; else S.deckOv[st.id]=u||''; save('deckOv'); }
+      rebuildStores(); openStore(SBY[st.id]); render(); buzz(); toast(u?'Saved. Your cart can go there in one tap':'Deck list link removed. Checkout goes one card at a time'); break; }
     case 'storeadd': addStore($id('storeurl').value); break;
     case 'removestore': { const st=SBY[el.dataset.s]; if(!confirm(`Remove ${st.name} from your stores?`)) break; S.myStores=S.myStores.filter(m=>'x:'+m.host!==st.id); save('myStores'); rebuildStores(); for(const k in DATA) delete DATA[k]; closeSheet(); render(); toast(`Removed ${st.name}`); break; }
     case 'favsort': { const k=Object.keys(FAVSORT); favF.sort=k[(k.indexOf(favF.sort)+1)%k.length]; render(); break; }
