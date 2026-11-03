@@ -460,7 +460,7 @@ def build_anim():
          extrude=0.002, align='LEFT')
     text('5/5', 0.13, ink, tilt, px(W * 0 + 855, 95), extrude=0.002)
     bk = mat('BackWord', WHITE, 0.25, coat=0.6)
-    text('CARD\nHUNT', 0.42, bk, tilt, (0, 0, -(T / 2 + 0.003)), extrude=0.03, bevel=0.008,
+    text('CARD\nHUNT', 0.42, bk, tilt, (0, 0, -(T / 2 + 0.034)), extrude=0.03, bevel=0.008,
          rot=(0, 180, 0), spacing=1.05)
     # spin: one full turn over 120 frames, linear, loops cleanly
     spin.rotation_euler.z = 0
