@@ -146,7 +146,7 @@ async function nearby(url, ctx) {
   if (!data) return Response.json({ ok: false, error: "The map service is busy right now. Try again in a minute.", detail: last }, { headers: { ...CORS, 'Cache-Control': 'no-store' } });
   const seen = new Set(), stores = [];
   for (const e of data.elements) {
-    const t = e.tags || {}, name = (t.name || '').trim(); if (!name || CHAINS.test(name) || /^(Q|P)\d/.test(t.brand_wikidata || '') && !/^(games|comic)$/.test(t.shop || '')) continue;
+    const t = e.tags || {}, name = (t.name || '').trim(); if (!name || CHAINS.test(name) || /^(Q|P)\d/.test(t['brand:wikidata'] || '') && !/^(games|comic)$/.test(t.shop || '')) continue;
     const core = /^(games|hobby|comic|collector|anime)$/.test(t.shop || '');
     let web0 = t.website || t['contact:website'] || t.url || '';
     if (!core && !TCG_NAME.test(name + ' ' + web0)) continue;

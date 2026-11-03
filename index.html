@@ -327,6 +327,67 @@ a.btn{text-decoration:none}
 body:has(#sheet .cartsheet) .toast{background:#fff;color:#121214}
 body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 .toast button{color:var(--accent);font-weight:750;font-size:15px;padding:4px 2px;flex:none;filter:brightness(1.35)}
+
+/* store page */
+.shero{position:relative;margin:-12px -16px 0;min-height:300px;padding:calc(10px + env(safe-area-inset-top)) 16px 22px;display:flex;flex-direction:column;justify-content:space-between;background-size:cover;background-position:center;color:#fff;border-radius:0 0 28px 28px;overflow:hidden}
+@media (min-width:792px){.shero{margin:0 0 0;border-radius:28px}}
+.shnav{display:flex;align-items:center}
+.glass{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.38);color:#fff;display:flex;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.shin{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:70px}
+.shin .logo{width:76px;height:76px;border-radius:22px;font-size:30px;box-shadow:0 6px 20px rgba(0,0,0,.35);overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
+.shin .logo,.abhero .logo{position:relative}.shin .logo img,.abhero .logo img{border-radius:0;padding:10%}
+.shin h1{margin:6px 0 0;font-size:32px;line-height:1.05;letter-spacing:-.02em;text-shadow:0 2px 14px rgba(0,0,0,.45)}
+.shmeta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px;opacity:.95;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.shmeta .b{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:999px;font-weight:600;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-shadow:none}
+.stools{position:sticky;top:0;z-index:15;background:var(--bg);margin:0 -16px;padding:14px 16px 2px}
+.stools .chips{padding-bottom:2px}
+.stools .chip svg{width:17px;height:17px}
+.stcart{display:flex;align-items:center;gap:12px;margin-top:18px;padding:14px 14px 14px 18px;border-radius:22px;background:var(--surface);box-shadow:var(--shadow)}
+.stcart .grow{flex:1;min-width:0;display:flex;flex-direction:column}
+.stcart span{color:var(--muted);font-size:14px}
+.later{color:var(--accent);font-weight:600;font-size:15px}
+.pd button.store{display:inline-flex;align-items:center;gap:4px;font-weight:600;color:var(--accent)}
+.pd button.store svg{width:13px;height:13px}
+.cfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px}
+.cfoot .later{height:40px;padding:0 14px;border-radius:999px;background:var(--sheet-2);color:var(--sheet-text);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.cfoot .later svg{width:12px;height:12px}
+/* about sheet */
+.abhero{position:relative;margin:-14px -16px 0;min-height:190px;padding:20px 16px 18px;display:flex;align-items:flex-end;gap:14px;background-size:cover;background-position:center;color:#fff;border-radius:28px 28px 0 0}
+.abhero .close{top:14px;right:14px;background:rgba(0,0,0,.38);color:#fff}
+.abhero .logo{flex:none;width:62px;height:62px;border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:24px;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.abhero h2{margin:0;font-size:24px;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.abhero div div{font-size:14px;opacity:.92;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.storesheet .body{padding-top:14px}
+.sdesc{margin:16px 0 0;font-size:16px;line-height:1.5}
+.socials{display:flex;flex-wrap:wrap;gap:8px}
+.socials a{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px 0 12px;border-radius:999px;background:var(--surface-2);text-decoration:none;font-weight:600;font-size:15px}
+.socials .si{display:flex}
+.row .ic{flex:none}
+/* add store: tabs and map */
+.seg{display:flex;background:var(--surface-2);border-radius:999px;padding:4px;gap:4px}
+.seg button{flex:1;height:42px;border-radius:999px;font-weight:600;font-size:15px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.nmapwrap{position:relative;border-radius:22px;overflow:hidden;height:min(46vh,380px);background:var(--surface-2)}
+#nmap{position:absolute;inset:0;z-index:0}
+.glass2{position:absolute;left:10px;bottom:10px;z-index:500;width:44px;height:44px;border-radius:50%;background:var(--surface);color:var(--accent);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center}
+.nrad{display:flex;align-items:center;gap:12px;margin:14px 2px}
+.nrad span{color:var(--muted);font-size:14px}
+.nrad input{flex:1;accent-color:var(--accent)}
+.nrad b{min-width:52px;text-align:right}
+.nlist .nrow{align-items:center;border-radius:16px;padding:10px 8px;margin:0 -8px}
+.nrow .num{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.nrow .s{color:var(--muted);font-size:13.5px}
+.nrow .nmsg:empty{display:none}
+.nrow .nmsg{color:var(--text)}
+.nrow .added{color:var(--ok);font-weight:650;font-size:14px;flex:none}
+.nrow .noweb{color:var(--muted);font-size:13px;flex:none}
+.nrow.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{background:color-mix(in srgb,var(--accent) 22%,transparent)}100%{background:transparent}}
+.btn.small{height:38px;padding:0 16px;font-size:14px;flex:none}
+.npin span{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#5433eb;color:#fff;font:700 12px/1 system-ui;box-shadow:0 2px 6px rgba(0,0,0,.35);border:2px solid #fff}
+.npin i{transform:rotate(45deg);font-style:normal}
+.npin.dim span{background:#8a8a94}
+.leaflet-container{font:inherit}
 </style>
 </head>
 <body>
@@ -384,6 +445,11 @@ const I = {
   ship:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 7V5.5a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 1 16 5.5V7"/></svg>',
   cloud:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.4 9.1 4.7 4.7 0 0 0 7 18.5z"/><path d="m9.5 13.5 2 2 3.5-3.5"/></svg>',
   phone:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="6.5" y="2.5" width="11" height="19" rx="3"/><path d="M12 7v7m-3-3 3 3 3-3"/></svg>',
+  back:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  info:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".6" fill="currentColor"/></svg>',
+  mail:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>',
+  pin:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+  locate:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
   ext:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>',
 };
 $id('nav-home').innerHTML=I.home; $id('nav-saved').innerHTML=I.heart; $id('nav-lists').innerHTML=I.grid;
@@ -511,20 +577,24 @@ async function linkCode(raw){
 }
 function openStore(st){
   const on=!S.prefs.off.includes(st.id);
-  sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
-    <div class="sthead">${storeLogo(st)}<div><h2>${esc(st.name)}</h2><div class="sub" style="margin:0">${esc(st.host)}</div></div></div>
+  sheet(`<div class="abhero" style="${heroStyle(st)}"><button class="close glass" data-act="close">${I.x}</button>${storeLogo(st)}<div><h2>${esc(st.name)}</h2><div>${esc(st.host||'')}</div></div></div><div class="syncs">
+    <div id="about" data-s="${esc(st.id)}">${aboutHTML(st)}</div>
+    <a class="btn block" href="${esc(storeHome(st))}" target="_blank" rel="noopener" style="margin-top:16px">Visit online store ${I.ext}</a>
+    ${route.name==='store'&&route.id===st.id?'':`<button class="btn ghost block" data-act="gostore" data-s="${esc(st.id)}" style="margin-top:10px">Open store page</button>`}
+    <div class="sub" style="margin:22px 0 4px">In Card Hunt</div>
     <button class="row" data-act="storetoggle" data-s="${esc(st.id)}"><span class="grow"><div class="t">Include in searches</div><div class="s">${on?'Card Hunt checks this store every time you search':'Skipped when you search'}</div></span><span class="switch${on?' on':''}"><i></i></span></button>
     <div class="row" style="cursor:default"><span class="grow"><div class="t">Checking out</div><div class="s">${st.deck?'Has a deck list page, so Card Hunt can send your whole cart there in one tap':'Card Hunt walks you through adding each card to its cart'}</div></span></div>
     ${st.custom?`<div class="sub" style="margin:14px 0 0">Store name</div>
       <div class="field"><input id="storename" value="${esc(st.name)}" autocomplete="off"><button class="btn ghost" data-act="savename" data-s="${esc(st.id)}">Save</button></div>`:''}
     ${st.custom?`<div class="sub" style="margin:10px 0 0">${st.deck?'Deck list page:':'Does this store have a deck list or multi-card search page? Paste its link and Card Hunt can send your whole cart there.'}</div>
       <div class="field"><input id="decklink" placeholder="https://…/pages/deck-list" value="${esc(st.deck||'')}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn ghost" data-act="savedeck" data-s="${esc(st.id)}">Save</button></div>`:''}
-    <div class="actions" style="margin-top:14px"><a class="btn" href="${esc(storeHome(st))}" target="_blank" rel="noopener">Visit store ${I.ext}</a>${st.custom?`<button class="btn ghost" data-act="removestore" data-s="${esc(st.id)}" style="color:var(--heart)">${I.trash} Remove</button>`:''}</div></div>`);
+    ${st.custom?`<button class="btn ghost block" data-act="removestore" data-s="${esc(st.id)}" style="color:var(--heart);margin-top:14px">${I.trash} Remove store</button>`:''}</div>`, 'storesheet');
+  if(!profOf(st)) loadProfile(st).then(()=>{ const a=$id('about'); if(a&&a.dataset.s===st.id){ a.innerHTML=aboutHTML(st); const h=document.querySelector('#sheet .abhero'); if(h) h.setAttribute('style',heroStyle(st)); } });
 }
 function openAddStore(msg=''){
   sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
-    <div class="h" style="margin-top:4px"><h2>Add a store</h2></div>
-    <p class="sub">Paste the store's website. Card Hunt checks that it can search it and whether it has a deck list page for sending your cart.</p>
+    <div class="h" style="margin-top:4px"><h2>Add a store</h2></div>${addTabs('link')}
+    <p class="sub" style="margin-top:12px">Paste the store's website. Card Hunt checks that it can search it and whether it has a deck list page for sending your cart.</p>
     <div class="field"><input id="storeurl" placeholder="e.g. www.yourlocalstore.ca" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn" data-act="storeadd">Add</button></div>
     <p class="sub" id="storemsg" style="margin-top:4px">${msg}</p>
     <p class="note">Works with stores built on Shopify, which most Canadian card shops use.</p></div>`);
@@ -673,6 +743,181 @@ function listStack(l){
 }
 const countCards = l => l.items.reduce((a,i)=>a+i.qty,0);
 
+// ---------- store pages ----------
+// Each store gets its own page: its banner, its logo, a search of just that store, and what you have saved there.
+// The banner, description, socials and policies come from the store's own home page through the helper, kept for 3 days.
+let PROF=LS.get('prof',{});
+const profOf = st => (st&&st.host&&PROF[st.host]&&PROF[st.host].data)||null;
+async function loadProfile(st){
+  if(!st||!st.host) return null; const p=PROF[st.host];
+  if(p&&p.data&&Date.now()-p.at<3*864e5) return p.data;
+  if(p&&!p.data&&Date.now()-p.at<5*60e3) return null;   // it failed a moment ago; don't hammer the store
+  try{ const j=await (await fetch(`${API}/profile?host=${encodeURIComponent(st.host)}`)).json();
+    PROF[st.host]=j.ok?{at:Date.now(),data:j}:{at:Date.now(),data:p&&p.data||null};
+    if(!j.ok&&p&&p.data) PROF[st.host].at=Date.now()-3*864e5+5*60e3;
+  }catch(e){ PROF[st.host]={at:Date.now(),data:p&&p.data||null}; }
+  LS.set('prof',PROF); return PROF[st.host].data;
+}
+const SDATA={};   // store searches, keyed "<store id>|<query>"
+let storeQ='', storeBack=null;
+async function storeSearch(st,q){
+  q=(q||'').trim(); storeQ=q; if(q.length<2){ render(); return; }
+  const k=st.id+'|'+q.toLowerCase(); if(SDATA[k]&&SDATA[k].state==='ok'&&Date.now()-SDATA[k].at<10*60e3){ render(); return; }
+  SDATA[k]={state:'loading'}; render();
+  try{
+    const qs=st.custom?`stores=_&extra=${encodeURIComponent(st.host)}`:`stores=${encodeURIComponent(st.id)}`;
+    const r=await fetch(`${API}/search?q=${encodeURIComponent(q)}&${qs}`); if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    const offers=(j.results||[]).filter(p=>p.store===st.id).map(p=>remember({store:p.store, storeName:p.storeName, title:p.title, name:p.name||q, set:p.set, url:p.url,
+      image:p.image, foil:!!p.foil, price:p.priceMin??0, priceMax:p.priceMax??p.priceMin??0, available:!!p.available}));
+    offers.sort((a,b)=>(b.available-a.available)||a.price-b.price);
+    SDATA[k]={state:'ok',offers,at:Date.now()};
+  }catch(e){ SDATA[k]={state:'err'}; }
+  if(route.name==='store'&&route.id===st.id) render();
+}
+function heroStyle(st){
+  const p=profOf(st), c=st.color||'#5433eb';
+  return p&&p.banner?`background-color:${c};background-image:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,.05) 35%,rgba(0,0,0,.78) 100%),url('${esc(p.banner)}')`
+    :`background-color:${c};background-image:radial-gradient(120% 90% at 85% 0%,rgba(255,255,255,.28),transparent 60%),linear-gradient(160deg,${c},#0b0b10)`;
+}
+function viewStore(){
+  const st=SBY[route.id]; if(!st) return viewHome();
+  if(!PROF[st.host]||Date.now()-PROF[st.host].at>3*864e5) loadProfile(st).then(()=>{ if(route.name==='store'&&route.id===st.id) render(); });
+  const on=!S.prefs.off.includes(st.id);
+  const mine=S.cart.filter(c=>c.store===st.id), n=mine.reduce((a,c)=>a+c.qty,0), sub=mine.reduce((a,c)=>a+c.price*c.qty,0);
+  const seen=S.viewed.filter(o=>o.store===st.id), favs=S.favs.filter(o=>o.store===st.id);
+  const d=storeQ?SDATA[st.id+'|'+storeQ.toLowerCase()]:null;
+  let results='';
+  if(storeQ){
+    if(!d||d.state==='loading') results=`<div class="grid" style="margin-top:14px">${skeletons(4)}</div>`;
+    else if(d.state==='err') results=`<div class="empty">Couldn't reach ${esc(st.name)} right now. <a href="${esc(st.url(storeQ))}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600">Search on their site</a></div>`;
+    else results=d.offers.length?`<div class="sub" style="margin-top:14px">${d.offers.length} result${d.offers.length===1?'':'s'} at ${esc(st.name)}</div><div class="grid">${d.offers.map(x=>tile(x)).join('')}</div>`
+      :`<div class="empty">${esc(st.name)} doesn't list "${esc(storeQ)}" right now.<br><button data-act="q" data-q="${esc(storeQ)}" style="color:var(--accent);font-weight:600;margin-top:8px">Check all your stores</button></div>`;
+  }
+  const sugg=[...new Set(S.searches.map(s=>s.q))].slice(0,6);
+  return `<div class="shero" style="${heroStyle(st)}">
+      <div class="shnav"><button class="glass" data-act="back" aria-label="Back">${I.back}</button><span class="grow"></span>
+        <button class="glass" data-act="storeinfo" data-s="${esc(st.id)}" aria-label="About ${esc(st.name)}">${I.info}</button></div>
+      <div class="shin">${storeLogo(st)}<h1>${esc(st.name)}</h1>
+        <div class="shmeta"><span>${esc(st.host||'')}</span>${st.deck?`<span class="b">${I.cart.replace('width="30" height="30"','width="13" height="13"')} One-tap cart</span>`:''}${on?'':'<span class="b">Skipped in searches</span>'}</div></div>
+    </div>
+    <div class="stools">
+      <div class="pill">${I.search}
+        <input id="sq" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="Search ${esc(st.name)}" value="${esc(storeQ)}">
+        <button type="button" class="x${storeQ?'':' hidden'}" data-act="sqclear" title="Clear">${I.x}</button><div class="suggest hidden" id="sug3"></div></div>
+      <div class="chips"><button class="chip" data-act="storeinfo" data-s="${esc(st.id)}">${I.info.replace('width="22" height="22"','width="17" height="17"')} About</button>
+        <a class="chip" href="${esc(storeHome(st))}" target="_blank" rel="noopener" style="text-decoration:none">${I.ext} Visit online store</a>
+        ${!storeQ?sugg.map(q=>`<button class="chip" data-act="sq" data-q="${esc(q)}">${esc(q)}</button>`).join(''):''}</div>
+    </div>
+    ${results}
+    ${!storeQ&&n?`<div class="stcart"><div class="grow"><b>${n} item${n===1?'':'s'} in your cart here</b><span>from ${money(sub)}</span></div>
+      <button class="btn" data-act="checkout" data-s="${esc(st.id)}">${st.deck?'Send to their cart':'Check out'}</button></div>
+      <button class="later" data-act="cart" style="margin:8px 4px 0">View my whole cart</button>`:''}
+    ${!storeQ&&seen.length?`<div class="h"><h2>Jump back in</h2></div><div class="rail">${seen.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
+    ${!storeQ&&favs.length?`<div class="h"><h2>Your favorites here</h2><span class="hint">${favs.length}</span></div><div class="grid">${favs.slice(0,12).map(o=>tile(o)).join('')}</div>`:''}
+    ${!storeQ&&!n&&!seen.length&&!favs.length?`<div class="empty">Search ${esc(st.name)} above to see what they have. Cards you open, save or add from here show up on this page.</div>`:''}`;
+}
+const SOCIAL={instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',youtube:'YouTube',x:'X',discord:'Discord'};
+function aboutHTML(st){
+  const p=profOf(st); if(!p) return `<div class="sub" style="margin:4px 0 14px">${st.host?'Loading store details…':''}</div>`;
+  const desc=(p.description||'').trim(); const showDesc=desc&&desc.toLowerCase()!==String(p.name||st.name).toLowerCase();
+  const soc=Object.entries(p.socials||{}).filter(([k,u])=>SOCIAL[k]&&/^https?:/.test(u));
+  return `${showDesc?`<p class="sdesc">${esc(desc)}</p>`:''}
+    ${soc.length?`<div class="sub" style="margin:16px 0 8px">Follow</div><div class="socials">${soc.map(([k,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener"><span class="si">${SOC_ICON[k]||I.ext}</span>${SOCIAL[k]}</a>`).join('')}</div>`:''}
+    ${p.email?`<div class="sub" style="margin:16px 0 4px">Contact</div><a class="row" href="mailto:${esc(p.email)}" style="text-decoration:none"><span class="ic">${I.mail}</span><span class="grow"><div class="t">${esc(p.email)}</div><div class="s">Email the store</div></span>${I.chev}</a>`:''}
+    ${p.policies&&p.policies.length?`<div class="sub" style="margin:16px 0 4px">Policies</div><div class="rows">${p.policies.map(x=>`<a class="row" href="${esc(x.url)}" target="_blank" rel="noopener" style="text-decoration:none"><span class="grow"><div class="t">${esc(x.title)}</div></span>${I.chev}</a>`).join('')}</div>`:''}`;
+}
+const SOC_ICON={
+  instagram:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
+  facebook:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5H16l.4-3h-2.9V8.6c0-.9.3-1.5 1.5-1.5h1.5V4.4c-.3 0-1.2-.1-2.2-.1-2.2 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21z"/></svg>',
+  youtube:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15V9l5.2 3z"/></svg>',
+  x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.3-8.3L2 3h6.4l4.4 5.8zm-1.1 16.2h1.7L7.4 4.7H5.6z"/></svg>',
+  tiktok:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 3c.4 2.2 1.8 3.6 4 3.8v3.1c-1.5.1-2.8-.4-4-1.2v6.2c0 3.5-2.6 6.1-6 6.1a5.9 5.9 0 0 1-6-6c0-3.6 3.1-6.3 6.8-5.9v3.2c-1.9-.4-3.6.9-3.6 2.7 0 1.6 1.2 2.8 2.8 2.8 1.7 0 2.8-1.2 2.8-3.1V3z"/></svg>',
+  discord:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.3 5.3A16 16 0 0 0 15.4 4l-.5 1a15 15 0 0 0-5.8 0l-.5-1a16 16 0 0 0-3.9 1.3C2.2 9 1.6 12.6 1.9 16.2a16 16 0 0 0 4.8 2.4l1-1.6a10 10 0 0 1-1.6-.8l.4-.3a11.4 11.4 0 0 0 11 0l.4.3-1.6.8 1 1.6a16 16 0 0 0 4.8-2.4c.4-4.2-.7-7.8-2.8-10.9zM8.7 14c-1 0-1.7-.9-1.7-2s.8-2 1.7-2 1.8.9 1.7 2c0 1.1-.8 2-1.7 2zm6.6 0c-1 0-1.7-.9-1.7-2s.8-2 1.7-2 1.8.9 1.7 2c0 1.1-.8 2-1.7 2z"/></svg>'};
+
+// ---------- find stores nearby ----------
+// A map (OpenStreetMap, through Leaflet) with a circle that stays in the middle while you move the map around.
+// "Search this area" asks the helper for game, comic and hobby shops inside the circle.
+let NEAR=LS.get('near',{lat:43.6532,lon:-79.3832,r:15,z:10}), nearMap=null, nearCircle=null, nearLayer=null, nearRes=null, nearBusy=false;
+function loadLeaflet(){
+  if(window.L) return Promise.resolve();
+  if(loadLeaflet.p) return loadLeaflet.p;
+  const css=document.createElement('link'); css.rel='stylesheet'; css.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(css);
+  return loadLeaflet.p=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    s.onload=res; s.onerror=()=>{ loadLeaflet.p=null; rej(new Error('map')); }; document.head.appendChild(s); });
+}
+function addTabs(tab){ return `<div class="seg"><button class="${tab==='link'?'on':''}" data-act="addtab" data-t="link">Paste a link</button><button class="${tab==='near'?'on':''}" data-act="addtab" data-t="near">${I.pin} Find nearby</button></div>`; }
+function openNearby(){
+  nearMap=null;
+  sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
+    <div class="h" style="margin-top:4px"><h2>Add a store</h2></div>${addTabs('near')}
+    <p class="sub" style="margin:12px 0 10px">Move the map so the circle covers your area, then search it for card and game stores.</p>
+    <div class="nmapwrap nodrag"><div id="nmap"></div><button class="glass2" data-act="nearme" aria-label="Use my location">${I.locate}</button></div>
+    <div class="nrad"><span>Circle</span><input id="nrad" type="range" min="2" max="50" step="1" value="${NEAR.r}" aria-label="Circle size in kilometres"><b id="nradv">${NEAR.r} km</b></div>
+    <button class="btn block" data-act="nearsearch" id="nearbtn">${I.search.replace('width="24" height="24"','width="20" height="20"')} Search this area</button>
+    <div id="nres">${nearListHTML()}</div>
+    <p class="note">Store locations come from OpenStreetMap, which anyone can edit, so a few shops may be missing or out of date.</p></div>`);
+  loadLeaflet().then(initMap).catch(()=>{ const m=$id('nmap'); if(m) m.innerHTML='<div class="empty">The map couldn\'t load. Check your connection and try again.</div>'; });
+}
+function initMap(){
+  const el=$id('nmap'); if(!el||el._leaflet_id) return;
+  nearMap=L.map(el,{zoomControl:false,attributionControl:true}).setView([NEAR.lat,NEAR.lon],NEAR.z||10);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(nearMap);
+  L.control.zoom({position:'bottomright'}).addTo(nearMap);
+  nearCircle=L.circle(nearMap.getCenter(),{radius:NEAR.r*1000,color:'#5433eb',weight:2,fillColor:'#5433eb',fillOpacity:.12,interactive:false}).addTo(nearMap);
+  nearLayer=L.layerGroup().addTo(nearMap);
+  const fit=()=>{ const b=nearCircle.getBounds(); if(!nearMap.getBounds().contains(b)) nearMap.fitBounds(b,{padding:[10,10]}); };
+  nearMap.on('move',()=>nearCircle.setLatLng(nearMap.getCenter()));
+  nearMap.on('moveend',()=>{ const c=nearMap.getCenter(); NEAR={...NEAR,lat:+c.lat.toFixed(5),lon:+c.lng.toFixed(5),z:nearMap.getZoom()}; LS.set('near',NEAR); });
+  nearMap.on('click',e=>nearMap.panTo(e.latlng));
+  const r=$id('nrad'); r.addEventListener('input',()=>{ NEAR.r=+r.value; $id('nradv').textContent=NEAR.r+' km'; nearCircle.setRadius(NEAR.r*1000); });
+  r.addEventListener('change',()=>{ LS.set('near',NEAR); fit(); });
+  fit(); drawMarkers();
+  if(!LS.get('nearAsked',false)){ LS.set('nearAsked',true); locateMe(true); }
+}
+function locateMe(quiet){
+  if(!navigator.geolocation){ if(!quiet) toast("This browser can't share your location"); return; }
+  navigator.geolocation.getCurrentPosition(p=>{ if(nearMap){ nearMap.setView([p.coords.latitude,p.coords.longitude],11); } },
+    ()=>{ if(!quiet) toast("Couldn't get your location. Move the map by hand instead"); },{enableHighAccuracy:false,timeout:10000,maximumAge:600000});
+}
+function km(a,b){ const R=6371, t=x=>x*Math.PI/180, dl=t(b.lat-a.lat), dn=t(b.lon-a.lon);
+  return 2*R*Math.asin(Math.sqrt(Math.sin(dl/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dn/2)**2)); }
+const hostOf = u => { try{ return new URL(u).host.toLowerCase().replace(/^www\./,''); }catch(e){ return ''; } };
+function nearListHTML(){
+  if(nearBusy) return `<div class="sub" style="margin:16px 0">Looking for stores in the circle…</div>`;
+  if(!nearRes) return '';
+  if(nearRes.error) return `<div class="empty">${esc(nearRes.error)}</div>`;
+  const list=nearRes.stores; if(!list.length) return `<div class="empty">No card or game stores found in this circle. Try a bigger circle.</div>`;
+  const mine=new Set(STORES.map(s=>(s.host||'').replace(/^www\./,'')));
+  const withWeb=list.filter(s=>s.website).length;
+  return `<div class="sub" style="margin:16px 0 6px">${list.length} store${list.length===1?'':'s'} found${withWeb<list.length?`, ${withWeb} with a website`:''}</div><div class="rows nlist">${list.map((s,i)=>{
+    const h=hostOf(s.website), added=h&&mine.has(h), d=km(nearRes.at,s);
+    return `<div class="row nrow" data-i="${i}"><span class="ic num">${i+1}</span><span class="grow"><div class="t">${esc(s.name)}</div><div class="s">${d<10?d.toFixed(1):Math.round(d)} km${s.addr?' · '+esc(s.addr):''}${h?` · ${esc(h)}`:''}</div><div class="s nmsg" id="nmsg${i}"></div></span>
+      ${added?'<span class="added">✓ Added</span>':s.website?`<button class="btn small" data-act="nearadd" data-i="${i}">Add</button>`:'<span class="noweb">No website</span>'}</div>`;}).join('')}</div>`;
+}
+function drawMarkers(){
+  if(!nearMap||!nearLayer) return; nearLayer.clearLayers(); if(!nearRes||!nearRes.stores) return;
+  nearRes.stores.forEach((s,i)=>{ L.marker([s.lat,s.lon],{icon:L.divIcon({className:'npin'+(s.website?'':' dim'),html:`<span><i>${i+1}</i></span>`,iconSize:[28,28],iconAnchor:[14,28]})})
+    .on('click',()=>{ const r=document.querySelector(`.nrow[data-i="${i}"]`); if(r){ r.scrollIntoView({behavior:'smooth',block:'center'}); r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); } })
+    .addTo(nearLayer); });
+}
+async function nearSearch(){
+  if(nearBusy) return; nearBusy=true; const c=nearMap?nearMap.getCenter():{lat:NEAR.lat,lng:NEAR.lon};
+  const at={lat:c.lat,lon:c.lng}; $id('nres').innerHTML=nearListHTML(); const b=$id('nearbtn'); if(b) b.disabled=true;
+  try{ const j=await (await fetch(`${API}/nearby?lat=${at.lat.toFixed(4)}&lon=${at.lon.toFixed(4)}&r=${NEAR.r*1000}`)).json();
+    nearRes=j.ok?{at,stores:j.stores.filter(s=>km(at,s)<=NEAR.r+0.2)}:{error:j.error||"Couldn't search this area. Try again."};
+  }catch(e){ nearRes={error:"Couldn't reach Card Hunt's helper. Try again."}; }
+  nearBusy=false; if(b) b.disabled=false; const n=$id('nres'); if(n) n.innerHTML=nearListHTML(); drawMarkers(); buzz();
+}
+async function nearAdd(i, btn){
+  const s=nearRes.stores[i], msg=$id('nmsg'+i); btn.disabled=true; btn.textContent='Checking…';
+  try{ const j=await (await fetch(`${API}/store?url=${encodeURIComponent(s.website)}`)).json();
+    if(!j.ok){ btn.disabled=false; btn.textContent='Add'; if(j.busy){ msg.textContent='The store is busy. Try again in a minute.'; } else { btn.replaceWith(Object.assign(document.createElement('span'),{className:'noweb',textContent:"Can't search"})); msg.textContent="Its website isn't a Shopify store, so Card Hunt can't search it."; } return; }
+    if(!STORES.some(x=>x.host===j.host)){ S.myStores=[...S.myStores,{host:j.host,name:j.name||s.name,deck:j.deck||null,logo:j.logo||null,v:2}]; save('myStores'); rebuildStores(); for(const k in DATA) delete DATA[k]; }
+    btn.replaceWith(Object.assign(document.createElement('span'),{className:'added',textContent:'✓ Added'})); msg.textContent=j.deck?'Added. It has a deck list page for one-tap carts.':'Added to your stores.'; buzz(); render();
+  }catch(e){ btn.disabled=false; btn.textContent='Add'; msg.textContent="Couldn't reach Card Hunt's helper. Try again."; }
+}
+
 // ---------- views ----------
 function viewHome(){
   const sm=w=>w.replace(/width="\d+" height="\d+"/,'width="22" height="22"');
@@ -687,7 +932,7 @@ function viewHome(){
       :`<div class="recent">${['Sol Ring','Lightning Bolt','Rhystic Study','Commander deck'].map(q=>`<button class="chip" data-act="q" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
     <button class="promo" data-act="multi"><span class="ic">${I.grid}</span><span class="grow"><b>Price a whole decklist</b><span>Paste your list and see every card at all ${STORES.length} stores</span></span>${I.chev}</button>
     <div class="h"><h2>Your stores</h2><span class="hint">${STORES.length-S.prefs.off.filter(id=>SBY[id]).length} of ${STORES.length} searched</span></div>
-    <div class="srail">${STORES.map(st=>`<button class="sbub${S.prefs.off.includes(st.id)?' off':''}" data-act="storeinfo" data-s="${esc(st.id)}">${storeLogo(st, st.deck?`<i title="Can fill its cart from a list">${I.cart.replace('width="30" height="30"','width="11" height="11"')}</i>`:'')}<span class="nm">${esc(st.name)}</span></button>`).join('')}
+    <div class="srail">${STORES.map(st=>`<button class="sbub${S.prefs.off.includes(st.id)?' off':''}" data-act="gostore" data-s="${esc(st.id)}">${storeLogo(st, st.deck?`<i title="Can fill its cart from a list">${I.cart.replace('width="30" height="30"','width="11" height="11"')}</i>`:'')}<span class="nm">${esc(st.name)}</span></button>`).join('')}
       <button class="sbub" data-act="addstore"><span class="logo add">${I.plus}</span><span class="nm">Add store</span></button></div>
     ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2></div><div class="rail">${S.viewed.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
     ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use Card Hunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
@@ -772,16 +1017,16 @@ function viewList(){
 function render(){
   const app=$id('app');
   const active=document.activeElement; const focusId=active&&active.id; const caret=active&&active.selectionStart;
-  const views={home:viewHome, search:viewSearch, saved:viewSaved, lists:viewLists, list:viewList};
+  const views={home:viewHome, search:viewSearch, saved:viewSaved, lists:viewLists, list:viewList, store:viewStore};
   app.innerHTML=(views[route.name]||viewHome)();
-  const tab=route.id==='temp'?'home':{home:'home',search:'home',saved:'saved',lists:'lists',list:'lists'}[route.name];
+  const tab=route.id==='temp'?'home':{home:'home',search:'home',store:'home',saved:'saved',lists:'lists',list:'lists'}[route.name];
   for(const n of ['home','saved','lists']) $id('nav-'+n).classList.toggle('on', tab===n);
   $id('cartCount').textContent=S.cart.reduce((a,c)=>a+c.qty,0);
   wireInputs();
   if(focusId&&$id(focusId)){const e=$id(focusId);e.focus();try{if(caret!=null)e.setSelectionRange(caret,caret)}catch(_){}}
 }
 function go(name, extra={}){ route={name,...extra}; if(name==='search'&&extra.q!=null) searchQ=extra.q; window.scrollTo(0,0); render(); syncHash(); }
-function syncHash(){ const h = route.name==='list'?`#list/${route.id}` : route.name==='search'&&searchQ?`#search/${encodeURIComponent(searchQ)}` : `#${route.name}`; if(location.hash!==h) history.replaceState(null,'',h); }
+function syncHash(){ const h = route.name==='list'?`#list/${route.id}` : route.name==='store'?`#store/${encodeURIComponent(route.id)}` : route.name==='search'&&searchQ?`#search/${encodeURIComponent(searchQ)}` : `#${route.name}`; if(location.hash!==h) history.replaceState(null,'',h); }
 
 // ---------- search + autocomplete ----------
 function doSearch(q){
@@ -812,6 +1057,9 @@ function wireInputs(){
     autocomplete(q,$id('sug'),v=>{q.value=v;doSearch(v)});
     q.addEventListener('input',()=>q.parentElement.querySelector('.x').classList.toggle('hidden',!q.value));
   }
+  const sq=$id('sq');
+  if(sq){ autocomplete(sq,$id('sug3'),v=>{sq.value=v;storeSearch(SBY[route.id],v)});
+    sq.addEventListener('input',()=>sq.parentElement.querySelector('.x').classList.toggle('hidden',!sq.value)); }
   const fq=$id('favq');
   if(fq) fq.addEventListener('input',()=>{ favF.q=fq.value; $id('favgrid').innerHTML=favGrid(); });
   const add=$id('addcard');
@@ -853,7 +1101,7 @@ function openProduct(o, fromCart=productFromCart){
   const c=inCart(o);
   sheet(`<div class="pd"><div class="grab"></div><button class="close" data-act="close">${I.x}</button>
     ${imgTag(o,'big')}
-    <div class="store">${esc(o.storeName)}</div><h3>${esc(o.title)}</h3>
+    ${SBY[o.store]?`<button class="store" data-act="gostore" data-s="${esc(o.store)}">${esc(o.storeName)} ${I.chev}</button>`:`<div class="store">${esc(o.storeName)}</div>`}<h3>${esc(o.title)}</h3>
     <div class="pr">${esc(priceText(o))}</div>
     <div class="st${o.available?'':' sold'}">${o.available?'In stock':'Sold out'}${o.foil?' · Foil':''}</div>
     <div class="hint">${o.priceMax>o.price+0.001?'Price depends on condition. You choose the condition on the store\'s page.':'Check the condition on the store\'s page.'}</div>
@@ -906,7 +1154,7 @@ function openCart(){
       <button class="co" data-act="checkout" data-s="${s.id}">${s.deck?`Send to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart`:`Add to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart, one by one`}</button>
       <div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} ${s.deck?'Opens the store\'s deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store\'s cart.':'Card Hunt opens each card on the store\'s site, one at a time. Add it to their cart, come back, and tap Next.'}</div>
       <div class="info">${I.ship} Each store ships and checks out separately.</div>
-      <button class="later" style="margin-top:12px" data-act="bought" data-s="${s.id}">✓ I bought these, clear them</button></div></div></div>`}).join('')
+      <div class="cfoot"><button class="later" data-act="bought" data-s="${s.id}">✓ I bought these, clear them</button><button class="later" data-act="gostore" data-s="${esc(s.id)}">Store page ${I.chev}</button></div></div></div></div>`}).join('')
       +`<div class="grandrow"><span>${picking?`Total from, ${shown.length} store${shown.length===1?'':'s'} (${shownN} item${shownN===1?'':'s'})`:'Total from, all stores'}</span><span>${money(grand)}</span></div>`
     :`<div class="empty">Your cart is empty.<br>Tap a card, then "Add to cart".</div>`}`, 'cartsheet');
 }
@@ -964,7 +1212,7 @@ function dismissSheet(){ if(backToCart()) return; productFromCart=false; closeSh
 // Swipe a panel down from the top to close it, like a native sheet.
 function dragToClose(b){
   let y0=null, dy=0;
-  b.addEventListener('touchstart',e=>{ y0=b.scrollTop<=0?e.touches[0].clientY:null; dy=0; b.style.transition='none'; },{passive:true});
+  b.addEventListener('touchstart',e=>{ y0=b.scrollTop<=0&&!e.target.closest('.nodrag')?e.touches[0].clientY:null; dy=0; b.style.transition='none'; },{passive:true});
   b.addEventListener('touchmove',e=>{ if(y0==null) return; dy=Math.max(0,e.touches[0].clientY-y0); if(dy>0) b.style.transform=`translateY(${dy}px)`; },{passive:true});
   b.addEventListener('touchend',()=>{ if(y0==null) return; y0=null; b.style.transition='';
     if(dy>110){ if(backToCart()){ b.style.transform=''; return; } b.style.transform=`translateY(${dy}px)`; closeSheet(); render(); } else b.style.transform=''; });
@@ -1037,6 +1285,14 @@ document.addEventListener('click', e=>{
     case 'storeinfo': openStore(SBY[el.dataset.s]); break;
     case 'storetoggle': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; save('prefs'); openStore(SBY[id]); render(); break; }
     case 'addstore': openAddStore(); break;
+    case 'gostore': { const id=el.dataset.s; if(!SBY[id]) break; productFromCart=false; closeSheet(); if(!(route.name==='store'&&route.id===id)){ storeBack=route.name==='store'?storeBack:{...route,q:searchQ}; storeQ=''; go('store',{id}); } buzz(); break; }
+    case 'back': { const b=storeBack||{name:'home'}; storeBack=null; storeQ=''; if(b.name==='search'&&b.q) searchQ=b.q; go(b.name,b); break; }
+    case 'sq': { const i=$id('sq'); if(i) i.value=el.dataset.q; storeSearch(SBY[route.id],el.dataset.q); break; }
+    case 'sqclear': storeQ=''; render(); setTimeout(()=>$id('sq')&&$id('sq').focus(),0); break;
+    case 'addtab': el.dataset.t==='near'?openNearby():openAddStore(); break;
+    case 'nearme': locateMe(false); break;
+    case 'nearsearch': nearSearch(); break;
+    case 'nearadd': nearAdd(+el.dataset.i, el); break;
     case 'savename': { const st=SBY[el.dataset.s], v=$id('storename').value.trim(); if(!v) break; const m=S.myStores.find(x=>'x:'+x.host===st.id); m.name=v; save('myStores'); rebuildStores(); openStore(SBY[st.id]); render(); toast('Name saved'); break; }
     case 'savedeck': { const st=SBY[el.dataset.s]; const v=$id('decklink').value.trim(); let u=null;
       if(v){ try{ u=new URL(/^https?:/i.test(v)?v:'https://'+v); }catch(e){} if(!u||!u.pathname.startsWith('/pages/')){ toast('Paste the link to a page on the store, like …/pages/deck-list'); break; } u=u.origin+u.pathname; }
@@ -1068,6 +1324,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').inner
     else if(confirm(SY?'Switch this device to the other sync code? What you saved here is kept and added to it.':'Sync this device? What you saved here is kept and added to your other devices.')) linkCode(c);
     return; }
   if(h.startsWith('list/')) route={name:'list',id:h.slice(5)};
+  else if(h.startsWith('store/')&&SBY[h.slice(6)]) route={name:'store',id:h.slice(6)};
   else if(h.startsWith('search/')){ searchQ=h.slice(7); route={name:'search'}; fetchCard(searchQ); }
   else if(['saved','lists'].includes(h)) route={name:h};
   render();
