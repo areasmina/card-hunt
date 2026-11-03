@@ -454,7 +454,7 @@ def build_anim():
     ink = mat('Ink', INK, 0.4)
     text('Card Hunt', 0.17, ink, tilt, px(90, 1400 - 117), extrude=0.002, align='LEFT')
     text('Artifact - Seeker', 0.12, ink, tilt, px(90, 507), extrude=0.002, align='LEFT')
-    text('Look through every store at once.\nKeep the cheapest copy.', 0.105, ink, tilt, px(100, 340),
+    text('Look through every store at once.\nKeep the cheapest copy.', 0.12, ink, tilt, px(100, 415),
          extrude=0.002, align='LEFT', valign='TOP')
     text('"Five shops, one search."', 0.095, mat('Flavor', lin('5b4b8a'), 0.4), tilt, px(100, 170),
          extrude=0.002, align='LEFT')
@@ -478,7 +478,7 @@ def build_anim():
                     for fc in bag.fcurves:
                         for k in fc.keyframe_points:
                             k.interpolation = 'LINEAR'
-    camera((0, -15.5, 1.2), (0, 0, 0), lens=85)
+    camera((0, -15.5, 1.2), (0, 0, 0), lens=130)
     area('Key', (-5, -7, 6), 1500, 5)
     area('Fill', (6, -6, 0), 500, 7)
     area('Rim', (0, 7, 4), 1500, 6)
