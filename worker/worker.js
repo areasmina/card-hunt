@@ -73,6 +73,55 @@ function shopifySized(u) {
 // "store.401games.ca" -> "401games" when the store's real name can't be read.
 function prettyHost(h) { const b = h.replace(/^(www|store|shop|en)\./, '').split('.')[0]; return b.charAt(0).toUpperCase() + b.slice(1); }
 
+// Read a store's home page once: name, favicon logo, a banner picture, short description, theme colour,
+// contact email and social links. Shopify sometimes rate-limits us, so retry once after a pause.
+async function readHome(host) {
+  const out = { name: '', logo: null, banner: null, description: '', color: null, email: null, socials: {} };
+  try {
+    const get = () => fetch(`https://${host}/`, { headers: { 'User-Agent': UA, Accept: 'text/html' }, redirect: 'follow' });
+    let hp = await get();
+    if (hp.status === 429) { await new Promise(r => setTimeout(r, 900)); hp = await get(); }
+    if (!hp.ok) { out.status = hp.status; return out; }
+    const t = (await hp.text()).slice(0, 600000);
+    const dec = v => v.replace(/&amp;/g, '&').replace(/&#39;|&#039;/g, "'").replace(/&quot;/g, '"').replace(/&ndash;|&mdash;/g, '-').replace(/\s+/g, ' ').trim();
+    const abs = u => { try { const x = new URL(dec(u).replace(/^\/\//, 'https://'), `https://${host}/`); if (x.protocol === 'http:') x.protocol = 'https:'; return x.href; } catch { return null; } };
+    const meta = (attr, key) => { const m = t.match(new RegExp(`<meta[^>]+${attr}=["']${key}["'][^>]*content=["']([^"']*)["']`, 'i')) || t.match(new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]*${attr}=["']${key}["']`, 'i')); return m ? dec(m[1]) : ''; };
+    out.name = meta('property', 'og:site_name');
+    out.description = (meta('name', 'description') || meta('property', 'og:description')).slice(0, 400);
+    out.color = (meta('name', 'theme-color').match(/^#[0-9a-f]{3,8}$/i) || [null])[0];
+    const icon = t.match(/<link[^>]+rel=["'](?:apple-touch-icon|shortcut icon|icon)["'][^>]*>/i);
+    const href = icon && icon[0].match(/href=["']([^"']+)["']/i);
+    if (href) out.logo = shopifySized(abs(href[1]));
+    // Banner: the first big picture in a slideshow or image-banner section, else the social share image.
+    const sec = t.match(/(?:slideshow|image-banner|hero|banner)[\s\S]{0,4000}?<img[^>]+src=["']([^"']+\.(?:jpe?g|png|webp)[^"']*)["']/i);
+    const og = meta('property', 'og:image');
+    const pick = sec ? abs(sec[1]) : (og ? abs(og) : null);
+    if (pick) { const x = new URL(pick); if (/\/cdn\/shop\/|cdn\.shopify\.com/.test(x.href)) { x.searchParams.delete('height'); x.searchParams.delete('crop'); x.searchParams.set('width', '1200'); } out.banner = x.href; }
+    const mail = t.match(/mailto:([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})/i); if (mail) out.email = mail[1];
+    const SOC = { instagram: /instagram\.com/, facebook: /facebook\.com/, tiktok: /tiktok\.com/, youtube: /youtube\.com|youtu\.be/, x: /(?:twitter|x)\.com/, discord: /discord\.(?:gg|com)/ };
+    for (const m of t.matchAll(/href=["'](https?:\/\/[^"']+)["']/gi)) {
+      const u = dec(m[1]); for (const [k, re] of Object.entries(SOC)) if (!out.socials[k] && re.test(u) && !/sharer|share\?|intent\/|\/plugins\//i.test(u)) out.socials[k] = u;
+    }
+  } catch (e) { out.error = String(e); }
+  return out;
+}
+
+// GET /profile?host=<store host> -> what a store page shows. Cached for a day so repeat visits are instant.
+async function profile(url, ctx) {
+  const host = String(url.searchParams.get('host') || '').toLowerCase();
+  if (!HOST_RE.test(host)) return Response.json({ ok: false, error: 'bad host' }, { status: 400, headers: CORS });
+  const key = new Request(`https://cardhunt.cache/v1/profile/${host}`);
+  const hit = url.searchParams.has('fresh') ? null : await caches.default.match(key);
+  if (hit) return hit;
+  const p = await readHome(host);
+  const policies = [['Refund policy', 'refund-policy'], ['Shipping policy', 'shipping-policy'], ['Privacy policy', 'privacy-policy'], ['Terms of service', 'terms-of-service']]
+    .map(([title, slug]) => ({ title, url: `https://${host}/policies/${slug}` }));
+  const ok = !p.status && !p.error;
+  const res = Response.json({ ok, host, ...p, policies }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=86400' } });
+  if (ok) ctx.waitUntil(caches.default.put(key, res.clone()));
+  return res;
+}
+
 // Check a store someone wants to add: is it a Shopify store whose product search works from here,
 // what is it called, and does it have a BinderPOS deck-list page that can fill its cart?
 const DECK_PATHS = ['/pages/deck-list', '/pages/multi-card-search', '/pages/decklist', '/pages/deck-builder', '/pages/deckbuilder', '/pages/buylist-deck', '/pages/card-list', '/pages/multi-search'];
@@ -86,22 +135,8 @@ async function checkStore(raw) {
   let ok = false; try { ok = !!(r && r.ok && (await r.json()).resources); } catch {}
   if (!ok && r && r.status === 429) return Response.json({ ok: false, host, busy: true, error: 'This store is busy right now. Try adding it again in a minute.' }, { headers: CORS });
   if (!ok) return Response.json({ ok: false, host, status: r && r.status, error: "Card Hunt can only search stores built on Shopify, and this one didn't answer like a Shopify store." }, { headers: CORS });
-  // Name and logo come from the store's home page: og:site_name (or /meta.json), and the favicon, which
-  // Shopify can serve at any size. Retry once when Shopify rate-limits us.
-  let name = '', logo = null;
-  try {
-    let hp = await get(host, '/', 'text/html');
-    if (hp.status === 429) { await new Promise(r => setTimeout(r, 900)); hp = await get(host, '/', 'text/html'); }
-    if (hp.ok) {
-      const t = (await hp.text()).slice(0, 300000);
-      const dec = v => v.replace(/&amp;/g, '&').replace(/&#39;|&#039;/g, "'").replace(/&quot;/g, '"').replace(/&ndash;|&mdash;/g, '-').trim();
-      const site = t.match(/property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i) || t.match(/content=["']([^"']+)["'][^>]*property=["']og:site_name["']/i);
-      if (site) name = dec(site[1]);
-      const icon = t.match(/<link[^>]+rel=["'](?:apple-touch-icon|shortcut icon|icon)["'][^>]*>/i);
-      const href = icon && icon[0].match(/href=["']([^"']+)["']/i);
-      if (href) logo = shopifySized(new URL(dec(href[1]), `https://${host}/`).href);
-    }
-  } catch {}
+  const prof = await readHome(host);
+  let name = prof.name || '', logo = prof.logo || null;
   if (!name) { try { const m = await get(host, '/meta.json'); if (m.ok) { const j = await m.json(); if (j.name) name = j.name; } } catch {} }
   if (!name) name = prettyHost(host);
   // Only BinderPOS deck-list pages accept a prefilled ?cards= list, so require its script on the page.
@@ -147,6 +182,7 @@ export default {
     const url = new URL(req.url);
     if (url.pathname === '/') return new Response('Card Hunt helper is running. Try /search?q=Lightning+Bolt', { headers: CORS });
     if (url.pathname === '/store') return checkStore(url.searchParams.get('url') || '');
+    if (url.pathname === '/profile') return profile(url, ctx);
     if (url.pathname.startsWith('/sync/')) return sync(req, env, url.pathname.slice(6));
     if (url.pathname !== '/search') return new Response('Not found', { status: 404, headers: CORS });
 
