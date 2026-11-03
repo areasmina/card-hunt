@@ -273,6 +273,12 @@ a.btn{text-decoration:none}
 .cjump button{flex:none;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:999px;background:var(--sheet-2);color:var(--sheet-text);font-size:14px;font-weight:600}
 .cjump button.on{background:#fff;color:#121214}
 .cjump button.on b{background:rgba(0,0,0,.1)}
+.cpick{color:var(--sheet-muted);font-size:13px;margin:-6px 0 12px}
+.cpicked{display:flex;align-items:center;gap:12px;background:var(--sheet);border-radius:20px;padding:14px 18px;margin:-4px 0 14px}
+.cpicked>div:first-child{flex:1;display:flex;flex-direction:column}
+.cpicked b{font-size:16px}
+.cpicked span{font-size:13px;color:var(--sheet-muted)}
+.cpicked .amt{font-size:22px;font-weight:800}
 .cjump .dot{width:12px;height:12px;border-radius:50%}
 .cjump b{background:rgba(255,255,255,.14);border-radius:999px;padding:1px 8px;font-size:13px}
 @media (prefers-reduced-motion: reduce){.sc .scb,.sc .shd .chev,.sc .shd .sum{transition:none}}
@@ -876,14 +882,20 @@ function chooseList(name){
 function storeLogo(s, extra=''){ return `<span class="logo${s.logo?' haslogo':''}" style="background:${s.logo?'#fff':s.color}" data-c="${s.color}">${esc(s.name[0])}${s.logo?`<img alt="" loading="lazy" src="${esc(s.logo)}" onload="if(this.naturalWidth<24)this.onerror()" onerror="const p=this.parentNode;p.classList.remove('haslogo');p.style.background=p.dataset.c;this.remove()">`:''}${extra}</span>`; }
 // Each store in the cart can be folded down to one line by tapping its name; this device remembers which.
 let FOLD=new Set(LS.get('fold',[]));
+let CSEL=new Set();   // stores picked with the buttons at the top of the cart; empty means show all
 const saveFold=()=>LS.set('fold',[...FOLD]);
 function setFold(sc,fold){ sc.classList.toggle('folded',fold); sc.querySelector('.shd').setAttribute('aria-expanded',String(!fold)); if(fold) FOLD.add(sc.dataset.s); else FOLD.delete(sc.dataset.s); }
 function openCart(){
   const groups=STORES.map(s=>({s,items:S.cart.filter(c=>c.store===s.id)})).filter(g=>g.items.length);
-  const grand=S.cart.reduce((a,c)=>a+c.price*c.qty,0);
+  for(const id of [...CSEL]) if(!groups.some(g=>g.s.id===id)) CSEL.delete(id);
+  const picking=groups.length>1&&CSEL.size>0;
+  const shown=picking?groups.filter(g=>CSEL.has(g.s.id)):groups;
+  const grand=shown.reduce((a,g)=>a+g.items.reduce((b,c)=>b+c.price*c.qty,0),0);
+  const shownN=shown.reduce((a,g)=>a+g.items.reduce((b,c)=>b+c.qty,0),0);
   sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><h2>Cart</h2>
-    ${groups.length>1?`<div class="cjump">${groups.map(({s,items})=>`<button data-act="cjump" data-s="${esc(s.id)}"><span class="dot" style="background:${s.color}"></span>${esc(s.name)} <b>${items.reduce((a,c)=>a+c.qty,0)}</b></button>`).join('')}</div>`:''}
-    ${groups.length?groups.map(({s,items})=>{const sub=items.reduce((a,c)=>a+c.price*c.qty,0), n=items.reduce((a,c)=>a+c.qty,0), fold=groups.length>1&&FOLD.has(s.id); return `<div class="sc${fold?' folded':''}" data-s="${esc(s.id)}">
+    ${groups.length>1?`<div class="cjump"><button data-act="csel" data-s="" class="${picking?'':'on'}">All stores</button>${groups.map(({s,items})=>`<button data-act="csel" data-s="${esc(s.id)}" class="${CSEL.has(s.id)?'on':''}" aria-pressed="${CSEL.has(s.id)}">${CSEL.has(s.id)?'✓':`<span class="dot" style="background:${s.color}"></span>`}${esc(s.name)} <b>${items.reduce((a,c)=>a+c.qty,0)}</b></button>`).join('')}</div>
+      ${picking?`<div class="cpicked"><div><b>${shown.length} of ${groups.length} stores</b><span>${shownN} item${shownN===1?'':'s'} · tap more stores to add them</span></div><div class="amt">${money(grand)}</div></div>`:'<div class="cpick">Tap stores to see only those, with their own total</div>'}`:''}
+    ${groups.length?shown.map(({s,items})=>{const sub=items.reduce((a,c)=>a+c.price*c.qty,0), n=items.reduce((a,c)=>a+c.qty,0), fold=groups.length>1&&!picking&&FOLD.has(s.id); return `<div class="sc${fold?' folded':''}" data-s="${esc(s.id)}">
       <button class="shd" data-act="fold" aria-expanded="${!fold}">${storeLogo(s)}<div class="grow"><div class="sn">${esc(s.name)}</div><div class="sum">${n} item${n===1?'':'s'} · from ${money(sub)}</div></div><span class="chev">${I.down}</span></button>
       <div class="scb"><div>
       ${items.map(c=>`<div class="ci"><button class="ciimg" data-act="cartopen" data-k="${esc(c.url)}" aria-label="Open ${esc(c.title)}">${imgTag(c)}</button><div class="grow"><div class="top2"><button class="nm" data-act="cartopen" data-k="${esc(c.url)}">${esc(c.title)}</button><div class="pp">${esc(money(c.price*c.qty))}</div></div>
@@ -895,7 +907,7 @@ function openCart(){
       <div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} ${s.deck?'Opens the store\'s deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store\'s cart.':'Card Hunt opens each card on the store\'s site, one at a time. Add it to their cart, come back, and tap Next.'}</div>
       <div class="info">${I.ship} Each store ships and checks out separately.</div>
       <button class="later" style="margin-top:12px" data-act="bought" data-s="${s.id}">✓ I bought these, clear them</button></div></div></div>`}).join('')
-      +`<div class="grandrow"><span>Total from, all stores</span><span>${money(grand)}</span></div>`
+      +`<div class="grandrow"><span>${picking?`Total from, ${shown.length} store${shown.length===1?'':'s'} (${shownN} item${shownN===1?'':'s'})`:'Total from, all stores'}</span><span>${money(grand)}</span></div>`
     :`<div class="empty">Your cart is empty.<br>Tap a card, then "Add to cart".</div>`}`, 'cartsheet');
 }
 // ---------- guided one-by-one checkout ----------
@@ -1020,11 +1032,8 @@ document.addEventListener('click', e=>{
     case 'walkback': walk.i=Math.max(0,walk.i-1); openWalk(); break;
     case 'sync': openSync(); break;
     case 'fold': { const sc=el.closest('.sc'); setFold(sc,!sc.classList.contains('folded')); saveFold(); buzz(); break; }
-    case 'cjump': { const id=el.dataset.s; let target;
-      document.querySelectorAll('#sheet .sc').forEach(sc=>{ const me=sc.dataset.s===id; setFold(sc,!me); if(me) target=sc; }); saveFold();
-      document.querySelectorAll('#sheet .cjump button').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
-      setTimeout(()=>{ if(!target) return; const body=target.closest('.body'), chips=body.querySelector('.cjump');
-        body.scrollTo({top:target.offsetTop-(chips?chips.offsetHeight+8:0), behavior:'smooth'}); },380); break; }
+    case 'csel': { const id=el.dataset.s; if(!id) CSEL.clear(); else if(CSEL.has(id)) CSEL.delete(id); else CSEL.add(id); buzz(); openCart();
+      const b=$id('sheet').querySelector('.body'), c=b&&b.querySelector('.cjump'); if(b&&c&&b.scrollTop>c.offsetTop) b.scrollTo({top:c.offsetTop-8,behavior:'smooth'}); break; }
     case 'storeinfo': openStore(SBY[el.dataset.s]); break;
     case 'storetoggle': { const id=el.dataset.s, off=S.prefs.off; S.prefs.off=off.includes(id)?off.filter(x=>x!==id):[...off,id]; save('prefs'); openStore(SBY[id]); render(); break; }
     case 'addstore': openAddStore(); break;
