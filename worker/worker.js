@@ -174,7 +174,7 @@ async function browse(url, ctx) {
   const host = String(url.searchParams.get('host') || '').toLowerCase(), id = String(url.searchParams.get('id') || 'x:' + host).slice(0, 120);
   const q = String(url.searchParams.get('q') || '').trim().slice(0, 60);
   if (!HOST_RE.test(host)) return Response.json({ ok: false, error: 'bad host' }, { status: 400, headers: CORS });
-  const key = new Request(`https://cardhunt.cache/v2/browse/${host}?q=${encodeURIComponent(q.toLowerCase())}`);
+  const key = new Request(`https://cardhunt.cache/v3/browse/${host}?q=${encodeURIComponent(q.toLowerCase())}`);
   const hit = await caches.default.match(key); if (hit) return hit;
   const s = { name: STORES[id]?.name || host, host };
   const sug = async term => { try { const r = await fetch(`https://${host}/search/suggest.json?q=${encodeURIComponent(term)}&resources[type]=product&resources[limit]=10&resources[options][unavailable_products]=last`, { headers: { 'User-Agent': UA, Accept: 'application/json' }, cf: { cacheTtl: 900, cacheEverything: true } });
@@ -182,12 +182,21 @@ async function browse(url, ctx) {
   let items = [], source = 'search';
   if (q) items = await sug(q);
   else {
-    try { const r = await fetch(`https://${host}/products.json?limit=80`, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
-      if (r.ok) { const j = await r.json(); items = (j.products || []).map(p => toOffer(id, s, p)); source = 'newest'; } } catch {}
-    if (!items.length) items = (await Promise.all(BROWSE_KINDS.map(sug))).flat();
+    // Newest products plus a few common kinds (boosters, sleeves, playmats...). New single cards are often
+    // listed before they're in stock or photographed, so only in-stock items with a picture are kept.
+    const newest = (async () => { try { const r = await fetch(`https://${host}/products.json?limit=120`, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+      if (!r.ok) return []; const j = await r.json(); return (j.products || []).map(p => toOffer(id, s, p)); } catch { return []; } })();
+    const [nw, kinds] = await Promise.all([newest, Promise.all(BROWSE_KINDS.map(sug))]);
+    if (nw.length) source = 'newest';
+    // Mix them so the page isn't all singles: alternate a kind item and a newest item.
+    const k = kinds.flat(), mixed = []; for (let i = 0; i < Math.max(k.length, nw.length); i++) { if (k[i]) mixed.push(k[i]); if (nw[i]) mixed.push(nw[i]); }
+    items = mixed;
   }
-  // Event tickets, gift cards and services aren't things to hunt for.
-  const seen = new Set(); items = items.filter(o => !/\bticket\b|\bevent\b|gift card|admission|registration|entry fee/i.test(`${o.title} ${o.type}`) && !seen.has(o.url) && seen.add(o.url)).slice(0, 40);
+  // Event tickets, gift cards and services aren't things to hunt for; nor are items with no stock or no picture.
+  const seen = new Set();
+  items = items.filter(o => !/\bticket\b|\bevent\b|gift card|admission|registration|entry fee/i.test(`${o.title} ${o.type}`) && !seen.has(o.url) && seen.add(o.url));
+  const good = items.filter(o => o.available && o.image);
+  items = (good.length >= 6 ? good : items.filter(o => o.image)).slice(0, 40);
   const res = Response.json({ ok: true, source, items }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=1800' } });
   if (items.length) ctx.waitUntil(caches.default.put(key, res.clone()));
   return res;
