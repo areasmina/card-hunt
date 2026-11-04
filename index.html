@@ -19,23 +19,23 @@
   /* Nord, Polar Night (#2e3440 #3b4252 #434c5e #4c566a) and Snow Storm (#d8dee9 #e5e9f0 #eceff4) only.
      Dark is the default: Polar Night surfaces, Snow Storm text and accent. Light flips them.
      Only the status colours (ok, warn, heart) come from Nord's Aurora.
-     The accent is Guillermo's night-sky purple: --accent fills buttons, --accent-ink is accent-coloured text. */
+     The accent is a soft night-sky purple: --accent fills buttons, --accent-ink is accent-coloured text. */
   --bg:#2e3440; --surface:#3b4252; --surface-2:#434c5e; --surface-3:#4c566a; --text:#eceff4; --muted:#d8dee9;
-  --line:#434c5e; --accent:#6a1f8a; --accent-text:#eceff4; --accent-ink:#c9a3e6; --ok:#a3be8c; --warn:#ebcb8b; --heart:#bf616a;
+  --line:#434c5e; --accent:#6c5486; --accent-text:#eceff4; --accent-ink:#c8b6dd; --ok:#a3be8c; --warn:#ebcb8b; --heart:#bf616a;
   --sheet-bg:#2e3440; --sheet:#3b4252; --sheet-2:#434c5e; --sheet-text:#eceff4; --sheet-muted:#d8dee9;
   --shadow:0 8px 28px rgba(0,0,0,.35); --r:24px;
   color-scheme:dark;   /* scrollbars and form controls follow the theme (Firefox kept a white scrollbar) */
 }
 :root[data-theme="light"]{
   --bg:#e5e9f0; --surface:#eceff4; --surface-2:#d8dee9; --surface-3:#d8dee9; --text:#2e3440; --muted:#4c566a;
-  --line:#d8dee9; --accent:#53106f; --accent-text:#eceff4; --accent-ink:#53106f; --ok:#4f7a3a; --warn:#9a6a10; --heart:#bf616a; --shadow:0 8px 28px rgba(46,52,64,.14);
+  --line:#d8dee9; --accent:#5c4a75; --accent-text:#eceff4; --accent-ink:#5c4a75; --ok:#4f7a3a; --warn:#9a6a10; --heart:#bf616a; --shadow:0 8px 28px rgba(46,52,64,.14);
   color-scheme:light;
 }
 html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
 /* Vintage texture: the old card frame, greyed and almost hidden under the theme colour, on the page only.
    To turn it off, delete this block (or set --tex:none). */
-:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.88); --veil-sheet:rgba(46,52,64,.78)}
-:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.89); --veil-sheet:rgba(229,233,240,.79)}
+:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.93); --veil-sheet:rgba(46,52,64,.83)}
+:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.94); --veil-sheet:rgba(229,233,240,.84)}
 body{min-height:100vh;min-height:100dvh}
 body,.top,.stools{background-color:var(--bg);background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px;background-attachment:fixed}
 .sheet .body:not(.cartsheet .body){background-image:linear-gradient(var(--veil-sheet),var(--veil-sheet)),var(--tex);background-size:auto,340px}
@@ -263,7 +263,7 @@ a.btn{text-decoration:none}
 .pd .hint{color:var(--muted);font-size:13px;margin-top:4px}
 
 /* cart (dark, like Shop) */
-.cartsheet{--accent:#6a1f8a;--accent-text:#eceff4;--accent-ink:#c9a3e6}
+.cartsheet{--accent:#6c5486;--accent-text:#eceff4;--accent-ink:#c8b6dd}
 .cartsheet .body{background:var(--sheet-bg);color:var(--sheet-text)}
 .cartsheet .grab{background:#333}
 .cartsheet .close{background:var(--sheet-2);color:var(--sheet-text)}
@@ -487,24 +487,6 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 .chev2{color:var(--muted);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
 .row.open .chev2{transform:rotate(90deg)}
 .deckbox{padding:0 0 10px}
-
-/* ---- the opened card looks like a real card: a black edge with curved corners, and inside it the
-   title bar (name), the art, the type bar (price) and the text box (details), all kept inside the frame ---- */
-:root{--fr-edge:#0e1014;--fr-in:#434c5e;--fr-bar:linear-gradient(#4c566a,#434c5e);--fr-bar-text:#eceff4;--fr-line:#2e3440;--fr-box:#3b4252}
-:root[data-theme="light"]{--fr-in:#d8dee9;--fr-bar:linear-gradient(#eceff4,#e5e9f0);--fr-bar-text:#2e3440;--fr-line:#4c566a;--fr-box:#eceff4}
-.pd .mf{margin:22px 0 0;background:var(--fr-edge);border-radius:26px;padding:12px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
-.pd .mfin{background:var(--fr-in);border-radius:14px;padding:6px;display:flex;flex-direction:column;gap:6px}
-.pd .mbar{background:var(--fr-bar);color:var(--fr-bar-text);border:1.5px solid var(--fr-line);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:10px}
-.pd .mtitle{padding-right:44px}
-.pd .mtitle h3{margin:0;font-size:18px;line-height:1.2;flex:1;min-width:0}
-.pd .mart{display:flex;justify-content:center;padding:4px 0}
-.pd .mart .big:not(.btn){margin:0;border-radius:4.5%/3.3%;height:min(40vh,460px)}
-.pd .mtype{justify-content:space-between}
-.pd .mtype .pr{font-size:19px}
-.pd .mtype .st{margin:0}
-.pd .mbox{padding:12px;background:var(--fr-box);border:1.5px solid var(--fr-line);border-radius:4px 4px 10px 10px}
-.pd .mbox .store{margin-top:0}
-.pd > .close{top:60px;right:36px;width:30px;height:30px;z-index:2;background:transparent;color:var(--fr-bar-text)}
 </style>
 </head>
 <body>
@@ -1387,12 +1369,10 @@ function openProduct(o, fromCart=productFromCart){
   productFromCart=fromCart; viewed(o);
   const c=inCart(o);
   sheet(`<div class="pd"><div class="grab"></div><button class="close" data-act="close">${I.x}</button>
-    <div class="mf"><div class="mfin">
-    <div class="mbar mtitle"><h3>${esc(o.title)}</h3></div>
-    <div class="mart">${imgTag(o,'big')}</div>
-    <div class="mbar mtype"><span class="pr">${esc(priceText(o))}</span><span class="st${o.available?'':' sold'}">${o.available?'In stock':'Sold out'}${isFoil(o.title)?' · Foil':''}</span></div>
-    <div class="mbox">
-    ${SBY[o.store]?`<button class="store" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}">${esc(o.storeName)} ${I.chev}</button>`:`<div class="store">${esc(o.storeName)}</div>`}
+    ${imgTag(o,'big')}
+    ${SBY[o.store]?`<button class="store" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}">${esc(o.storeName)} ${I.chev}</button>`:`<div class="store">${esc(o.storeName)}</div>`}<h3>${esc(o.title)}</h3>
+    <div class="pr">${esc(priceText(o))}</div>
+    <div class="st${o.available?'':' sold'}">${o.available?'In stock':'Sold out'}${isFoil(o.title)?' · Foil':''}</div>
     <div class="hint">${o.priceMax>o.price+0.001?'Price depends on condition. You choose the condition on the store\'s page.':'Check the condition on the store\'s page.'}</div>
     <div class="buy">
       ${c?`<div class="incart"><div><b>In your cart</b><span>${esc(money(c.price*c.qty))} from</span></div><div class="bigstep">
@@ -1407,7 +1387,6 @@ function openProduct(o, fromCart=productFromCart){
     </div>
     ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost block" style="margin-top:10px" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
     ${fromCart?`<button class="btn ghost block" style="margin-top:10px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
-    </div></div></div>
   </div>`);
 }
 function chooseList(name){
