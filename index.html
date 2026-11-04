@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#283032">
+<meta name="theme-color" content="#262a2b">
 <script>try{var t=JSON.parse(localStorage.getItem('cardhunt2.theme')||'"dark"');document.documentElement.dataset.theme=t==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}</script>
 <title>Card Hunt</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -16,25 +16,25 @@
 <meta name="description" content="Search five Canadian MTG stores at once, save favorites, wishlists and decks.">
 <style>
 :root{
-  /* Nord, Polar Night (#2e3440 #3b4252 #434c5e #4c566a) and Snow Storm (#d8dee9 #e5e9f0 #eceff4) only.
-     Dark is the default: Polar Night surfaces, Snow Storm text and accent. Light flips them.
-     Only the status colours (ok, warn, heart) come from Nord's Aurora.
-     The accent is a soft night-sky purple: --accent fills buttons, --accent-ink is accent-coloured text. */
-  --bg:#283032; --surface:#3b4252; --surface-2:#434c5e; --surface-3:#4c566a; --text:#eceff4; --muted:#d8dee9;
-  --line:#434c5e; --accent:#6c5486; --accent-text:#eceff4; --accent-ink:#c8b6dd; --ok:#a3be8c; --warn:#ebcb8b; --heart:#bf616a;
-  --sheet-bg:#2e3440; --sheet:#3b4252; --sheet-2:#434c5e; --sheet-text:#eceff4; --sheet-muted:#d8dee9;
+  /* Dark: colours taken from an Alpha black card (Demonic Tutor). Slate frame for the page and panels,
+     parchment from the text box for the words, the art's deep red for buttons, the parchment tan for links.
+     Light: Nord Snow Storm surfaces with Polar Night text, and the same red.
+     --accent fills buttons, --accent-ink is accent-coloured text. ok, warn, heart are status colours. */
+  --bg:#262a2b; --surface:#303536; --surface-2:#3a4041; --surface-3:#474e4e; --text:#efe2cb; --muted:#c9b495;
+  --line:#3a4041; --accent:#8a3b33; --accent-text:#f4e7d1; --accent-ink:#d9ba97; --ok:#a3be8c; --warn:#e0b86a; --heart:#c8584c;
+  --sheet-bg:#262a2b; --sheet:#303536; --sheet-2:#3a4041; --sheet-text:#efe2cb; --sheet-muted:#c9b495;
   --shadow:0 8px 28px rgba(0,0,0,.35); --r:24px;
   color-scheme:dark;   /* scrollbars and form controls follow the theme (Firefox kept a white scrollbar) */
 }
 :root[data-theme="light"]{
   --bg:#e5e9f0; --surface:#eceff4; --surface-2:#d8dee9; --surface-3:#d8dee9; --text:#2e3440; --muted:#4c566a;
-  --line:#d8dee9; --accent:#5c4a75; --accent-text:#eceff4; --accent-ink:#5c4a75; --ok:#4f7a3a; --warn:#9a6a10; --heart:#bf616a; --shadow:0 8px 28px rgba(46,52,64,.14);
+  --line:#d8dee9; --accent:#793c37; --accent-text:#f4e7d1; --accent-ink:#793c37; --ok:#4f7a3a; --warn:#9a6a10; --heart:#bf616a; --shadow:0 8px 28px rgba(46,52,64,.14);
   color-scheme:light;
 }
 html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
 /* Vintage texture: the old card frame, greyed and almost hidden under the theme colour, on the page only.
    To turn it off, delete this block (or set --tex:none). */
-:root{--tex:url(textures/frame-tutor.jpg); --veil:rgba(40,48,50,.45); --veil-sheet:rgba(40,48,50,.78)}   /* dark: the black beaded frame of an Alpha black card (Demonic Tutor), slate teal */
+:root{--tex:url(textures/frame-tutor.jpg); --veil:rgba(38,42,43,.9); --veil-sheet:rgba(38,42,43,.82)}   /* dark: the beaded frame of an Alpha black card (Demonic Tutor), kept subtle */
 :root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.94); --veil-sheet:rgba(229,233,240,.84)}
 body{min-height:100vh;min-height:100dvh}
 body,.top,.stools{background-color:var(--bg);background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px;background-attachment:fixed}
@@ -263,7 +263,7 @@ a.btn{text-decoration:none}
 .pd .hint{color:var(--muted);font-size:13px;margin-top:4px}
 
 /* cart (dark, like Shop) */
-.cartsheet{--accent:#6c5486;--accent-text:#eceff4;--accent-ink:#c8b6dd}
+.cartsheet{--accent:#8a3b33;--accent-text:#f4e7d1;--accent-ink:#d9ba97}
 .cartsheet .body{background:var(--sheet-bg);color:var(--sheet-text)}
 .cartsheet .grab{background:#333}
 .cartsheet .close{background:var(--sheet-2);color:var(--sheet-text)}
@@ -283,7 +283,7 @@ a.btn{text-decoration:none}
 .cartsheet .sc{scroll-margin-top:66px}
 .cjump::-webkit-scrollbar{display:none}
 .cjump button{flex:none;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:999px;background:var(--sheet-2);color:var(--sheet-text);font-size:14px;font-weight:600}
-.cjump button.on{background:#eceff4;color:#2e3440}
+.cjump button.on{background:#efe2cb;color:#262a2b}
 .cjump button.on b{background:rgba(0,0,0,.1)}
 .cpick{color:var(--sheet-muted);font-size:13px;margin:-6px 0 12px}
 .cpicked{display:flex;align-items:center;gap:12px;background:var(--sheet);border-radius:20px;padding:14px 18px;margin:-4px 0 14px}
@@ -336,8 +336,8 @@ a.btn{text-decoration:none}
 
 .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:60;box-shadow:var(--shadow);transition:opacity .2s;max-width:calc(100% - 32px);text-align:center;display:flex;align-items:center;gap:14px;white-space:nowrap}
 .toast span{overflow:hidden;text-overflow:ellipsis}
-body:has(#sheet .cartsheet) .toast{background:#eceff4;color:#2e3440}
-body:has(#sheet .cartsheet) .toast button{color:#3b4252;filter:none}
+body:has(#sheet .cartsheet) .toast{background:#efe2cb;color:#262a2b}
+body:has(#sheet .cartsheet) .toast button{color:#793c37;filter:none}
 .toast button{color:var(--accent-ink);font-weight:750;font-size:15px;padding:4px 2px;flex:none;filter:brightness(1.35)}
 
 /* store page */
@@ -507,11 +507,11 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 // ---------- config ----------
 const API = 'https://card-hunt.areasmina.workers.dev';
 const BUILTIN = [
-  {id:'ea',     name:'EA Collectibles', color:'#4c566a', host:'www.eacollectibles.com', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'lamood', name:'La Mood',         color:'#4c566a', logo:'https://cdn.shopify.com/s/files/1/0275/7728/6793/files/LA_Mood_Logo.jpg?width=240', host:'lamoodcomics.ca', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
-  {id:'mana',   name:'Mana Lounge',     color:'#4c566a', logo:'https://www.manalounge.ca/cdn/shop/files/favicon.png?width=180', host:'www.manalounge.ca', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
-  {id:'ge',     name:'Gamers Emporium', color:'#4c566a', logo:'https://gamersemporium.ca/cdn/shop/files/GE_Logo_LinkedIn_White.jpg?crop=center&height=180&width=180', host:'gamersemporium.ca', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'players',name:'Players',         color:'#4c566a', logo:'https://playerscandc.com/cdn/shop/files/players.png?width=180', host:'playerscandc.com', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
+  {id:'ea',     name:'EA Collectibles', color:'#474e4e', host:'www.eacollectibles.com', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'lamood', name:'La Mood',         color:'#474e4e', logo:'https://cdn.shopify.com/s/files/1/0275/7728/6793/files/LA_Mood_Logo.jpg?width=240', host:'lamoodcomics.ca', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
+  {id:'mana',   name:'Mana Lounge',     color:'#474e4e', logo:'https://www.manalounge.ca/cdn/shop/files/favicon.png?width=180', host:'www.manalounge.ca', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
+  {id:'ge',     name:'Gamers Emporium', color:'#474e4e', logo:'https://gamersemporium.ca/cdn/shop/files/GE_Logo_LinkedIn_White.jpg?crop=center&height=180&width=180', host:'gamersemporium.ca', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'players',name:'Players',         color:'#474e4e', logo:'https://playerscandc.com/cdn/shop/files/players.png?width=180', host:'playerscandc.com', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
 ];
 // Stores the person adds themselves (any Shopify store). They sync like favorites and lists.
 const PALETTE=['#7c3aed','#0891b2','#c2410c','#15803d','#db2777','#4f46e5','#a16207','#0f766e'];
@@ -569,7 +569,7 @@ function applyTheme(){
   const r=document.documentElement;
   if(S.theme!=='light') S.theme='dark';   // only light and dark now; the old "follow device" setting becomes dark
   r.dataset.theme=S.theme;
-  document.querySelector('meta[name="theme-color"]').content=S.theme==='dark'?'#283032':'#e5e9f0';
+  document.querySelector('meta[name="theme-color"]').content=S.theme==='dark'?'#262a2b':'#e5e9f0';
 }
 
 // ---------- utils ----------
