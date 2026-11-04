@@ -8,11 +8,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Metamorphous&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap");
 
 :root {
-  --bg:#d9d2c6; --surface:#ece7de; --surface-2:#e2dbd0; --surface-3:#cfc6b8; --text:#15120e; --muted:#5c544a;
-  --line:#bdb3a4; --accent:#5e4430; --accent-text:#f6efe2; --ok:#2f6b2a; --warn:#8a5a10; --heart:#9c1f16;
+  --bg:#f4f2ee; --surface:#fdfcfa; --surface-2:#efece6; --surface-3:#e3dfd7; --text:#141210; --muted:#6b665e;
+  --line:#e4e0d8; --accent:#5e4430; --accent-text:#f6efe2; --ok:#2f6b2a; --warn:#8a5a10; --heart:#9c1f16;
   --sheet:#15120e; --sheet-2:#26211b; --sheet-text:#f2ebdf; --sheet-muted:#b0a490;
   --shadow:0 8px 28px rgba(0,0,0,.14);
-  --v-frame:url(frame-white.jpg); --v-veil:rgba(244,240,232,.8);
+  --v-frame:url(frame-white.jpg); --v-veil:rgba(246,243,238,.9);
   --v-box:url(box-white.jpg); --v-box-ink:#15120e; --v-box-muted:#4e473e;
   --v-title-ink:#111; --v-title-shadow:none;
   --v-hi:rgba(255,255,255,.75); --v-lo:rgba(0,0,0,.28);
@@ -21,10 +21,10 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg:#121410; --surface:#1b1d18; --surface-2:#23251f; --surface-3:#2e3029; --text:#f1ece2; --muted:#b4aa98;
-    --line:#34372e; --accent:#c4a078; --accent-text:#1e140c; --ok:#6fbf5a; --warn:#e0b040; --heart:#e06a52;
+    --bg:#0d0d0c; --surface:#181816; --surface-2:#22211f; --surface-3:#2d2c29; --text:#f4f2ee; --muted:#a8a49c;
+    --line:#2b2a27; --accent:#c4a078; --accent-text:#1e140c; --ok:#6fbf5a; --warn:#e0b040; --heart:#e06a52;
     --shadow:0 8px 28px rgba(0,0,0,.5);
-    --v-frame:url(frame-black.jpg); --v-veil:rgba(8,9,7,.6);
+    --v-frame:url(frame-black.jpg); --v-veil:rgba(12,12,11,.82);
     --v-box:url(box-black.jpg); --v-box-ink:#1e130a; --v-box-muted:#5a4230;
     --v-title-ink:#f3efe6; --v-title-shadow:1.5px 1.5px 0 #000;
     --v-hi:rgba(255,255,255,.14); --v-lo:rgba(0,0,0,.7);
@@ -32,10 +32,10 @@
   }
 }
 :root[data-theme="dark"] {
-  --bg:#121410; --surface:#1b1d18; --surface-2:#23251f; --surface-3:#2e3029; --text:#f1ece2; --muted:#b4aa98;
-  --line:#34372e; --accent:#c4a078; --accent-text:#1e140c; --ok:#6fbf5a; --warn:#e0b040; --heart:#e06a52;
+  --bg:#0d0d0c; --surface:#181816; --surface-2:#22211f; --surface-3:#2d2c29; --text:#f4f2ee; --muted:#a8a49c;
+  --line:#2b2a27; --accent:#c4a078; --accent-text:#1e140c; --ok:#6fbf5a; --warn:#e0b040; --heart:#e06a52;
   --shadow:0 8px 28px rgba(0,0,0,.5);
-  --v-frame:url(frame-black.jpg); --v-veil:rgba(8,9,7,.6);
+  --v-frame:url(frame-black.jpg); --v-veil:rgba(12,12,11,.82);
   --v-box:url(box-black.jpg); --v-box-ink:#1e130a; --v-box-muted:#5a4230;
   --v-title-ink:#f3efe6; --v-title-shadow:1.5px 1.5px 0 #000;
   --v-hi:rgba(255,255,255,.14); --v-lo:rgba(0,0,0,.7);
@@ -46,9 +46,6 @@
 /* page: the printed frame, softened */
 body { background-color:var(--bg); background-image:linear-gradient(var(--v-veil),var(--v-veil)),var(--v-frame); background-size:auto,340px; background-attachment:fixed; }
 .top { background-color:var(--bg); background-image:linear-gradient(var(--v-veil),var(--v-veil)),var(--v-frame); background-size:auto,340px; background-attachment:fixed; }
-/* panels keep their shapes, with the faint printed bevel of a card box */
-.pill, .lcard, .sicard, .promo.soft, .chip, .navpill { box-shadow:inset 1px 1px 0 var(--v-hi), inset -1px -1px 0 var(--v-lo); }
-.navpill { box-shadow:inset 1px 1px 0 var(--v-hi), var(--shadow); }
 /* accent: flat parchment in dark, deep umber in light, no gradients */
 .cartbtn span { color:var(--accent); }
 .p .img, .rail .p .img { border-radius:4.5% / 3.3%; }
