@@ -373,6 +373,34 @@ async function sync(req, env, code) {
   return new Response('Method not allowed', { status: 405, headers: nc });
 }
 
+// GET /deck?url=<Moxfield or Archidekt deck link> -> {ok, name, source, items:[{qty,name}]} (main deck + commanders; no maybeboard).
+async function deck(url) {
+  const link = String(url.searchParams.get('url') || '').trim().slice(0, 300);
+  const H = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36', Accept: 'application/json' };
+  const out = (o, st = 200) => Response.json(o, { status: st, headers: { ...CORS, 'Cache-Control': o.ok ? 'public, max-age=600' : 'no-store' } });
+  const add = (m, n, q) => { n = String(n || '').trim(); if (!n) return; m.set(n, (m.get(n) || 0) + (+q || 1)); };
+  const list = m => [...m].map(([name, qty]) => ({ qty, name }));
+  let m;
+  if ((m = link.match(/moxfield\.com\/decks\/([\w-]{5,40})/i))) {
+    for (const api of [`https://api2.moxfield.com/v3/decks/all/${m[1]}`, `https://api2.moxfield.com/v2/decks/all/${m[1]}`]) {
+      try { const r = await fetch(api, { headers: H }); if (!r.ok) continue; const j = await r.json(); const cards = new Map();
+        if (j.boards) { for (const b of ['commanders', 'companions', 'mainboard']) for (const c of Object.values(j.boards[b]?.cards || {})) add(cards, c.card?.name, c.quantity); }
+        else { for (const b of ['commanders', 'companions', 'mainboard']) for (const [n, c] of Object.entries(j[b] || {})) add(cards, c.card?.name || n, c.quantity); }
+        if (cards.size) return out({ ok: true, source: 'Moxfield', name: j.name || 'Moxfield deck', items: list(cards) });
+      } catch {}
+    }
+    return out({ ok: false, error: "Moxfield didn't let us read that deck. Make sure it's public, or copy the list from Moxfield (Export, Copy for MTGA) and paste it." });
+  }
+  if ((m = link.match(/archidekt\.com\/(?:api\/)?decks\/(\d+)/i))) {
+    try { const r = await fetch(`https://archidekt.com/api/decks/${m[1]}/`, { headers: H }); if (r.ok) { const j = await r.json(); const cards = new Map();
+        const skip = new Set((j.categories || []).filter(c => c.includedInDeck === false).map(c => c.name));
+        for (const c of j.cards || []) { const cats = c.categories || []; if (cats.some(x => skip.has(x) || /^(maybeboard|sideboard)$/i.test(x))) continue; add(cards, c.card?.oracleCard?.name || c.card?.name, c.quantity); }
+        if (cards.size) return out({ ok: true, source: 'Archidekt', name: j.name || 'Archidekt deck', items: list(cards) }); } } catch {}
+    return out({ ok: false, error: "Archidekt didn't let us read that deck. Make sure it's public, or copy the list and paste it." });
+  }
+  return out({ ok: false, error: 'Paste a Moxfield or Archidekt deck link.' }, 400);
+}
+
 export default {
   async fetch(req, env, ctx) {
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
@@ -383,6 +411,7 @@ export default {
     if (url.pathname === '/nearby') return nearby(url, ctx);
     if (url.pathname === '/recs') return recs(url, ctx);
     if (url.pathname === '/browse') return browse(url, ctx);
+    if (url.pathname === '/deck') return deck(url);
     if (url.pathname === '/geo') { const q = String(url.searchParams.get('q') || '').slice(0, 200).trim(); const g = q.length > 5 ? await geocode(q, ctx) : null;
       return Response.json(g ? { ok: true, ...g } : { ok: false, error: "Couldn't find that address. Try adding the city." }, { headers: CORS }); }
     if (url.pathname.startsWith('/sync/')) return sync(req, env, url.pathname.slice(6));
