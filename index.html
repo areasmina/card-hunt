@@ -202,6 +202,8 @@ a.btn{text-decoration:none}
 .hello{display:flex;align-items:center;gap:8px;padding:14px 0 2px}
 .hello>div{flex:1;min-width:0}
 .hello h1{margin:0;font-size:30px;letter-spacing:-.03em;line-height:1.1}
+.hello .hlogo{flex:none;display:block;margin-right:4px}
+.hello .hlogo img{display:block;height:58px;width:auto}
 .hello p{margin:2px 0 0;color:var(--muted);font-size:15px}
 .iconbtn{position:relative;width:44px;height:44px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--text);flex:none}
 .iconbtn.on{color:var(--accent)}
@@ -1150,6 +1152,7 @@ function viewHome(){
   const sm=w=>w.replace(/width="\d+" height="\d+"/,'width="22" height="22"');
   const recent=S.searches.slice(0,8);
   return `<header class="hello">
+      <picture class="hlogo" aria-hidden="true"><source srcset="icons/card-spin.png" media="(prefers-reduced-motion: reduce)"><img src="icons/card-spin.webp" alt="" width="94" height="140"></picture>
       <div><h1>Card Hunt</h1><p>${STORES.length} stores, one search</p></div>
       <button class="iconbtn${SY?' on':''}" data-act="sync" title="Sync across devices" aria-label="Sync across devices">${sm(I.cloud)}${SY?'<i></i>':''}</button>
       <button class="iconbtn" data-act="theme" title="${S.theme==='light'?'Light mode. Tap for dark':'Dark mode. Tap for light'}" aria-label="Change light or dark mode">${themeIcon()}</button>
