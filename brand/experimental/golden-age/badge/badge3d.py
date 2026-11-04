@@ -122,7 +122,7 @@ def frame(i, n, card, hopen, hgrab):
     # ---- the hand, behind everything that is the card: scale and brightness follow depth
     if ease > .02:
         spr = hgrab if grabbing else hopen
-        sc = 0.4 + 0.75 * ease                                         # far = small
+        sc = 0.5 + 1.05 * ease                                         # far = small
         w, h = spr.size
         hs = spr.resize((max(1, round(w * sc * SS)), max(1, round(h * sc * SS))), Image.NEAREST)
         # foreshortening: the hand leans in, so squash it a little and tilt it towards the card
@@ -131,8 +131,8 @@ def frame(i, n, card, hopen, hgrab):
         fog = 1 - ease                                                  # far = sunk into the dark
         a[..., :3] = a[..., :3] * (1 - .75 * fog) + np.array(PAL[1]) * .75 * fog
         hs = Image.fromarray(a.astype(np.uint8), 'RGBA')
-        hx = (33 + 2 * ease) * SS - hs.width / 2                        # drifts up and right, towards the card's top corner
-        hy = (30 - 12 * ease + (4 if grabbing else 0)) * SS - hs.height / 2
+        hx = (34 + 1 * ease) * SS - hs.width / 2                        # drifts up and right, towards the card's top corner
+        hy = (30 - 8 * ease + (4 if grabbing else 0)) * SS - hs.height / 2
         canvas.alpha_composite(hs, (int(hx), int(hy)))
 
     # ---- cast shadow on the tunnel wall, then the card's thickness, then its face
