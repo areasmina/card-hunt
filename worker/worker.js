@@ -158,6 +158,41 @@ async function geocode(addr, ctx) {
   return geo;
 }
 
+// GET /recs?names=A|B|C -> cards that Commander decks with those cards often play (EDHREC's public card pages),
+// ranked by how many of your cards they go with and how high EDHREC lists them. Each card page is cached for a week.
+const REC_LISTS = /^(highsynergycards|topcards|creatures|instants|sorceries|utilityartifacts|enchantments|planeswalkers|gamechangers)$/;
+const edhSlug = n => n.split(' // ')[0].toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/['’,.!?:]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+async function edhCard(name, ctx) {
+  const slug = edhSlug(name); if (!slug) return null;
+  const key = new Request(`https://cardhunt.cache/v1/edh/${slug}`);
+  const hit = await caches.default.match(key); if (hit) return hit.json();
+  let lists = null;
+  try {
+    const r = await fetch(`https://json.edhrec.com/pages/cards/${slug}.json`, { headers: { 'User-Agent': UA, Accept: 'application/json' }, signal: AbortSignal.timeout(9000) });
+    if (r.ok) { const j = await r.json(); lists = (j.container?.json_dict?.cardlists || []).filter(l => REC_LISTS.test(l.tag || ''))
+      .map(l => ({ tag: l.tag, cards: (l.cardviews || []).slice(0, 12).map(c => ({ name: c.name, syn: typeof c.synergy === 'number' ? c.synergy : null })) })); }
+    else if (r.status === 404) lists = [];
+  } catch {}
+  if (lists) ctx.waitUntil(caches.default.put(key, Response.json(lists, { headers: { 'Cache-Control': 'public, max-age=604800' } })));
+  return lists;
+}
+async function recs(url, ctx) {
+  const names = [...new Set(String(url.searchParams.get('names') || '').split('|').map(x => x.trim()).filter(x => x.length > 1 && x.length < 120))].slice(0, 6);
+  if (!names.length) return Response.json({ ok: false, error: 'names required' }, { status: 400, headers: CORS });
+  const mine = new Set(names.map(n => n.toLowerCase())), score = new Map();
+  const pages = await Promise.all(names.map(n => edhCard(n, ctx)));
+  pages.forEach((lists, i) => { if (!lists) return;
+    for (const l of lists) l.cards.forEach((c, k) => {
+      const low = c.name.toLowerCase(); if (mine.has(low)) return;
+      const w = (l.tag === 'highsynergycards' ? 3 : l.tag === 'topcards' ? 2 : 1) + (c.syn > 0 ? c.syn * 4 : 0) + (12 - k) / 12;
+      const e = score.get(low) || { name: c.name, score: 0, with: [] }; e.score += w; if (!e.with.includes(names[i])) e.with.push(names[i]); score.set(low, e);
+    }); });
+  const out = [...score.values()].map(e => ({ ...e, score: e.score * e.with.length })).sort((a, b) => b.score - a.score).slice(0, 18)
+    .map(e => ({ name: e.name, with: e.with.slice(0, 2) }));
+  return Response.json({ ok: true, seeds: names, cards: out, found: pages.filter(Boolean).length },
+    { headers: { ...CORS, 'Cache-Control': 'public, max-age=3600' } });
+}
+
 // GET /profile?host=<store host> -> what a store page shows. Cached for a day so repeat visits are instant.
 async function profile(url, ctx) {
   const host = String(url.searchParams.get('host') || '').toLowerCase();
@@ -294,6 +329,7 @@ export default {
     if (url.pathname === '/store') return checkStore(url.searchParams.get('url') || '');
     if (url.pathname === '/profile') return profile(url, ctx);
     if (url.pathname === '/nearby') return nearby(url, ctx);
+    if (url.pathname === '/recs') return recs(url, ctx);
     if (url.pathname === '/geo') { const q = String(url.searchParams.get('q') || '').slice(0, 200).trim(); const g = q.length > 5 ? await geocode(q, ctx) : null;
       return Response.json(g ? { ok: true, ...g } : { ok: false, error: "Couldn't find that address. Try adding the city." }, { headers: CORS }); }
     if (url.pathname.startsWith('/sync/')) return sync(req, env, url.pathname.slice(6));

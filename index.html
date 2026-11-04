@@ -1150,6 +1150,31 @@ async function nearAdd(i, btn){
 }
 
 // ---------- views ----------
+// ---------- recommended ----------
+// Cards that Commander decks often play alongside what you've carted, saved, listed or looked at (EDHREC data via the helper).
+let RECS=LS.get('recs',null), recsBusy=false;
+function recSeeds(){
+  const out=[], seen=new Set(), add=n=>{ n=String(n||'').trim(); const k=n.toLowerCase(); if(n&&!seen.has(k)){ seen.add(k); out.push(n); } };
+  [...S.cart].reverse().forEach(c=>add(c.name)); S.favs.forEach(f=>add(f.name));
+  (S.lists||[]).forEach(l=>(l.items||[]).forEach(i=>add(i.name))); S.viewed.forEach(v=>add(v.name));
+  return out.filter(n=>!/^(plains|island|swamp|mountain|forest|wastes)$/i.test(n)).slice(0,6);
+}
+async function loadRecs(){
+  const seeds=recSeeds(), key=seeds.join('|').toLowerCase(); if(!seeds.length||recsBusy) return;
+  if(RECS&&RECS.key===key&&Date.now()-RECS.at<864e5) return;
+  recsBusy=true;
+  try{ const j=await (await fetch(`${API}/recs?names=${encodeURIComponent(seeds.join('|'))}`)).json();
+    if(j.ok){ RECS={key,at:Date.now(),cards:j.cards||[]}; LS.set('recs',RECS); const el=$id('recs'); if(el) el.innerHTML=recsInner(); } }
+  catch(e){} finally{ recsBusy=false; }
+}
+function recsHTML(){ if(!recSeeds().length) return ''; setTimeout(loadRecs,0); return `<div id="recs">${recsInner()}</div>`; }
+function recsInner(){
+  if(!RECS||!RECS.cards) return '';
+  const own=new Set([...S.cart,...S.favs].map(x=>String(x.name||'').toLowerCase()));
+  const cards=RECS.cards.filter(c=>!own.has(c.name.toLowerCase())).slice(0,12); if(!cards.length) return '';
+  return `<div class="h"><h2>Recommended for you</h2><span class="hint">From what you hunt</span></div>
+    <div class="rail">${cards.map(c=>`<div class="p rec"><button class="img" data-act="q" data-q="${esc(c.name)}"><img alt="${esc(c.name)}" loading="lazy" src="${esc(scry(c.name))}"></button><div class="rmeta">Goes with ${esc(c.with[0]||'')}</div></div>`).join('')}</div>`;
+}
 function viewHome(){
   const sm=w=>w.replace(/width="\d+" height="\d+"/,'width="22" height="22"');
   const recent=S.searches.slice(0,8);
@@ -1166,6 +1191,7 @@ function viewHome(){
     <div class="h"><h2>Your stores</h2><span class="hint">${STORES.length-S.prefs.off.filter(id=>SBY[id]).length} of ${STORES.length} searched</span></div>
     <div class="srail">${STORES.map(st=>`<button class="sbub${S.prefs.off.includes(st.id)?' off':''}" data-act="gostore" data-hold="${esc(st.id)}" data-s="${esc(st.id)}">${storeLogo(st, st.deck?`<i title="Can fill its cart from a list">${I.cart.replace('width="30" height="30"','width="11" height="11"')}</i>`:'')}<span class="nm">${esc(st.name)}</span></button>`).join('')}
       <button class="sbub" data-act="addstore"><span class="logo add">${I.plus}</span><span class="nm">Add store</span></button></div>
+    ${recsHTML()}
     ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2>${S.viewed.length>3?'<button class="right" data-act="seeviewed">See all</button>':''}</div><div class="rail">${S.viewed.slice(0,12).map(o=>tile(o,{rail:true})).join('')}${S.viewed.length>3?`<button class="seeall" data-act="seeviewed"><span>${I.chev.replace('width="16" height="16"','width="22" height="22"')}</span>See all<small>${S.viewed.length} cards</small></button>`:''}</div>`:''}
     ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use Card Hunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
     ${installEvt&&!standalone()?`<button class="promo soft" data-act="install"><span class="ic">${I.phone}</span><span class="grow"><b>Install the app</b><span>Open Card Hunt from your home screen or taskbar</span></span>${I.chev}</button>`:''}`;
