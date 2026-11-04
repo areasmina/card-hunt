@@ -483,7 +483,7 @@ def hills(m, y0, x0, x1, z):
 
 THEMES = {
     #        frame tile,        box tile,       box burn, title ink, rule ink, bevel
-    'dark':     ('frame-black', 'box-black',    0.6, '#f1e9d8', '#1a1208', '#3a3a38'),
+    'dark':     ('frame-black', 'box-black',    0.4, '#f1e9d8', '#1a1208', '#3a3a38'),
     'light':    ('frame-white', 'box-white',    0.0, '#1a1814', '#1a1814', '#8a877f'),
     'blue':     ('frame-blue',  'box-blue',     0.0, '#f4f8fb', '#10202a', '#24525e'),
     'artifact': ('frame-artifact', 'box-artifact', 0.0, '#f1e9d8', '#1a1814', '#3d2c1e'),
@@ -491,7 +491,7 @@ THEMES = {
 
 
 def build_mock():
-    tex = lambda n: os.path.join(OUT, f'{n}.png')
+    tex = lambda n: os.path.join(os.environ.get('TEX', OUT), f'{n}.png')  # TEX=out/upres for the scan tiles
     T = 0.83                                  # one tile = a third of the card width
     for theme, (ft, bt, burn, title, rule, bev) in THEMES.items():
         sc = reset((1000, 1400))
