@@ -494,13 +494,15 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
    and a small collector line at the bottom ---- */
 /* the card pop-up keeps its own look inside a modern card's black frame: rounded black edge, a thin cream sliver
    down the sides, and the black band at the bottom with the collector line and the little triangle */
-.sheet .body:has(> .pd){background:#0b141c!important;background-image:none!important;padding:10px 10px calc(4px + env(safe-area-inset-bottom));border-radius:30px 30px 0 0}
-.pd .pdc{position:relative;background-color:var(--bg);background-image:linear-gradient(var(--veil-sheet),var(--veil-sheet)),var(--tex);background-size:auto,340px;border-radius:20px 20px 26px 26px;padding:14px 14px 18px;box-shadow:-2px 0 0 #e6dcc4,2px 0 0 #e6dcc4}
+.sheet .body:has(> .pd){background:var(--pf-edge)!important;background-image:none!important;padding:10px 10px calc(4px + env(safe-area-inset-bottom));border-radius:30px 30px 0 0}
+.pd .pdc{position:relative;background-color:var(--bg);background-image:linear-gradient(var(--veil-sheet),var(--veil-sheet)),var(--tex);background-size:auto,340px;border-radius:20px 20px 26px 26px;padding:14px 14px 18px;box-shadow:-1.5px 0 0 var(--pf-sliver),1.5px 0 0 var(--pf-sliver),0 1px 0 var(--pf-sliver)}
 .pd .pdc > .close{top:12px;right:12px}
-.pd .pdfoot{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:10px 8px 6px;font-size:10.5px;line-height:1.35;font-weight:600;letter-spacing:.06em;color:#eef0f2;white-space:nowrap}
+.pd .pdfoot{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:10px 8px 6px;font-size:10.5px;line-height:1.35;font-weight:600;letter-spacing:.06em;color:var(--pf-ink);white-space:nowrap}
 .pd .pdfoot span:last-child{text-align:right;font-weight:500;letter-spacing:.02em}
 .pd .pdfoot b{font-weight:700}
-.pd .pdfoot i{position:absolute;left:50%;top:-1px;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:13px solid #6d737a}
+.pd .pdfoot i{position:absolute;left:50%;top:-1px;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:13px solid var(--pf-tri)}
+:root{--pf-edge:#1b1e1f;--pf-sliver:rgba(217,186,151,.45);--pf-ink:#c9b495;--pf-tri:#474e4e}
+:root[data-theme="light"]{--pf-edge:#3b4252;--pf-sliver:#d8dee9;--pf-ink:#e5e9f0;--pf-tri:#5c6578}
 </style>
 </head>
 <body>
