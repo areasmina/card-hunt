@@ -519,14 +519,13 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 
 /* stock status as a set-symbol plate: gold (like a rare) when in stock, silver (like an uncommon) when sold out */
 .pd .st{margin-top:6px}
-.stamp{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:6px;border:2px solid transparent;
-  font:700 12.5px/1 Georgia,"Times New Roman",serif;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;box-shadow:0 0 0 1px #050505,0 2px 3px rgba(0,0,0,.45)}
-/* in stock: a polished gold plate with dark engraved letters (like the M19 symbol) */
-.stamp.in{background:linear-gradient(#f6e2a0,#d8b25a 45%,#a77b2c 55%,#e4c777) padding-box,linear-gradient(#fff4cf,#8a6420 50%,#f2d88e) border-box;
-  color:#24190a;text-shadow:0 1px 0 rgba(255,244,205,.6),0 -1px 0 rgba(60,40,0,.35)}
-/* sold out: a gunmetal plate in a silver rim with embossed silver letters (like the M11 symbol) */
-.stamp.out{background:linear-gradient(#6b737b,#3a4046 48%,#24282c 52%,#454c53) padding-box,linear-gradient(#ffffff,#8d959d 50%,#e3e7eb) border-box;
-  color:#e6eaee;text-shadow:0 -1px 0 #000,0 1px 0 rgba(255,255,255,.18)}
+.stamp{position:relative;display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:4px;overflow:hidden;
+  font:700 13px/1 Georgia,"Times New Roman",serif;letter-spacing:0;white-space:nowrap}
+/* in stock: the M19 look, a flat gold plaque with a black keyline and black serif letters */
+.stamp.in{border:2px solid transparent;background:linear-gradient(118deg,rgba(255,255,255,.22) 0 34%,transparent 35%) padding-box,linear-gradient(#f4dc8e,#d9b257 52%,#c49a3e 53%,#e1c06c) padding-box,linear-gradient(#fbeab0,#b8892f 50%,#f0d283) border-box;color:#0d0b07;box-shadow:inset 0 0 0 1.2px #0d0b07,0 0 0 1px #0d0b07;height:22px}
+/* sold out: the M11 look, a chrome rim around a dark slate-blue face with silver letters outlined in black */
+.stamp.out{border-radius:6px;background:linear-gradient(118deg,rgba(255,255,255,.16) 0 34%,transparent 35%) padding-box,linear-gradient(160deg,#58707c,#22313a 55%,#3a505c) padding-box,linear-gradient(#ffffff,#8e98a1 45%,#eef1f3 60%,#7b858e) border-box;border:2.5px solid transparent;
+  color:#e9edf0;-webkit-text-stroke:.6px #0a1013;paint-order:stroke fill;box-shadow:0 0 0 1px #0a0c0e;height:22px;padding:0 8px}
 </style>
 </head>
 <body>
@@ -960,15 +959,20 @@ const countCards = l => l.items.reduce((a,i)=>a+i.qty,0);
 // Each store gets its own page: its logo on a header in its own colours, a search of just that store, and what you have saved there.
 // The description, socials and policies come from the store's own home page through the helper, kept for 3 days.
 let PROF=LS.get('prof4',{});
-// A short card-style address: "1124 Wellington Road South, Unit 5, London, ON N6E 1M3, Canada" -> "1124 WELLINGTON RD S · LONDON"
-const ADDR_AB={street:'ST',road:'RD',avenue:'AVE',boulevard:'BLVD',drive:'DR',lane:'LN',court:'CT',crescent:'CRES',place:'PL',highway:'HWY',parkway:'PKWY',square:'SQ',terrace:'TER',circle:'CIR',way:'WAY',north:'N',south:'S',east:'E',west:'W',suite:'#',unit:'#'};
+// The store's city and province, card-style: "1124 Wellington Rd S, London, ON N6E 1M3, Canada" -> "LONDON, ON"
+const PROV={ontario:'ON',quebec:'QC','québec':'QC','british columbia':'BC',alberta:'AB',manitoba:'MB',saskatchewan:'SK','nova scotia':'NS','new brunswick':'NB','newfoundland and labrador':'NL','prince edward island':'PE',yukon:'YT','northwest territories':'NT',nunavut:'NU'};
+const PROVS=new Set(Object.values(PROV));
 function shortAddr(a){
-  const parts=String(a||'').split(',').map(x=>x.trim()).filter(Boolean)
-    .filter(x=>!/^(canada|ca)$/i.test(x)&&!/^[A-Z]{2}\b\s*([A-Z]\d[A-Z]\s?\d[A-Z]\d)?$/i.test(x)&&!/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i.test(x)&&!/^(unit|suite|#|apt)\b/i.test(x));
-  if(!parts.length) return '';
-  const ab=t=>t.split(/\s+/).map(w=>ADDR_AB[w.toLowerCase().replace(/\.$/,'')]||w).join(' ');
-  const street=ab(parts[0]).replace(/\s+(unit|suite)\s+\S+/i,''), city=(parts[1]||'').replace(/\s+[A-Z]{2}(\s+[A-Z]\d[A-Z]\s?\d[A-Z]\d)?$/i,'');
-  return (city?`${street} · ${city}`:street).toUpperCase();
+  const parts=String(a||'').split(',').map(x=>x.trim()).filter(x=>x&&!/^canada$/i.test(x));
+  let prov='', city='';
+  for(let i=0;i<parts.length;i++){
+    const t=parts[i].replace(/\s*[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i,'').trim(), low=t.toLowerCase(), w=t.split(/\s+/);
+    const code=PROV[low]||(PROVS.has(t.toUpperCase())?t.toUpperCase():'')||(PROVS.has((w[w.length-1]||'').toUpperCase())&&w.length>1?w[w.length-1].toUpperCase():'');
+    if(code){ prov=code; const rest=PROV[low]||PROVS.has(t.toUpperCase())?'':w.slice(0,-1).join(' '); city=rest||(i>0?parts[i-1]:''); break; }
+  }
+  if(!city) city=parts.length>1?parts[1]:'';
+  if(/^\d/.test(city)) city='';
+  return [city,prov].filter(Boolean).join(', ').toUpperCase();
 }
 // Where a store is: the address set by hand, else every location its own website lists.
 const locsOf = st => { const o=st&&(S.addrOv||{})[st.id]; if(o&&o.lat!=null) return [o]; const p=profOf(st); if(!p) return [];
