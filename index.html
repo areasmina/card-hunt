@@ -16,28 +16,30 @@
 <meta name="description" content="Search five Canadian MTG stores at once, save favorites, wishlists and decks.">
 <style>
 :root{
-  /* Nord palette. Dark (Polar Night) is the default; light (Snow Storm) when chosen. */
+  /* Nord palette. Dark (Polar Night) is the default; light (Snow Storm) when chosen.
+     Accent: Frost nord8 #88c0d0 (dark) / nord10 #5e81ac (light). Aurora: nord11 red, nord13 yellow, nord14 green. */
   --bg:#2e3440; --surface:#3b4252; --surface-2:#434c5e; --surface-3:#4c566a; --text:#eceff4; --muted:#b4bccb;
-  --line:#434c5e; --accent:#8f7bff; --accent-text:#fff; --ok:#a3be8c; --warn:#ebcb8b; --heart:#e88b94;
+  --line:#434c5e; --accent:#88c0d0; --accent-text:#2e3440; --ok:#a3be8c; --warn:#ebcb8b; --heart:#bf616a;
   --sheet-bg:#2e3440; --sheet:#3b4252; --sheet-2:#434c5e; --sheet-text:#eceff4; --sheet-muted:#b4bccb;
   --shadow:0 8px 28px rgba(0,0,0,.35); --r:24px;
   color-scheme:dark;   /* scrollbars and form controls follow the theme (Firefox kept a white scrollbar) */
 }
 :root[data-theme="light"]{
   --bg:#e5e9f0; --surface:#eceff4; --surface-2:#d8dee9; --surface-3:#ccd3df; --text:#2e3440; --muted:#4c566a;
-  --line:#d8dee9; --accent:#5433eb; --ok:#3f7d3a; --warn:#9a6a10; --heart:#bf3b4a; --shadow:0 8px 28px rgba(46,52,64,.14);
+  --line:#d8dee9; --accent:#5e81ac; --accent-text:#fff; --ok:#4f7a3a; --warn:#9a6a10; --heart:#bf616a; --shadow:0 8px 28px rgba(46,52,64,.14);
   color-scheme:light;
 }
 html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
 /* Vintage texture: the old card frame, greyed and almost hidden under the theme colour, on the page only.
    To turn it off, delete this block (or set --tex:none). */
-:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.86)}
-:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.87)}
+:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.71)}
+:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.72)}
+body{min-height:100vh;min-height:100dvh}
 body,.top,.stools{background-color:var(--bg);background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px;background-attachment:fixed}
 .sheet .body:not(.cartsheet .body){background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background-color:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 a{color:inherit}
 svg{display:block}
@@ -46,7 +48,7 @@ svg{display:block}
 .hidden{display:none!important}
 
 /* search pill */
-.top{position:sticky;top:0;z-index:15;background:var(--bg);padding:8px 0 6px;margin:0 -16px;padding-left:16px;padding-right:16px;display:flex;gap:10px;align-items:center}
+.top{position:sticky;top:0;z-index:15;background-color:var(--bg);padding:8px 0 6px;margin:0 -16px;padding-left:16px;padding-right:16px;display:flex;gap:10px;align-items:center}
 .top .pill{flex:1;min-width:0}
 
 .pill{display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:999px;padding:0 14px;height:52px;position:relative}
@@ -231,7 +233,7 @@ a.btn{text-decoration:none}
 .navpill{pointer-events:auto;display:flex;align-items:center;gap:4px;background:var(--surface);border-radius:999px;padding:6px;box-shadow:var(--shadow)}
 .navpill button{width:58px;height:54px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
 .navpill button.on{background:var(--surface-2);color:var(--text)}
-.cartbtn{pointer-events:auto;width:66px;height:66px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);position:relative}
+.cartbtn{pointer-events:auto;width:66px;height:66px;border-radius:50%;background:var(--accent);color:var(--accent-text);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);position:relative}
 .cartbtn span{position:absolute;top:14px;right:12px;font-size:12px;font-weight:800;background:#fff;color:var(--accent);border-radius:999px;padding:0 5px;min-width:18px;text-align:center}
 
 /* sheets */
@@ -259,7 +261,7 @@ a.btn{text-decoration:none}
 .pd .hint{color:var(--muted);font-size:13px;margin-top:4px}
 
 /* cart (dark, like Shop) */
-.cartsheet{--accent:#8f7bff}
+.cartsheet{--accent:#88c0d0;--accent-text:#2e3440}
 .cartsheet .body{background:var(--sheet-bg);color:var(--sheet-text)}
 .cartsheet .grab{background:#333}
 .cartsheet .close{background:var(--sheet-2);color:var(--sheet-text)}
@@ -333,7 +335,7 @@ a.btn{text-decoration:none}
 .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:60;box-shadow:var(--shadow);transition:opacity .2s;max-width:calc(100% - 32px);text-align:center;display:flex;align-items:center;gap:14px;white-space:nowrap}
 .toast span{overflow:hidden;text-overflow:ellipsis}
 body:has(#sheet .cartsheet) .toast{background:#eceff4;color:#2e3440}
-body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
+body:has(#sheet .cartsheet) .toast button{color:#5e81ac;filter:none}
 .toast button{color:var(--accent);font-weight:750;font-size:15px;padding:4px 2px;flex:none;filter:brightness(1.35)}
 
 /* store page */
@@ -356,7 +358,7 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 .abhero div div{font-size:14px;opacity:.9}
 .shnav{display:flex;align-items:center}.shnav .grow{flex:1}
 .glass{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.38);color:#fff;display:flex;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-.stools{position:sticky;top:0;z-index:15;background:var(--bg);margin:0 -16px;padding:14px 16px 2px}
+.stools{position:sticky;top:0;z-index:15;background-color:var(--bg);margin:0 -16px;padding:14px 16px 2px}
 .stools .chips{padding-bottom:2px}
 .stools .chip svg{width:17px;height:17px}
 .stcart{display:flex;align-items:center;gap:12px;margin-top:18px;padding:14px 14px 14px 18px;border-radius:22px;background:var(--surface);box-shadow:var(--shadow)}
@@ -387,7 +389,7 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 .nrad input{flex:1;accent-color:var(--accent)}
 .nrad b{min-width:52px;text-align:right}
 .nlist .nrow{align-items:center;border-radius:16px;padding:10px 8px;margin:0 -8px}
-.nrow .num{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.nrow .num{width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-text);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
 .nrow .s{color:var(--muted);font-size:13.5px}
 .nrow .nmsg:empty{display:none}
 .nrow .nmsg{color:var(--text)}
@@ -401,7 +403,7 @@ a.noweb{color:var(--accent)!important;font-weight:600}
 .nrow.flash{animation:flash 1.2s ease-out}
 @keyframes flash{0%{background:color-mix(in srgb,var(--accent) 22%,transparent)}100%{background:transparent}}
 .btn.small{height:38px;padding:0 16px;font-size:14px;flex:none}
-.npin span{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#5433eb;color:#fff;font:700 12px/1 system-ui;box-shadow:0 2px 6px rgba(0,0,0,.35);border:2px solid #fff}
+.npin span{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#5e81ac;color:#fff;font:700 12px/1 system-ui;box-shadow:0 2px 6px rgba(0,0,0,.35);border:2px solid #fff}
 .npin i{transform:rotate(45deg);font-style:normal}
 .npin.dim span{background:#8a8a94}
 .leaflet-container{font:inherit}
@@ -445,7 +447,7 @@ a.noweb{color:var(--accent)!important;font-weight:600}
 .dayl{font-weight:650;font-size:15px;color:var(--muted);margin:20px 0 10px}
 /* filters */
 .fchips .chip.icon{position:relative}
-.fbadge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.fbadge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--accent);color:var(--accent-text);font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
 .filt{display:flex;flex-direction:column}
 .fhead{display:flex;align-items:center;justify-content:space-between;margin:2px 0 4px}
 .fhead h2{margin:0;font-size:28px;letter-spacing:-.02em}
@@ -503,11 +505,11 @@ a.noweb{color:var(--accent)!important;font-weight:600}
 // ---------- config ----------
 const API = 'https://card-hunt.areasmina.workers.dev';
 const BUILTIN = [
-  {id:'ea',     name:'EA Collectibles', color:'#0f766e', host:'www.eacollectibles.com', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'lamood', name:'La Mood',         color:'#be185d', logo:'https://cdn.shopify.com/s/files/1/0275/7728/6793/files/LA_Mood_Logo.jpg?width=240', host:'lamoodcomics.ca', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
-  {id:'mana',   name:'Mana Lounge',     color:'#1d4ed8', logo:'https://www.manalounge.ca/cdn/shop/files/favicon.png?width=180', host:'www.manalounge.ca', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
-  {id:'ge',     name:'Gamers Emporium', color:'#b45309', logo:'https://gamersemporium.ca/cdn/shop/files/GE_Logo_LinkedIn_White.jpg?crop=center&height=180&width=180', host:'gamersemporium.ca', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'players',name:'Players',         color:'#6b7280', logo:'https://playerscandc.com/cdn/shop/files/players.png?width=180', host:'playerscandc.com', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
+  {id:'ea',     name:'EA Collectibles', color:'#8fbcbb', host:'www.eacollectibles.com', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'lamood', name:'La Mood',         color:'#bf616a', logo:'https://cdn.shopify.com/s/files/1/0275/7728/6793/files/LA_Mood_Logo.jpg?width=240', host:'lamoodcomics.ca', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
+  {id:'mana',   name:'Mana Lounge',     color:'#5e81ac', logo:'https://www.manalounge.ca/cdn/shop/files/favicon.png?width=180', host:'www.manalounge.ca', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
+  {id:'ge',     name:'Gamers Emporium', color:'#d08770', logo:'https://gamersemporium.ca/cdn/shop/files/GE_Logo_LinkedIn_White.jpg?crop=center&height=180&width=180', host:'gamersemporium.ca', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'players',name:'Players',         color:'#4c566a', logo:'https://playerscandc.com/cdn/shop/files/players.png?width=180', host:'playerscandc.com', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
 ];
 // Stores the person adds themselves (any Shopify store). They sync like favorites and lists.
 const PALETTE=['#7c3aed','#0891b2','#c2410c','#15803d','#db2777','#4f46e5','#a16207','#0f766e'];
@@ -1072,7 +1074,7 @@ function initMap(){
   nearMap=L.map(el,{zoomControl:false,attributionControl:true}).setView([NEAR.lat,NEAR.lon],NEAR.z||10);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(nearMap);
   L.control.zoom({position:'bottomright'}).addTo(nearMap); nearMap.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
-  nearCircle=L.circle(nearMap.getCenter(),{radius:NEAR.r*1000,color:'#5433eb',weight:2,fillColor:'#5433eb',fillOpacity:.12,interactive:false}).addTo(nearMap);
+  nearCircle=L.circle(nearMap.getCenter(),{radius:NEAR.r*1000,color:'#5e81ac',weight:2,fillColor:'#5e81ac',fillOpacity:.12,interactive:false}).addTo(nearMap);
   nearLayer=L.layerGroup().addTo(nearMap);
   const fit=()=>{ const b=nearCircle.getBounds(); if(!nearMap.getBounds().contains(b)) nearMap.fitBounds(b,{padding:[10,10]}); };
   let t; const later=()=>{ clearTimeout(t); t=setTimeout(nearRefresh,180); };
