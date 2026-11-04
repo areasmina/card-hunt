@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2e3440">
+<meta name="theme-color" content="#283032">
 <script>try{var t=JSON.parse(localStorage.getItem('cardhunt2.theme')||'"dark"');document.documentElement.dataset.theme=t==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}</script>
 <title>Card Hunt</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -20,7 +20,7 @@
      Dark is the default: Polar Night surfaces, Snow Storm text and accent. Light flips them.
      Only the status colours (ok, warn, heart) come from Nord's Aurora.
      The accent is a soft night-sky purple: --accent fills buttons, --accent-ink is accent-coloured text. */
-  --bg:#2e3440; --surface:#3b4252; --surface-2:#434c5e; --surface-3:#4c566a; --text:#eceff4; --muted:#d8dee9;
+  --bg:#283032; --surface:#3b4252; --surface-2:#434c5e; --surface-3:#4c566a; --text:#eceff4; --muted:#d8dee9;
   --line:#434c5e; --accent:#6c5486; --accent-text:#eceff4; --accent-ink:#c8b6dd; --ok:#a3be8c; --warn:#ebcb8b; --heart:#bf616a;
   --sheet-bg:#2e3440; --sheet:#3b4252; --sheet-2:#434c5e; --sheet-text:#eceff4; --sheet-muted:#d8dee9;
   --shadow:0 8px 28px rgba(0,0,0,.35); --r:24px;
@@ -34,7 +34,7 @@
 html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
 /* Vintage texture: the old card frame, greyed and almost hidden under the theme colour, on the page only.
    To turn it off, delete this block (or set --tex:none). */
-:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.93); --veil-sheet:rgba(46,52,64,.83)}
+:root{--tex:url(textures/frame-tutor.jpg); --veil:rgba(40,48,50,.45); --veil-sheet:rgba(40,48,50,.78)}   /* dark: the black beaded frame of an Alpha black card (Demonic Tutor), slate teal */
 :root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.94); --veil-sheet:rgba(229,233,240,.84)}
 body{min-height:100vh;min-height:100dvh}
 body,.top,.stools{background-color:var(--bg);background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px;background-attachment:fixed}
@@ -569,7 +569,7 @@ function applyTheme(){
   const r=document.documentElement;
   if(S.theme!=='light') S.theme='dark';   // only light and dark now; the old "follow device" setting becomes dark
   r.dataset.theme=S.theme;
-  document.querySelector('meta[name="theme-color"]').content=S.theme==='dark'?'#2e3440':'#e5e9f0';
+  document.querySelector('meta[name="theme-color"]').content=S.theme==='dark'?'#283032':'#e5e9f0';
 }
 
 // ---------- utils ----------
