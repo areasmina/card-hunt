@@ -18,6 +18,10 @@ PIX, UP, FPS, N, OUTLINE = CFG[D]
 PALETTE = ['#120e0c', '#2a1c14', '#4a2e1c', '#6e4426', '#9a6232', '#c88a44', '#e8b866', '#f6dc9a',
            '#1c2018', '#353a22', '#5a5a30', '#86803e', '#1a1830', '#2e2648', '#4a3058',
            '#7a2a1a', '#b8481e', '#e07a2c', '#f4ecd0', '#a8b8b0']
+if D == 'B':      # snap to the sprite's own palette, so the card keeps its colours
+    import re
+    _t = open(os.path.join(HERE, 'pixel.py')).read()
+    PALETTE = ['#0a0806'] + re.findall(r"'(#[0-9a-f]{6})'", _t[_t.index('HEX = {'):_t.index('}', _t.index('HEX = {'))])
 PAL = np.array([[int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)] for h in PALETTE], np.float32)
 BAYER = (np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]], np.float32) + 0.5) / 16 - 0.5
 
@@ -60,6 +64,8 @@ def face(name, path, z, flip, W, H, parent):
         t.interpolation = 'Closest'          # keep the card's own pixels crisp
     nt.links.new(t.outputs['Color'], p.inputs['Base Color'])
     nt.links.new(t.outputs['Alpha'], p.inputs['Alpha'])
+    nt.links.new(t.outputs['Color'], p.inputs['Emission Color'])     # a little self-light so it reads
+    p.inputs['Emission Strength'].default_value = 0.55
     try:
         m.surface_render_method = 'DITHERED'
     except AttributeError:
@@ -94,7 +100,7 @@ def anim():
         sc.frame_set(fr)
         spin.rotation_euler.z = math.radians(rz); spin.location.z = lz
         spin.keyframe_insert('rotation_euler', index=2); spin.keyframe_insert('location', index=2)
-    cam = bpy.data.cameras.new('C'); cam.lens = 125
+    cam = bpy.data.cameras.new('C'); cam.lens = 145
     co = link(bpy.data.objects.new('C', cam)); co.location = (0, -15.5, 1.2); look(co, (0, 0, 0)); sc.camera = co
     for nm, loc, e, s, col in (('Key', (-5, -7, 4), 900, 4, (1.0, 0.75, 0.48)),
                                ('Fill', (6, -6, 0), 160, 7, (0.6, 0.68, 0.9)),
