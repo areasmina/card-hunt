@@ -504,7 +504,15 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 .pd .pdfoot{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:10px 8px 6px;font-size:10.5px;line-height:1.35;font-weight:600;letter-spacing:.06em;color:#f2f2f2;white-space:nowrap}
 .pd .pdfoot span:last-child{text-align:right;font-weight:500;letter-spacing:.02em}
 .pd .pdfoot b{font-weight:700}
-.pd .pdfoot i{position:absolute;left:50%;top:-1px;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:13px solid #6d737a}
+.pd .pdfoot i{position:absolute;left:50%;top:-1px;transform:translateX(-50%);width:32px;height:13px;clip-path:polygon(0 0,100% 0,50% 100%);
+  background:linear-gradient(115deg,#7d858e 0%,#cfd6dd 18%,#8fd0e6 30%,#c4a8ee 42%,#f4f6f8 52%,#a6e3c0 64%,#d9c48f 76%,#7d858e 100%);background-size:300% 100%;animation:holo 5s linear infinite}
+.pd .pdfoot i::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.45),transparent 60%);mix-blend-mode:screen}
+@keyframes holo{to{background-position:300% 0}}
+@media (prefers-reduced-motion: reduce){.pd .pdfoot i{animation:none}}
+.pd .pdfoot .col{font-weight:600;letter-spacing:.07em}
+.pd .pdfoot .brush{display:inline-block;vertical-align:-1px;margin:0 3px 0 4px}
+.pd .pdfoot .cred{text-transform:uppercase;font-size:10px;font-weight:700;letter-spacing:.05em}
+.pd .pdfoot .cred em{font-style:normal;font-size:12.5px}
 :root{--pf-band:rgba(0,0,0,.05)}
 :root[data-theme="light"]{--pf-band:rgba(255,250,238,.12)}
 </style>
@@ -1448,7 +1456,7 @@ function openProduct(o, fromCart=productFromCart){
     </div>
     ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost block" style="margin-top:10px" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
     ${fromCart?`<button class="btn ghost block" style="margin-top:10px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
-    </div><div class="pdfoot"><span><b>${o.available?'IN STOCK':'SOLD OUT'}</b><br>${esc((o.storeName||'').toUpperCase())} • EN</span><i></i><span>© Card Hunt<br>${esc(new Date().getFullYear())} · ${STORES.length} stores</span></div>
+    </div><div class="pdfoot"><span class="col">${(()=>{const n=Math.max(1,STORES.findIndex(s=>s.id===o.store)+1),p=x=>String(x).padStart(3,'0');return `${p(n)}/${p(STORES.length)} ${o.available?'S':'X'}`})()}<br>CHT • EN <svg class="brush" viewBox="0 0 20 10" width="18" height="9" aria-hidden="true"><path d="M1 8.6c2.6-.2 4.2-1.4 5.3-3.3l1.6 1.2C6.5 8.4 4.4 9.3 1 8.6z" fill="currentColor"/><path d="M7.5 5l1.2-1.4L19 1.2 9.6 6.3z" fill="currentColor"/></svg><span class="cred">${esc(o.storeName||'').split(' ').map(w=>`<em>${w.slice(0,1)}</em>${w.slice(1)}`).join(' ')}</span></span><i></i><span>© Card Hunt<br>${esc(new Date().getFullYear())} · ${STORES.length} stores</span></div>
   </div>`);
 }
 function chooseList(name){
