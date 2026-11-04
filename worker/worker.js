@@ -35,14 +35,20 @@ const storeFor = id => STORES[id] || (id.startsWith('x:') && HOST_RE.test(id.sli
 
 async function searchStore(id, q) {
   const s = storeFor(id);
-  const u = `https://${s.host}/search/suggest.json?q=${encodeURIComponent(q)}&resources[type]=product&resources[limit]=10&resources[options][unavailable_products]=last`;
-  const get = () => fetch(u, { headers: { 'User-Agent': UA, Accept: 'application/json' }, cf: { cacheTtl: 300, cacheEverything: true } });
-  let r; try { r = await get(); } catch { r = { ok: false, status: 0 }; }
-  // A busy store (429) or a hiccup: wait a moment and ask once more before giving up on it.
-  if (!r.ok && (r.status === 429 || r.status === 0 || r.status >= 500)) { await new Promise(res => setTimeout(res, 900)); r = await get(); }
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  const sug = await r.json();
-  let prods = (sug.resources?.results?.products || []).filter(p => !OTHER_GAMES.test(`${p.type || ''} ${p.vendor || ''} ${p.title}`));
+  // Whole words first ("Ultima" shouldn't fill the 10 slots with "Ultimate ..."), then the usual prefix search if that finds nothing.
+  const fetchSug = async prefix => {
+    const u = `https://${s.host}/search/suggest.json?q=${encodeURIComponent(q)}&resources[type]=product&resources[limit]=10&resources[options][unavailable_products]=last&resources[options][prefix]=${prefix}&resources[options][fields]=title,product_type,variants.title`;
+    const get = () => fetch(u, { headers: { 'User-Agent': UA, Accept: 'application/json' }, cf: { cacheTtl: 300, cacheEverything: true } });
+    let r; try { r = await get(); } catch { r = { ok: false, status: 0 }; }
+    // A busy store (429) or a hiccup: wait a moment and ask once more before giving up on it.
+    if (!r.ok && (r.status === 429 || r.status === 0 || r.status >= 500)) { await new Promise(res => setTimeout(res, 900)); r = await get(); }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const sug = await r.json();
+    return (sug.resources?.results?.products || []).filter(p => !OTHER_GAMES.test(`${p.type || ''} ${p.vendor || ''} ${p.title}`));
+  };
+  const nq0 = norm(q), named = p => { const t = ` ${norm(baseName(p.title))} `; return nq0.split(' ').every(w => t.includes(` ${w} `)); };
+  let prods = await fetchSug('none');
+  if (!prods.some(named)) prods = await fetchSug('last');
   const nq = norm(q), words = nq.split(' ');
   const exact = prods.filter(p => norm(baseName(p.title)) === nq);
   // No exact name here: keep products whose own name has every word you typed as a whole word, so "Ultima"
@@ -299,7 +305,7 @@ export default {
     const ids = [...new Set([...(url.searchParams.get('stores') || Object.keys(STORES).join(',')).split(',').filter(id => STORES[id]), ...extra])];
 
     const cache = caches.default;
-    const key = new Request(`https://cardhunt.cache/v4/search?q=${encodeURIComponent(norm(q))}&s=${ids.sort().join(',')}`);
+    const key = new Request(`https://cardhunt.cache/v5/search?q=${encodeURIComponent(norm(q))}&s=${ids.sort().join(',')}`);
     const hit = url.searchParams.has('fresh') ? null : await cache.match(key);
     if (hit) return hit;
 
