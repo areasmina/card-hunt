@@ -1574,7 +1574,7 @@ function toggleFav(o){
   else {S.favs=[{...o},...S.favs]; toast('Saved to favorites')}
   save('favs');
 }
-function addToCart(o,q=1){const c=inCart(o); if(c) c.qty+=q; else S.cart.push({...o,qty:q}); save('cart'); $id('cartCount').textContent=S.cart.reduce((a,c)=>a+c.qty,0); toast('Added to cart')}
+function addToCart(o,q=1){const c=inCart(o), now=Date.now(); if(c){ c.qty+=q; c.at=now; } else S.cart.push({...o,qty:q,at:now}); save('cart'); $id('cartCount').textContent=S.cart.reduce((a,c)=>a+c.qty,0); toast('Added to cart')}
 function viewed(o){S.viewed=[{...o,at:Date.now()},...S.viewed.filter(v=>v.url!==o.url)].slice(0,60); save('viewed')}
 
 let productFromCart=false;
@@ -1619,7 +1619,9 @@ let CSEL=new Set();   // stores picked with the buttons at the top of the cart; 
 const saveFold=()=>LS.set('fold',[...FOLD]);
 function setFold(sc,fold){ sc.classList.toggle('folded',fold); sc.querySelector('.shd').setAttribute('aria-expanded',String(!fold)); if(fold) FOLD.add(sc.dataset.s); else FOLD.delete(sc.dataset.s); }
 function openCart(){
-  const groups=STORES.map(s=>({s,items:S.cart.filter(c=>c.store===s.id)})).filter(g=>g.items.length);
+  // The store you added to most recently comes first; removing or changing amounts doesn't reorder.
+  const groups=STORES.map(s=>({s,items:S.cart.filter(c=>c.store===s.id)})).filter(g=>g.items.length)
+    .map(g=>({...g,last:Math.max(0,...g.items.map(c=>c.at||0))})).sort((a,b)=>b.last-a.last);
   for(const id of [...CSEL]) if(!groups.some(g=>g.s.id===id)) CSEL.delete(id);
   const picking=groups.length>1&&CSEL.size>0;
   const shown=picking?groups.filter(g=>CSEL.has(g.s.id)):groups;
