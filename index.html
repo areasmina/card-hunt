@@ -29,6 +29,12 @@
   color-scheme:light;
 }
 html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
+/* Vintage texture: the old card frame, greyed and almost hidden under the theme colour, on the page only.
+   To turn it off, delete this block (or set --tex:none). */
+:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.86)}
+:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.87)}
+body,.top,.stools{background-color:var(--bg);background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px;background-attachment:fixed}
+.sheet .body:not(.cartsheet .body){background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
