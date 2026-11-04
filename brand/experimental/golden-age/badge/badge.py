@@ -109,7 +109,7 @@ def base():
     lv = 1.9 - 1.6 * t + (BAYER[yy.astype(int) % 4, xx.astype(int) % 4] - .5) * .55
     img[:] = P[np.clip(np.round(lv), 0, 5).astype(int)]
     # the void: a black hole in the lower half, with a thin frost rim and dithered falloff
-    vx, vy, rx, ry = c, 51.5, 15, 5.5
+    vx, vy, rx, ry = c, 30.5, 17, 17
     e = ((xx - vx) / rx) ** 2 + ((yy - vy) / ry) ** 2
     img[e < 1] = PAL['v']
     rim = (e >= 1) & (e < 1.35)
@@ -131,17 +131,17 @@ def frame(i, n, cards, hopen, hgrab):
     img, alpha, e = base()
     t = i / n
     # card: floats, spins at its own pace, and lifts a little when the hand gets close
-    reach = max(0.0, math.sin(min(1, t / .55) * math.pi)) if t < .55 else 0.0      # 0..1..0 over the first 55%
-    lift = round(3 * max(0, reach - .6) / .4)
+    reach = max(0.0, math.sin(min(1, t / .6) * math.pi)) if t < .6 else 0.0        # 0..1..0 over the first 60%
+    tug = 2 if .42 < t < .52 else 0                                                    # the hand pulls the card down a little
+    lift = -tug
     bob = round(1.2 * math.sin(t * 2 * math.pi * 2))
-    cf = cards[(i // 1) % len(cards)]
-    cx, cy = 23, 7 + bob - lift
+    cf = cards[int(((t - .47) % 1) * len(cards))]          # faces front just as the hand grabs
+    cx, cy = 23, 19 + bob - lift
     # hand: rises out of the void, opens, tries to grab under the card, slips back
     rise = reach
-    hy = round(54 - 23 * rise)
+    hy = round(48 - 35 * rise)
     hand = hgrab if .42 < t < .55 else hopen
     canvas = img.copy()
-    paste(canvas, cf, cx, cy)
     hl = np.zeros((N, N, 3), np.float32); hm = np.zeros((N, N), bool)
     h, w = hand.shape[:2]
     for j in range(h):
@@ -151,13 +151,14 @@ def frame(i, n, cards, hopen, hgrab):
                 hl[y, x] = hand[j, k, :3]; hm[y, x] = True
     # the arm vanishes into the void: only draw hand pixels above the void's back edge or outside it
     yy, xx = np.mgrid[0:N, 0:N] + .5
-    hide = (yy > 51) | ((e < 1) & (yy > 49))
-    m = hm & ~hide
+    hide = e >= 0.92                       # the hand only exists inside the void
+    m = hm & ~hide if reach > .08 else np.zeros_like(hm)
     canvas[m] = hl[m]
+    paste(canvas, cf, cx, cy)               # the card sits in front: the hand comes from behind it
     canvas[~alpha] = 0
     # little sparkle near the card while it's being sought
     if .2 < t < .6 and (i % 4) < 2:
-        canvas[max(0, cy - 2), cx + 19] = PAL['w']; canvas[cy + 5, cx - 2] = PAL['w']
+        canvas[max(0, cy - 3), cx + 20] = PAL['w']; canvas[cy + 6, cx - 3] = PAL['w']
     out = np.dstack([canvas, alpha * 255]).astype(np.uint8)
     return Image.fromarray(out, 'RGBA')
 
@@ -165,7 +166,6 @@ def frame(i, n, cards, hopen, hgrab):
 def main():
     src = sys.argv[1]
     cards = card_frames(src)
-    cards = [c for c in cards for _ in (0, 1)]           # half speed spin
     n = 72
     hopen, hgrab = sprite(HAND_OPEN), sprite(HAND_GRAB)
     frames = [frame(i, n, cards, hopen, hgrab) for i in range(n)]
