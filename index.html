@@ -1481,7 +1481,7 @@ function viewList(){
   return `${top}
     <div class="field${temp&&!l.items.length?' hidden':''}"><input id="addcard" placeholder="Add a card or product" autocomplete="off"><button class="btn" data-act="additem">Add</button><div class="suggest hidden" id="sug2"></div></div>
     <div class="actions${temp&&!l.items.length?' hidden':''}"><button class="btn ghost" data-act="paste">Paste a decklist</button></div>
-    <div class="field${temp&&!l.items.length?'':' hidden'}" id="pastebox"><textarea id="pastetext" placeholder="Paste from Moxfield, ManaBox, Archidekt… one card per line"></textarea></div>
+    <div class="field${temp&&!l.items.length?'':' hidden'}" id="pastebox"><textarea id="pastetext" placeholder="Paste a Moxfield or Archidekt link, or a list with one card per line"></textarea></div>
     <div class="actions${temp&&!l.items.length?'':' hidden'}" id="pasteactions"><button class="btn" data-act="importpaste">${temp?`${I.search} Search all stores`:'Add these cards'}</button>${navigator.clipboard&&navigator.clipboard.readText?'<button class="btn ghost" data-act="clippaste">Paste</button>':''}${temp?'<button class="btn ghost" data-act="samplelist">Example</button>':''}</div>
     ${temp&&!l.items.length?multiEmptyHTML():''}
     ${l.items.length?rows:(temp?'':'<div class="empty">This list is empty. Add cards above, or paste a whole decklist.</div>')}
@@ -1494,6 +1494,18 @@ function viewList(){
       : `<button class="btn ghost" data-act="dellist" style="color:var(--heart)">${I.trash} Delete list</button>`}</div>`;
 }
 
+// A Moxfield or Archidekt link pasted into the box: the helper reads the public deck and we add its cards.
+async function importDeckLink(l,link,btn){
+  const old=btn.innerHTML; btn.disabled=true; btn.textContent='Reading deck…';
+  try{ const j=await (await fetch(`${API}/deck?url=${encodeURIComponent(/^https?:/i.test(link)?link:'https://'+link)}`)).json();
+    if(!j.ok||!j.items||!j.items.length){ toast(j.error||"Couldn't read that deck. Copy the list and paste it instead."); return; }
+    for(const it of j.items){ const ex=l.items.find(i=>i.name.toLowerCase()===it.name.toLowerCase()); if(ex) ex.qty+=it.qty; else l.items.push({qty:it.qty,name:it.name}); }
+    if(l===S.temp&&j.name) l.deckName=j.name;
+    save('lists'); render(); toast(`Added ${j.items.length} cards from ${j.source}`);
+    if(l===S.temp) fetchMany(j.items.map(i=>i.name).filter(n=>!DATA[n.toLowerCase()]));
+  }catch(e){ toast("Couldn't reach the deck site. Copy the list and paste it instead."); }
+  finally{ if(btn.isConnected){ btn.disabled=false; btn.innerHTML=old; } }
+}
 // What fills the empty "Search a list of cards" screen: your saved lists, how it works, and formats that paste fine.
 const SAMPLE='1 Sol Ring\n1 Arcane Signet\n1 Command Tower\n1 Swords to Plowshares\n1 Counterspell\n1 Cultivate\n1 Lightning Greaves\n1 Rhystic Study';
 function multiEmptyHTML(){
@@ -1502,12 +1514,12 @@ function multiEmptyHTML(){
     <div class="rail lrail">${mine.map(x=>`<button class="lcard" data-act="list" data-id="${x.id}">${listStack(x)}<div class="n">${esc(x.name)}</div><div class="c">${countCards(x)} card${countCards(x)===1?'':'s'}</div></button>`).join('')}</div>`:''}
     <div class="h" style="margin-top:28px"><h2>How it works</h2></div>
     <ol class="msteps">
-      <li><b>Paste your list</b><span>From Moxfield, Archidekt, ManaBox, or type cards one per line</span></li>
+      <li><b>Paste your list</b><span>A Moxfield or Archidekt deck link, a copied list, or cards typed one per line</span></li>
       <li><b>We check all ${STORES.length} stores</b><span>Every card, at every store, at the same time</span></li>
       <li><b>See the cheapest total</b><span>Tap a card for every copy, then add the best ones to your cart</span></li>
     </ol>
     <div class="h" style="margin-top:24px"><h2>Lines that work</h2></div>
-    <div class="mfmt"><code>4 Lightning Bolt</code><code>1x Sol Ring (CMM) 400</code><code>Rhystic Study</code><code>1 Sol Ring [CMM]</code></div>`;
+    <div class="mfmt"><code>moxfield.com/decks/…</code><code>archidekt.com/decks/…</code><code>4 Lightning Bolt</code><code>1x Sol Ring (CMM) 400</code><code>Rhystic Study</code><code>1 Sol Ring [CMM]</code></div>`;
 }
 function render(){
   const app=$id('app');
@@ -1786,8 +1798,8 @@ document.addEventListener('click', e=>{
       if(c.qty+d<1){ undoToast(`Removed ${c.name||c.title}`); S.cart=S.cart.filter(x=>x!==c); } else c.qty+=d;
       save('cart'); $id('cartCount').textContent=S.cart.reduce((a,x)=>a+x.qty,0); openProduct(offerOf(k)); render(); buzz(); const sp=document.querySelector('.bigstep span'); if(sp) sp.classList.add('bump'); break; }
     case 'multi': go('list',{id:'temp'}); setTimeout(()=>{const t=$id('pastetext'); if(t&&!S.temp.items.length) t.focus()},0); break;
-    case 'savetemp': { const name=prompt('Name this list', 'My deck'); if(name==null) break; const l={id:uid(),name:name.trim()||'My deck',items:S.temp.items.map(i=>({...i})),at:Date.now()}; S.lists.push(l); S.temp.items=[]; save('lists'); toast('Saved to your lists'); go('list',{id:l.id}); break; }
-    case 'cleartemp': S.temp.items=[]; save('lists'); render(); break;
+    case 'savetemp': { const name=prompt('Name this list', S.temp.deckName||'My deck'); if(name==null) break; const l={id:uid(),name:name.trim()||'My deck',items:S.temp.items.map(i=>({...i})),at:Date.now()}; S.lists.push(l); S.temp.items=[]; delete S.temp.deckName; save('lists'); toast('Saved to your lists'); go('list',{id:l.id}); break; }
+    case 'cleartemp': S.temp.items=[]; delete S.temp.deckName; save('lists'); render(); break;
     case 'clearhist': S.searches=[]; save('searches'); render(); break;
     case 'theme': S.theme=S.theme==='light'?'dark':'light'; save('theme'); applyTheme(); render(); tick(); toast(S.theme==='light'?'Light mode':'Dark mode'); break;
     case 'close': dismissSheet(); break;
@@ -1803,7 +1815,9 @@ document.addEventListener('click', e=>{
     case 'samplelist': { const t=$id('pastetext'); if(t){ t.value=SAMPLE; t.focus(); } break; }
     case 'clippaste': navigator.clipboard.readText().then(v=>{ const t=$id('pastetext'); if(t&&v){ t.value=v; t.focus(); } else toast('Nothing to paste'); },()=>toast('Allow paste, or long-press the box')); break;
     case 'paste': $id('pastebox').classList.toggle('hidden'); $id('pasteactions').classList.toggle('hidden'); $id('pastetext').focus(); break;
-    case 'importpaste': { const l=curList(); const items=parseList($id('pastetext').value); for(const it of items){const ex=l.items.find(i=>i.name.toLowerCase()===it.name.toLowerCase()); if(ex) ex.qty+=it.qty; else l.items.push(it);} save('lists'); render(); toast(`Added ${items.length} card${items.length===1?'':'s'}`); if(l===S.temp) fetchMany(items.map(i=>i.name).filter(n=>!DATA[n.toLowerCase()])); break; }
+    case 'importpaste': { const l=curList(); const raw=$id('pastetext').value.trim();
+      if(/^(https?:\/\/)?\S*(moxfield\.com\/decks|archidekt\.com\/(api\/)?decks)\/\S+$/i.test(raw)){ importDeckLink(l,raw,el); break; }
+      const items=parseList(raw); for(const it of items){const ex=l.items.find(i=>i.name.toLowerCase()===it.name.toLowerCase()); if(ex) ex.qty+=it.qty; else l.items.push(it);} save('lists'); render(); toast(`Added ${items.length} card${items.length===1?'':'s'}`); if(l===S.temp) fetchMany(items.map(i=>i.name).filter(n=>!DATA[n.toLowerCase()])); break; }
     case 'liq': { const l=curList(), it=l.items[+el.dataset.i]; it.qty+=+el.dataset.d; if(it.qty<1) l.items.splice(+el.dataset.i,1); save('lists'); render(); break; }
     case 'findall': { const l=curList(); fetchMany(l.items.map(i=>i.name).filter(n=>!DATA[n.toLowerCase()])); break; }
     case 'dellist': { const l=curList(); if(confirm(`Delete "${l.name}"?`)){ S.lists=S.lists.filter(x=>x!==l); if(!S.lists.length) S.lists=[{id:'wish',name:'Wishlist',items:[],at:Date.now()}]; save('lists'); go('lists'); } break; }
