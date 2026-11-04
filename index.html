@@ -459,6 +459,9 @@ a.noweb{color:var(--accent)!important;font-weight:600}
 .dual input{position:absolute;inset:0;width:100%;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
 .dual input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:32px;height:32px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .2s cubic-bezier(.34,1.56,.64,1);cursor:grab}
 .dual input::-moz-range-thumb{pointer-events:auto;width:28px;height:28px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.dual input::-moz-range-track{background:none;border:0}
+.dual input::-moz-range-progress{background:none}
+@media (hover:hover) and (pointer:fine){ .srail,.chips,.rail,.recent,.cjump{cursor:grab} .dragging{cursor:grabbing;user-select:none} .dragging *{pointer-events:none} }
 .dual input:active::-webkit-slider-thumb{transform:scale(1.25)}
 .dual input::-webkit-slider-runnable-track{background:none}
 .fbar{position:sticky;bottom:calc(-28px - env(safe-area-inset-bottom));display:flex;gap:10px;margin:8px -16px calc(-28px - env(safe-area-inset-bottom));padding:14px 16px calc(16px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
@@ -1463,6 +1466,23 @@ const holdCancel=()=>{ clearTimeout(holdT); document.querySelectorAll('.holding'
 document.addEventListener('pointerup',holdCancel); document.addEventListener('pointercancel',holdCancel);
 document.addEventListener('pointermove',e=>{ if(holdXY&&Math.hypot(e.clientX-holdXY[0],e.clientY-holdXY[1])>10) holdCancel(); });
 document.addEventListener('contextmenu',e=>{ if(e.target.closest('[data-hold]')) e.preventDefault(); });
+// Desktop: the sideways rows (stores, chips, recently viewed) scroll with the mouse wheel and by click-and-drag,
+// since a mouse can't swipe and their scrollbars are hidden.
+const HROW='.srail,.chips,.rail,.recent,.cjump';
+document.addEventListener('wheel',e=>{ const r=e.target.closest&&e.target.closest(HROW); if(!r||e.ctrlKey||r.scrollWidth<=r.clientWidth+2) return;
+  if(Math.abs(e.deltaX)>Math.abs(e.deltaY)) return;   // trackpads already scroll sideways
+  const max=r.scrollWidth-r.clientWidth, d=e.deltaMode===1?e.deltaY*32:e.deltaY;
+  if((d<0&&r.scrollLeft<=0)||(d>0&&r.scrollLeft>=max-1)) return;   // at the end: let the page scroll
+  e.preventDefault(); r.scrollBy({left:d,behavior:'auto'}); },{passive:false});
+let dragRow=null, dragMoved=false;
+document.addEventListener('pointerdown',e=>{ if(e.pointerType!=='mouse'||e.button!==0) return; const r=e.target.closest&&e.target.closest(HROW);
+  if(!r||r.scrollWidth<=r.clientWidth+2||e.target.closest('input,textarea')) return; dragRow={r,x:e.clientX,left:r.scrollLeft}; dragMoved=false; });
+document.addEventListener('pointermove',e=>{ if(!dragRow) return; const dx=e.clientX-dragRow.x; if(!dragMoved&&Math.abs(dx)<6) return;
+  if(!dragMoved){ dragMoved=true; dragRow.r.classList.add('dragging'); } dragRow.r.scrollLeft=dragRow.left-dx; });
+const endDrag=()=>{ if(dragRow) dragRow.r.classList.remove('dragging'); dragRow=null; };
+document.addEventListener('pointerup',endDrag); document.addEventListener('pointercancel',endDrag);
+document.addEventListener('click',e=>{ if(dragMoved){ dragMoved=false; e.preventDefault(); e.stopImmediatePropagation(); } },true);
+document.addEventListener('dragstart',e=>{ if(e.target.closest&&e.target.closest(HROW)) e.preventDefault(); });
 document.addEventListener('click',e=>{ if(holdFired){ holdFired=false; e.preventDefault(); e.stopImmediatePropagation(); } },true);
 document.addEventListener('click', e=>{
   const el=e.target.closest('[data-act]'); if(!el) return;
