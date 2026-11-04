@@ -387,6 +387,7 @@ body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 .nrow .noweb{color:var(--muted);font-size:13px;flex:none;text-decoration:none}
 a.noweb{color:var(--accent)!important;font-weight:600}
 .nrow .num.dim{background:#8a8a94}
+.nrow .num.mine,.npin.mine span{background:var(--ok)}
 .nmore{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .nmore .btn{flex:1;min-width:150px}
 .nrow.flash{animation:flash 1.2s ease-out}
@@ -888,7 +889,7 @@ const countCards = l => l.items.reduce((a,i)=>a+i.qty,0);
 // ---------- store pages ----------
 // Each store gets its own page: its logo on a header in its own colours, a search of just that store, and what you have saved there.
 // The description, socials and policies come from the store's own home page through the helper, kept for 3 days.
-let PROF=LS.get('prof2',{});
+let PROF=LS.get('prof3',{});
 const profOf = st => (st&&st.host&&PROF[st.host]&&PROF[st.host].data)||null;
 async function loadProfile(st){
   if(!st||!st.host) return null; const p=PROF[st.host];
@@ -898,7 +899,7 @@ async function loadProfile(st){
     PROF[st.host]=j.ok?{at:Date.now(),data:j}:{at:Date.now(),data:p&&p.data||null};
     if(!j.ok&&p&&p.data) PROF[st.host].at=Date.now()-3*864e5+5*60e3;
   }catch(e){ PROF[st.host]={at:Date.now(),data:p&&p.data||null}; }
-  LS.set('prof2',PROF); return PROF[st.host].data;
+  LS.set('prof3',PROF); return PROF[st.host].data;
 }
 const SDATA={};   // store searches, keyed "<store id>|<query>"
 let storeQ='', storeBack=null;
@@ -991,7 +992,7 @@ function aboutHTML(st){
   const row=(href,label,icon,ext)=>`<a class="sirow" href="${esc(href)}"${ext?' target="_blank" rel="noopener"':''}><span>${esc(label)}</span>${icon}</a>`;
   return `${showDesc?`<div class="sicard"><h3>About</h3><p class="sdesc">${esc(desc)}</p></div>`:''}
     ${p.policies&&p.policies.length?`<div class="sicard"><h3>Policies</h3>${p.policies.map(x=>row(x.url,x.title==='Terms of service'?'Terms and conditions':x.title,I[POL_ICON[x.title]]||I.info,1)).join('')}</div>`:''}
-    ${p.email||p.phone?`<div class="sicard"><h3>Contact</h3>${p.email?row('mailto:'+p.email,p.email,I.mail):''}${p.phone?row('tel:'+p.phone.replace(/[^\d+]/g,''),p.phone,I.phone2):''}</div>`:''}
+    ${p.email||p.phone||p.address?`<div class="sicard"><h3>Contact</h3>${p.address?row('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((p.name||st.name)+' '+p.address),p.address,I.pin.replace('width="16" height="16"','width="22" height="22"'),1):''}${p.email?row('mailto:'+p.email,p.email,I.mail):''}${p.phone?row('tel:'+p.phone.replace(/[^\d+]/g,''),p.phone,I.phone2):''}</div>`:''}
     ${soc.length?`<div class="sicard"><h3>Follow</h3>${soc.map(([k,u])=>row(u,SOCIAL[k],SOC_ICON[k]||I.ext,1)).join('')}</div>`:''}`;
 }
 const SOC_ICON={
@@ -1032,6 +1033,7 @@ function openNearby(){
     <div class="nmore"><button class="btn ghost small" data-act="nearsearch" id="nearbtn">${I.search.replace('width="24" height="24"','width="16" height="16"')} Check live map data</button>
       <a class="btn ghost small" id="gmaps" href="#" target="_blank" rel="noopener">${I.pin} Look on Google Maps</a></div>
     <p class="note">Store locations come from OpenStreetMap, which anyone can edit, so a few shops may be missing. Found one on Google Maps? Copy its website and use Paste a link.</p></div>`);
+  let pend=STORES.filter(st=>st.host&&!profOf(st)); pend.forEach((st,i)=>setTimeout(()=>loadProfile(st).then(()=>{ if($id('nmap')) nearRefresh(); }),i*350));
   Promise.all([loadLeaflet(),loadCA()]).then(initMap).catch(()=>{ const m=$id('nmap'); if(m) m.innerHTML='<div class="empty">The map couldn\'t load. Check your connection and try again.</div>'; nearRefresh(); });
 }
 function initMap(){
@@ -1056,8 +1058,13 @@ function nearRefresh(){
   const at={lat:NEAR.lat,lon:NEAR.lon}; if(nearMap){ const c=nearMap.getCenter(); at.lat=c.lat; at.lon=c.lng; }
   const g=$id('gmaps'); if(g) g.href=`https://www.google.com/maps/search/trading+card+game+store/@${at.lat.toFixed(4)},${at.lon.toFixed(4)},12z`;
   const live=(nearRes&&nearRes.live)||[], seen=new Set(), all=[];
-  for(const s of [...(CA||[]),...live]){ const k=s.name.toLowerCase()+'|'+s.lat.toFixed(3); if(seen.has(k)) continue; seen.add(k); const d=km(at,s); if(d<=NEAR.r) all.push({...s,d}); }
-  all.sort((a,b)=>a.d-b.d);
+  // Your Card Hunt stores come first, placed where their own website says they are (always up to date).
+  const norm=x=>String(x||'').toLowerCase().replace(/^the\s+/,'').replace(/[^a-z0-9]/g,'');
+  const mineGeo=STORES.map(st=>{ const p=profOf(st); return p&&p.geo?{name:st.name,lat:p.geo.lat,lon:p.geo.lon,website:storeHome(st),addr:p.address,mine:st.id,shop:'games'}:null; }).filter(Boolean);
+  const isMine=s=>mineGeo.some(m=>{ const h=hostOf(s.website); return (h&&h===hostOf(m.website))||(norm(s.name).startsWith(norm(m.name))&&norm(m.name).length>3); });
+  for(const s of mineGeo){ const d=km(at,s); if(d<=NEAR.r) all.push({...s,d}); seen.add(s.name.toLowerCase()+'|'+s.lat.toFixed(3)); }
+  for(const s of [...(CA||[]),...live]){ if(isMine(s)) continue; const k=s.name.toLowerCase()+'|'+s.lat.toFixed(3); if(seen.has(k)) continue; seen.add(k); const d=km(at,s); if(d<=NEAR.r) all.push({...s,d}); }
+  all.sort((a,b)=>(!!b.mine-!!a.mine)||a.d-b.d);
   nearRes={at,stores:all.slice(0,80),live,total:all.length,noData:!CA&&!live.length};
   const n=$id('nres'); if(n) n.innerHTML=nearListHTML(); drawMarkers();
 }
@@ -1079,12 +1086,12 @@ function nearListHTML(){
   const withWeb=list.filter(s=>s.website).length;
   return busy+`<div class="sub" style="margin:16px 0 6px">${nearRes.total} store${nearRes.total===1?'':'s'} in the circle${withWeb<list.length?`, ${withWeb} with a website`:''}</div><div class="rows nlist">${list.map((s,i)=>{
     const h=hostOf(s.website), added=h&&mine.has(h);
-    return `<div class="row nrow" data-i="${i}"><span class="ic num${s.website?'':' dim'}">${i+1}</span><span class="grow"><div class="t">${esc(s.name)}</div><div class="s">${s.d<10?s.d.toFixed(1):Math.round(s.d)} km${s.addr?' · '+esc(s.addr):''}${h?` · ${esc(h)}`:''}</div><div class="s nmsg" id="nmsg${i}"></div></span>
-      ${added?'<span class="added">✓ Added</span>':s.website?`<button class="btn small" data-act="nearadd" data-i="${i}">Add</button>`:`<a class="noweb" href="https://www.google.com/search?q=${encodeURIComponent(s.name+' '+(s.addr||''))}" target="_blank" rel="noopener">Find website</a>`}</div>`;}).join('')}</div>`;
+    return `<div class="row nrow" data-i="${i}"><span class="ic num${s.mine?' mine':s.website?'':' dim'}">${s.mine?'★':i+1}</span><span class="grow"><div class="t">${esc(s.name)}</div><div class="s">${s.d<10?s.d.toFixed(1):Math.round(s.d)} km${s.addr?' · '+esc(s.addr):''}${h?` · ${esc(h)}`:''}</div><div class="s nmsg" id="nmsg${i}"></div></span>
+      ${s.mine?`<button class="btn ghost small" data-act="gostore" data-s="${esc(s.mine)}">Your store</button>`:added?'<span class="added">✓ Added</span>':s.website?`<button class="btn small" data-act="nearadd" data-i="${i}">Add</button>`:`<a class="noweb" href="https://www.google.com/search?q=${encodeURIComponent(s.name+' '+(s.addr||''))}" target="_blank" rel="noopener">Find website</a>`}</div>`;}).join('')}</div>`;
 }
 function drawMarkers(){
   if(!nearMap||!nearLayer) return; nearLayer.clearLayers(); if(!nearRes||!nearRes.stores) return;
-  nearRes.stores.forEach((s,i)=>{ L.marker([s.lat,s.lon],{icon:L.divIcon({className:'npin'+(s.website?'':' dim'),html:`<span><i>${i+1}</i></span>`,iconSize:[28,28],iconAnchor:[14,28]})})
+  nearRes.stores.forEach((s,i)=>{ L.marker([s.lat,s.lon],{icon:L.divIcon({className:'npin'+(s.mine?' mine':s.website?'':' dim'),html:`<span><i>${s.mine?'★':i+1}</i></span>`,iconSize:[28,28],iconAnchor:[14,28]})})
     .on('click',()=>{ tick(); const r=document.querySelector(`.nrow[data-i="${i}"]`); if(r){ r.scrollIntoView({behavior:'smooth',block:'center'}); r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); } })
     .addTo(nearLayer); });
 }
