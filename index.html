@@ -109,6 +109,11 @@ svg{display:block}
 .rail .p{flex:none;width:132px}
 .noimg{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:120px;background:var(--surface-2);color:var(--muted);aspect-ratio:488/680}.noimg svg{width:40px;height:40px;opacity:.55}
 .lrail .lcard{flex:none;width:140px}
+.msteps{list-style:none;counter-reset:ms;margin:0;padding:0;display:grid;gap:10px}
+.msteps li{counter-increment:ms;display:grid;grid-template-columns:34px 1fr;column-gap:12px;align-items:start;background:var(--surface);border-radius:18px;padding:14px}
+.msteps li::before{content:counter(ms);grid-row:span 2;width:34px;height:34px;border-radius:50%;background:var(--surface-2);color:var(--text);font-weight:700;display:grid;place-items:center}
+.msteps b{font-size:16px}.msteps span{color:var(--muted);font-size:14px;margin-top:2px}
+.mfmt{display:flex;flex-wrap:wrap;gap:8px}.mfmt code{font:13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;padding:9px 12px;border-radius:999px;background:var(--surface);color:var(--muted)}
 .bchips{margin-top:6px}
 .rail .p .img{border-radius:14px;aspect-ratio:488/680}
 .rail .p .img img{object-fit:cover;object-position:center}
@@ -1476,7 +1481,8 @@ function viewList(){
     <div class="field${temp&&!l.items.length?' hidden':''}"><input id="addcard" placeholder="Add a card or product" autocomplete="off"><button class="btn" data-act="additem">Add</button><div class="suggest hidden" id="sug2"></div></div>
     <div class="actions${temp&&!l.items.length?' hidden':''}"><button class="btn ghost" data-act="paste">Paste a decklist</button></div>
     <div class="field${temp&&!l.items.length?'':' hidden'}" id="pastebox"><textarea id="pastetext" placeholder="Paste from Moxfield, ManaBox, Archidekt… one card per line"></textarea></div>
-    <div class="actions${temp&&!l.items.length?'':' hidden'}" id="pasteactions"><button class="btn" data-act="importpaste">${temp?`${I.search} Search all stores`:'Add these cards'}</button></div>
+    <div class="actions${temp&&!l.items.length?'':' hidden'}" id="pasteactions"><button class="btn" data-act="importpaste">${temp?`${I.search} Search all stores`:'Add these cards'}</button>${navigator.clipboard&&navigator.clipboard.readText?'<button class="btn ghost" data-act="clippaste">Paste</button>':''}${temp?'<button class="btn ghost" data-act="samplelist">Example</button>':''}</div>
+    ${temp&&!l.items.length?multiEmptyHTML():''}
     ${l.items.length?rows:(temp?'':'<div class="empty">This list is empty. Add cards above, or paste a whole decklist.</div>')}
     ${searched?`<div class="total"><span>Cheapest in-stock total${missing?` (${missing} missing)`:''}</span><span>${money(total)}</span></div>`:''}
     ${l.items.some(i=>!DATA[i.name.toLowerCase()])?`<button class="btn block" style="margin-top:16px" data-act="findall">${I.search} Check prices at all stores</button>`:''}
@@ -1487,6 +1493,21 @@ function viewList(){
       : `<button class="btn ghost" data-act="dellist" style="color:var(--heart)">${I.trash} Delete list</button>`}</div>`;
 }
 
+// What fills the empty "Search a list of cards" screen: your saved lists, how it works, and formats that paste fine.
+const SAMPLE='1 Sol Ring\n1 Arcane Signet\n1 Command Tower\n1 Swords to Plowshares\n1 Counterspell\n1 Cultivate\n1 Lightning Greaves\n1 Rhystic Study';
+function multiEmptyHTML(){
+  const mine=S.lists.filter(x=>x.items&&x.items.length);
+  return `${mine.length?`<div class="h" style="margin-top:28px"><h2>Your lists and decks</h2><span class="hint">Tap one to price it</span></div>
+    <div class="rail lrail">${mine.map(x=>`<button class="lcard" data-act="list" data-id="${x.id}">${listStack(x)}<div class="n">${esc(x.name)}</div><div class="c">${countCards(x)} card${countCards(x)===1?'':'s'}</div></button>`).join('')}</div>`:''}
+    <div class="h" style="margin-top:28px"><h2>How it works</h2></div>
+    <ol class="msteps">
+      <li><b>Paste your list</b><span>From Moxfield, Archidekt, ManaBox, or type cards one per line</span></li>
+      <li><b>We check all ${STORES.length} stores</b><span>Every card, at every store, at the same time</span></li>
+      <li><b>See the cheapest total</b><span>Tap a card for every copy, then add the best ones to your cart</span></li>
+    </ol>
+    <div class="h" style="margin-top:24px"><h2>Lines that work</h2></div>
+    <div class="mfmt"><code>4 Lightning Bolt</code><code>1x Sol Ring (CMM) 400</code><code>Rhystic Study</code><code>1 Sol Ring [CMM]</code></div>`;
+}
 function render(){
   const app=$id('app');
   const active=document.activeElement; const focusId=active&&active.id; const caret=active&&active.selectionStart;
@@ -1778,6 +1799,8 @@ document.addEventListener('click', e=>{
     case 'tolist': { const l=S.lists.find(x=>x.id===el.dataset.id), n=el.dataset.n; const ex=l.items.find(i=>i.name.toLowerCase()===n.toLowerCase()); if(ex) ex.qty++; else l.items.push({name:n,qty:1}); save('lists'); closeSheet(); render(); toast(`Added to ${l.name}`); break; }
     case 'wishname': chooseList(el.dataset.n); break;
     case 'additem': addItem($id('addcard').value); break;
+    case 'samplelist': { const t=$id('pastetext'); if(t){ t.value=SAMPLE; t.focus(); } break; }
+    case 'clippaste': navigator.clipboard.readText().then(v=>{ const t=$id('pastetext'); if(t&&v){ t.value=v; t.focus(); } else toast('Nothing to paste'); },()=>toast('Allow paste, or long-press the box')); break;
     case 'paste': $id('pastebox').classList.toggle('hidden'); $id('pasteactions').classList.toggle('hidden'); $id('pastetext').focus(); break;
     case 'importpaste': { const l=curList(); const items=parseList($id('pastetext').value); for(const it of items){const ex=l.items.find(i=>i.name.toLowerCase()===it.name.toLowerCase()); if(ex) ex.qty+=it.qty; else l.items.push(it);} save('lists'); render(); toast(`Added ${items.length} card${items.length===1?'':'s'}`); if(l===S.temp) fetchMany(items.map(i=>i.name).filter(n=>!DATA[n.toLowerCase()])); break; }
     case 'liq': { const l=curList(), it=l.items[+el.dataset.i]; it.qty+=+el.dataset.d; if(it.qty<1) l.items.splice(+el.dataset.i,1); save('lists'); render(); break; }
