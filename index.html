@@ -1027,7 +1027,7 @@ function viewStore(){
       <button class="later" data-act="cart" style="margin:8px 4px 0">View my whole cart</button>`:''}
     ${!storeQ&&seen.length?`<div class="h"><h2>Jump back in</h2></div><div class="rail">${seen.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
     ${!storeQ?storePicksHTML(st):''}
-    ${!storeQ&&favs.length?`<div class="h"><h2>Your favorites here</h2><span class="hint">${favs.length}</span></div><div class="grid">${favs.slice(0,12).map(o=>tile(o)).join('')}</div>`:''}
+    ${!storeQ&&favs.length?`<div class="h"><h2>Your favorites here</h2>${favs.length>3?`<button class="right" data-act="storefavs" data-s="${esc(st.id)}">See all ${favs.length}</button>`:`<span class="hint">${favs.length}</span>`}</div><div class="rail">${favs.slice(0,15).map(o=>tile(o,{rail:true})).join('')}${favs.length>3?`<button class="seeall" data-act="storefavs" data-s="${esc(st.id)}"><span>${I.chev.replace('width="16" height="16"','width="22" height="22"')}</span>See all<small>${favs.length} saved</small></button>`:''}</div>`:''}
     ${!storeQ?storeBrowseHTML(st):''}</div>`;
 }
 // Store page extras: your recommended cards that this store has in stock, and everything else it sells.
@@ -1645,6 +1645,7 @@ document.addEventListener('click', e=>{
     case 'fclear': { FM=el.dataset.m||'search'; const f=fstate(FM); f.p.inStock=false; f.p.foil=false; f.p.sort=f.def; f.p.off=[]; f.pr.lo=f.pr.hi=null; f.save(); refilter('#fdone'); buzz(); break; }
     case 'retrysearch': { delete DATA[searchQ.toLowerCase()]; tick(); fetchCard(searchQ); break; }
     case 'bkind': { const st=SBY[el.dataset.s]; BKIND[st.id]=el.dataset.q; tick(); render(); break; }
+    case 'storefavs': { const id=el.dataset.s; favF={...favF,q:'',off:STORES.map(x=>x.id).filter(x=>x!==id)}; tick(); go('saved'); break; }
     case 'seeviewed': go('viewed'); break;
     case 'clearviewed': if(confirm('Clear your recently viewed cards?')){ S.viewed=[]; save('viewed'); render(); } break;
     case 'storeshare': { const st=SBY[el.dataset.s], u=storeHome(st); if(navigator.share) navigator.share({title:st.name,url:u}).catch(()=>{}); else (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Store link copied'),()=>prompt('Store link',u)); break; }
