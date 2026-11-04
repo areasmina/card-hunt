@@ -55,7 +55,7 @@ async function searchStore(id, q) {
       title: p.title, name: baseName(p.title), set: setLabel(p.title, p.body),
       url: `https://${s.host}${handle}`,
       image: img(p.featured_image?.url || p.image),
-      foil: /\bfoil\b/i.test(p.title),
+      foil: /\betched\b/i.test(p.title) || /\bfoil\b/i.test(p.title.replace(/\bnon[\s-]?foil\b/ig, '')),
       priceMin: min, priceMax: max,
       available: !!p.available,
     };
