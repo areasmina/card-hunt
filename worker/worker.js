@@ -245,7 +245,7 @@ async function recs(url, ctx) {
 async function profile(url, ctx) {
   const host = String(url.searchParams.get('host') || '').toLowerCase();
   if (!HOST_RE.test(host)) return Response.json({ ok: false, error: 'bad host' }, { status: 400, headers: CORS });
-  const key = new Request(`https://cardhunt.cache/v5/profile/${host}`);
+  const key = new Request(`https://cardhunt.cache/v6/profile/${host}`);
   const hit = url.searchParams.has('fresh') ? null : await caches.default.match(key);
   if (hit) return hit;
   const p = await readHome(host);
@@ -260,6 +260,10 @@ async function profile(url, ctx) {
         if (a.length) { p.addresses = a; break; } } catch {}
     }
   }
+  // Some stores only give their address in the site description ("Visit us at 1354 Barton St E, Hamilton, ON").
+  if (!p.addresses.length && p.description) p.addresses = findAddresses('', p.description);
+  const fix = t => { if (typeof t !== 'string' || !/Ã.|â€/.test(t)) return t; try { return decodeURIComponent(escape(t)); } catch { return t; } };
+  p.name = fix(p.name); p.description = fix(p.description);
   p.locations = [];
   for (const a of p.addresses.slice(0, 4)) { const g = await geocode(a, ctx); if (g) p.locations.push({ address: a, ...g }); }
   p.address = p.addresses[0] || null; p.geo = p.locations[0] ? { lat: p.locations[0].lat, lon: p.locations[0].lon } : null;
