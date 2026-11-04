@@ -10,7 +10,7 @@ const STORES = {
   ge:      { name: 'Gamers Emporium', host: 'gamersemporium.ca' },
   players: { name: 'Players',         host: 'playerscandc.com' },
 };
-const OTHER_GAMES = /pok[eé]mon|yu-?gi-?oh|lorcana|one piece|flesh and blood|digimon|dragon ball|star wars unlimited/i;
+const OTHER_GAMES = /final fantasy tcg|fabula ultima|gundam card|pok[eé]mon|yu-?gi-?oh|lorcana|one piece|flesh and blood|digimon|dragon ball|star wars unlimited/i;
 const UA = 'Mozilla/5.0 (compatible; CardHunt/1.0; +https://areasmina.github.io/card-hunt/)';
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' };
 
@@ -35,9 +35,9 @@ const storeFor = id => STORES[id] || (id.startsWith('x:') && HOST_RE.test(id.sli
 
 async function searchStore(id, q) {
   const s = storeFor(id);
-  // Whole words first ("Ultima" shouldn't fill the 10 slots with "Ultimate ..."), then the usual prefix search if that finds nothing.
-  const fetchSug = async prefix => {
-    const u = `https://${s.host}/search/suggest.json?q=${encodeURIComponent(q)}&resources[type]=product&resources[limit]=10&resources[options][unavailable_products]=last&resources[options][prefix]=${prefix}&resources[options][fields]=title,product_type,variants.title`;
+  // The exact phrase first ("Ultima" in quotes, so "Ultimate ..." products don't fill the 10 slots), then the usual search if that finds nothing.
+  const fetchSug = async quoted => {
+    const u = `https://${s.host}/search/suggest.json?q=${encodeURIComponent(quoted ? `"${q.replace(/"/g, '')}"` : q)}&resources[type]=product&resources[limit]=10&resources[options][unavailable_products]=last`;
     const get = () => fetch(u, { headers: { 'User-Agent': UA, Accept: 'application/json' }, cf: { cacheTtl: 300, cacheEverything: true } });
     let r; try { r = await get(); } catch { r = { ok: false, status: 0 }; }
     // A busy store (429) or a hiccup: wait a moment and ask once more before giving up on it.
@@ -47,8 +47,8 @@ async function searchStore(id, q) {
     return (sug.resources?.results?.products || []).filter(p => !OTHER_GAMES.test(`${p.type || ''} ${p.vendor || ''} ${p.title}`));
   };
   const nq0 = norm(q), named = p => { const t = ` ${norm(baseName(p.title))} `; return nq0.split(' ').every(w => t.includes(` ${w} `)); };
-  let prods = await fetchSug('none');
-  if (!prods.some(named)) prods = await fetchSug('last');
+  let prods = await fetchSug(true);
+  if (!prods.some(named)) prods = await fetchSug(false);
   const nq = norm(q), words = nq.split(' ');
   const exact = prods.filter(p => norm(baseName(p.title)) === nq);
   // No exact name here: keep products whose own name has every word you typed as a whole word, so "Ultima"
@@ -305,7 +305,7 @@ export default {
     const ids = [...new Set([...(url.searchParams.get('stores') || Object.keys(STORES).join(',')).split(',').filter(id => STORES[id]), ...extra])];
 
     const cache = caches.default;
-    const key = new Request(`https://cardhunt.cache/v5/search?q=${encodeURIComponent(norm(q))}&s=${ids.sort().join(',')}`);
+    const key = new Request(`https://cardhunt.cache/v6/search?q=${encodeURIComponent(norm(q))}&s=${ids.sort().join(',')}`);
     const hit = url.searchParams.has('fresh') ? null : await cache.match(key);
     if (hit) return hit;
 
