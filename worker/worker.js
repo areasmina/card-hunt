@@ -158,6 +158,40 @@ async function geocode(addr, ctx) {
   return geo;
 }
 
+// GET /browse?host=<store>&id=<store id>[&q=sleeves] -> a store's products of any kind (sleeves, playmats, boxes...),
+// not only Magic singles. With no q it lists the newest products; Shopify often blocks that for us, so then it
+// gathers a few common product kinds through the store's own search instead.
+const BROWSE_KINDS = ['booster', 'sleeves', 'playmat', 'deck box', 'commander deck'];
+function toOffer(id, s, p) {
+  const handle = (p.url || (p.handle ? `/products/${p.handle}` : '')).split('?')[0];
+  const vs = p.variants || [], prices = vs.map(v => num(v.price)).filter(v => v != null);
+  const min = num(p.price_min) ?? (prices.length ? Math.min(...prices) : num(p.price)), max = num(p.price_max) ?? (prices.length ? Math.max(...prices) : min);
+  return { store: id, storeName: s.name, title: p.title, name: baseName(p.title), set: '', url: `https://${s.host}${handle}`,
+    image: img(p.featured_image?.url || p.image || p.images?.[0]?.src), priceMin: min, priceMax: max,
+    available: p.available ?? vs.some(v => v.available), type: p.product_type || p.type || '' };
+}
+async function browse(url, ctx) {
+  const host = String(url.searchParams.get('host') || '').toLowerCase(), id = String(url.searchParams.get('id') || 'x:' + host).slice(0, 120);
+  const q = String(url.searchParams.get('q') || '').trim().slice(0, 60);
+  if (!HOST_RE.test(host)) return Response.json({ ok: false, error: 'bad host' }, { status: 400, headers: CORS });
+  const key = new Request(`https://cardhunt.cache/v1/browse/${host}?q=${encodeURIComponent(q.toLowerCase())}`);
+  const hit = await caches.default.match(key); if (hit) return hit;
+  const s = { name: STORES[id]?.name || host, host };
+  const sug = async term => { try { const r = await fetch(`https://${host}/search/suggest.json?q=${encodeURIComponent(term)}&resources[type]=product&resources[limit]=10&resources[options][unavailable_products]=last`, { headers: { 'User-Agent': UA, Accept: 'application/json' }, cf: { cacheTtl: 900, cacheEverything: true } });
+    if (!r.ok) return []; const j = await r.json(); return (j.resources?.results?.products || []).map(p => toOffer(id, s, p)); } catch { return []; } };
+  let items = [], source = 'search';
+  if (q) items = await sug(q);
+  else {
+    try { const r = await fetch(`https://${host}/products.json?limit=30`, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+      if (r.ok) { const j = await r.json(); items = (j.products || []).map(p => toOffer(id, s, p)); source = 'newest'; } } catch {}
+    if (!items.length) items = (await Promise.all(BROWSE_KINDS.map(sug))).flat();
+  }
+  const seen = new Set(); items = items.filter(o => !seen.has(o.url) && seen.add(o.url));
+  const res = Response.json({ ok: true, source, items }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=1800' } });
+  if (items.length) ctx.waitUntil(caches.default.put(key, res.clone()));
+  return res;
+}
+
 // GET /recs?names=A|B|C -> cards that Commander decks with those cards often play (EDHREC's public card pages),
 // ranked by how many of your cards they go with and how high EDHREC lists them. Each card page is cached for a week.
 const REC_LISTS = /^(highliftcards|highsynergycards|topcards|creatures|instants|sorceries|utilityartifacts|enchantments|planeswalkers|manaartifacts)$/;
@@ -334,6 +368,7 @@ export default {
     if (url.pathname === '/profile') return profile(url, ctx);
     if (url.pathname === '/nearby') return nearby(url, ctx);
     if (url.pathname === '/recs') return recs(url, ctx);
+    if (url.pathname === '/browse') return browse(url, ctx);
     if (url.pathname === '/geo') { const q = String(url.searchParams.get('q') || '').slice(0, 200).trim(); const g = q.length > 5 ? await geocode(q, ctx) : null;
       return Response.json(g ? { ok: true, ...g } : { ok: false, error: "Couldn't find that address. Try adding the city." }, { headers: CORS }); }
     if (url.pathname.startsWith('/sync/')) return sync(req, env, url.pathname.slice(6));

@@ -107,6 +107,8 @@ svg{display:block}
 .rail{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 4px}
 .rail::-webkit-scrollbar{display:none}
 .rail .p{flex:none;width:132px}
+.lrail .lcard{flex:none;width:140px}
+.bchips{margin-top:6px}
 .rail .p .img{border-radius:14px;aspect-ratio:488/680}
 .rail .p .img img{object-fit:cover;object-position:center}
 .rail .heart{width:38px;height:38px;right:8px;bottom:8px}
@@ -496,7 +498,6 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
   <div class="navpill">
     <button data-act="go" data-to="home" id="nav-home" title="Home"></button>
     <button data-act="go" data-to="saved" id="nav-saved" title="Favorites"></button>
-    <button data-act="go" data-to="lists" id="nav-lists" title="Lists and decks"></button>
   </div>
   <button class="cartbtn" data-act="cart" title="Cart"><span id="cartCount">0</span></button>
 </nav>
@@ -557,7 +558,7 @@ const I = {
   shield:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>',
   ext:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>',
 };
-$id('nav-home').innerHTML=I.home; $id('nav-saved').innerHTML=I.heart; $id('nav-lists').innerHTML=I.grid;
+$id('nav-home').innerHTML=I.home; $id('nav-saved').innerHTML=I.heart;
 document.querySelector('.cartbtn').insertAdjacentHTML('afterbegin', I.cart);
 
 // ---------- theme ----------
@@ -1013,8 +1014,45 @@ function viewStore(){
       <button class="btn" data-act="checkout" data-s="${esc(st.id)}">${st.deck?'Send to their cart':'Check out'}</button></div>
       <button class="later" data-act="cart" style="margin:8px 4px 0">View my whole cart</button>`:''}
     ${!storeQ&&seen.length?`<div class="h"><h2>Jump back in</h2></div><div class="rail">${seen.slice(0,15).map(o=>tile(o,{rail:true})).join('')}</div>`:''}
+    ${!storeQ?storePicksHTML(st):''}
     ${!storeQ&&favs.length?`<div class="h"><h2>Your favorites here</h2><span class="hint">${favs.length}</span></div><div class="grid">${favs.slice(0,12).map(o=>tile(o)).join('')}</div>`:''}
-    ${!storeQ&&!n&&!seen.length&&!favs.length?`<div class="empty">Search ${esc(st.name)} above to see what they have. Cards you open, save or add from here show up on this page.</div>`:''}</div>`;
+    ${!storeQ?storeBrowseHTML(st):''}</div>`;
+}
+// Store page extras: your recommended cards that this store has in stock, and everything else it sells.
+const PICKS={}, BROWSE={}, BKIND={};
+const KINDS=[['','All products'],['booster','Boosters'],['commander deck','Commander decks'],['sleeves','Sleeves'],['playmat','Playmats'],['deck box','Deck boxes'],['binder','Binders'],['dice','Dice']];
+async function loadPicks(st){
+  const names=((RECS&&RECS.cards)||[]).slice(0,8).map(c=>c.name); const key=names.join('|');
+  if(!names.length||(PICKS[st.id]&&PICKS[st.id].key===key)) return; PICKS[st.id]={key,state:'loading',offers:[]};
+  const qs=st.custom?`stores=_&extra=${encodeURIComponent(st.host)}`:`stores=${encodeURIComponent(st.id)}`;
+  const found=await Promise.all(names.map(async n=>{ try{ const j=await (await fetch(`${API}/search?q=${encodeURIComponent(n)}&${qs}`)).json();
+    const o=(j.results||[]).filter(p=>p.store===st.id&&p.available).sort((a,b)=>(a.priceMin??0)-(b.priceMin??0))[0]; return o||null; }catch(e){ return null; } }));
+  PICKS[st.id]={key,state:'ok',offers:found.filter(Boolean).map(p=>remember({store:p.store,storeName:st.name,title:p.title,name:p.name,set:p.set,url:p.url,image:p.image,foil:isFoil(p.title),price:p.priceMin??0,priceMax:p.priceMax??p.priceMin??0,available:true}))};
+  if(route.name==='store'&&route.id===st.id&&!storeQ) render();
+}
+function storePicksHTML(st){
+  if(!recSeeds().length) return ''; if(!RECS||!RECS.cards){ setTimeout(loadRecs,0); return ''; }
+  const pk=PICKS[st.id]; if(!pk||pk.key!==RECS.cards.slice(0,8).map(c=>c.name).join('|')) setTimeout(()=>loadPicks(st),0);
+  if(!pk||pk.state==='loading') return `<div class="h"><h2>Picks for you here</h2></div><div class="rail">${'<div class="p"><div class="skel" style="aspect-ratio:488/680"></div></div>'.repeat(3)}</div>`;
+  if(!pk.offers.length) return '';
+  return `<div class="h"><h2>Picks for you here</h2><span class="hint">Goes with your cards</span></div><div class="rail">${pk.offers.map(o=>tile(o,{rail:true})).join('')}</div>`;
+}
+async function loadBrowse(st,kind){
+  const k=st.id+'|'+kind; if(BROWSE[k]&&(BROWSE[k].state==='loading'||Date.now()-BROWSE[k].at<30*60e3)) return;
+  BROWSE[k]={state:'loading',items:[]};
+  try{ const j=await (await fetch(`${API}/browse?host=${encodeURIComponent(st.host)}&id=${encodeURIComponent(st.id)}${kind?'&q='+encodeURIComponent(kind):''}`)).json();
+    BROWSE[k]={state:'ok',at:Date.now(),items:(j.items||[]).map(p=>remember({store:st.id,storeName:st.name,title:p.title,name:p.name,set:p.set||'',url:p.url,image:p.image,foil:isFoil(p.title),price:p.priceMin??0,priceMax:p.priceMax??p.priceMin??0,available:!!p.available}))}; }
+  catch(e){ BROWSE[k]={state:'err',at:Date.now(),items:[]}; }
+  if(route.name==='store'&&route.id===st.id&&!storeQ) render();
+}
+function storeBrowseHTML(st){
+  const kind=BKIND[st.id]||'', k=st.id+'|'+kind, b=BROWSE[k]; if(!b) setTimeout(()=>loadBrowse(st,kind),0);
+  const list=b&&b.state==='ok'?[...b.items].sort((x,y)=>(y.available-x.available)):[];
+  return `<div class="h"><h2>Shop ${esc(st.name)}</h2></div>
+    <div class="chips bchips">${KINDS.map(([q,l])=>`<button class="chip${kind===q?' on':''}" data-act="bkind" data-s="${esc(st.id)}" data-q="${esc(q)}">${esc(l)}</button>`).join('')}</div>
+    ${!b||b.state==='loading'?`<div class="grid" style="margin-top:10px">${skeletons(4)}</div>`
+      :list.length?`<div class="grid" style="margin-top:10px">${list.map(o=>tile(o)).join('')}</div>`
+      :`<div class="empty">Couldn't load ${esc(st.name)}'s products right now. <a href="${esc(storeHome(st))}" target="_blank" rel="noopener" style="color:var(--accent-ink);font-weight:600">Open their site</a></div>`}`;
 }
 const SOCIAL={instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',youtube:'YouTube',x:'X',discord:'Discord'};
 // The store info panel, laid out like the Shop app's: a card each for policies, contact and following the store.
@@ -1240,18 +1278,22 @@ function favGrid(){
   return o.length?`<div class="sub" style="margin-top:12px">${o.length} of ${S.favs.length} favorite${S.favs.length===1?'':'s'}</div><div class="grid">${o.map(x=>tile(x)).join('')}</div>`
     :`<div class="empty">No favorites match. <button class="right" data-act="fclear" data-m="favs" style="color:var(--accent-ink);font-weight:600">Clear filters</button></div>`;
 }
+// Favorites and your collections (wishlists, decks) live on one screen, so neither looks empty on its own.
 function viewSaved(){
-  if(!S.favs.length) return `<div class="h"><h2>Favorites</h2></div><div class="empty">No favorites yet. Tap the heart, or double-tap any card, to save it here.</div>`;
-  return `<div class="h"><h2>Favorites</h2></div>
-    <div class="pill" style="height:46px">${I.search}<input id="favq" type="search" autocomplete="off" spellcheck="false" placeholder="Filter your favorites" value="${esc(favF.q)}"></div>
+  const lists=`<div class="h"><h2>Collections and decks</h2><span class="hint">${S.lists.length}</span></div>
+    <div class="rail lrail">${S.lists.map(l=>`<button class="lcard" data-act="list" data-id="${l.id}">${listStack(l)}<div class="n">${esc(l.name)}</div><div class="c">${countCards(l)} card${countCards(l)===1?'':'s'}</div></button>`).join('')}
+      <button class="lcard newcard" data-act="newlist">${I.plus} New list</button></div>`;
+  return `<div class="h"><h2 style="font-size:28px">Favorites</h2></div>${lists}
+    <div class="h"><h2>Saved cards</h2>${S.favs.length?`<span class="hint">${S.favs.length}</span>`:''}</div>
+    ${S.favs.length?`<div class="pill" style="height:46px">${I.search}<input id="favq" type="search" autocomplete="off" spellcheck="false" placeholder="Filter your favorites" value="${esc(favF.q)}"></div>
     ${chipsHTML('favs')}
-    <div id="favgrid">${favGrid()}</div>`;
+    <div id="favgrid">${favGrid()}</div>`:`<div class="empty">No saved cards yet. Tap the heart, or double-tap any card, to save it here.</div>`}`;
 }
 function listsGrid(){
   return `<div class="lcards" style="margin-top:14px">${S.lists.map(l=>`<button class="lcard" data-act="list" data-id="${l.id}">${listStack(l)}<div class="n">${esc(l.name)}</div><div class="c">${countCards(l)} card${countCards(l)===1?'':'s'}</div></button>`).join('')}
     <button class="lcard newcard" data-act="newlist">${I.plus} New list</button></div>`;
 }
-function viewLists(){ return `<div class="h"><h2>Lists and decks</h2></div><div class="sub">Wishlists, decks, anything you want to buy some day.</div>${listsGrid()}`; }
+function viewLists(){ return viewSaved(); }
 function viewList(){
   const l=curList(); if(!l) return viewLists(); const temp=l===S.temp;
   const searched=l.items.some(i=>DATA[i.name.toLowerCase()]);
@@ -1286,8 +1328,8 @@ function render(){
   const active=document.activeElement; const focusId=active&&active.id; const caret=active&&active.selectionStart;
   const views={home:viewHome, viewed:viewViewed, search:viewSearch, saved:viewSaved, lists:viewLists, list:viewList, store:viewStore};
   app.innerHTML=(views[route.name]||viewHome)();
-  const tab=route.id==='temp'?'home':{home:'home',search:'home',store:'home',viewed:'home',saved:'saved',lists:'lists',list:'lists'}[route.name];
-  for(const n of ['home','saved','lists']) $id('nav-'+n).classList.toggle('on', tab===n);
+  const tab=route.id==='temp'?'home':{home:'home',search:'home',store:'home',viewed:'home',saved:'saved',lists:'saved',list:'saved'}[route.name];
+  for(const n of ['home','saved']) $id('nav-'+n).classList.toggle('on', tab===n);
   $id('cartCount').textContent=S.cart.reduce((a,c)=>a+c.qty,0);
   wireInputs();
   if(focusId&&$id(focusId)){const e=$id(focusId);e.focus();try{if(caret!=null)e.setSelectionRange(caret,caret)}catch(_){}}
@@ -1587,6 +1629,7 @@ document.addEventListener('click', e=>{
     case 'fsort': { FM=el.dataset.m||'search'; const f=fstate(FM); f.p.sort=el.dataset.v; f.save(); refilter(`[data-act="fsort"][data-v="${el.dataset.v}"]`); break; }
     case 'fclear': { FM=el.dataset.m||'search'; const f=fstate(FM); f.p.inStock=false; f.p.foil=false; f.p.sort=f.def; f.p.off=[]; f.pr.lo=f.pr.hi=null; f.save(); refilter('#fdone'); buzz(); break; }
     case 'retrysearch': { delete DATA[searchQ.toLowerCase()]; tick(); fetchCard(searchQ); break; }
+    case 'bkind': { const st=SBY[el.dataset.s]; BKIND[st.id]=el.dataset.q; tick(); render(); break; }
     case 'seeviewed': go('viewed'); break;
     case 'clearviewed': if(confirm('Clear your recently viewed cards?')){ S.viewed=[]; save('viewed'); render(); } break;
     case 'storeshare': { const st=SBY[el.dataset.s], u=storeHome(st); if(navigator.share) navigator.share({title:st.name,url:u}).catch(()=>{}); else (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Store link copied'),()=>prompt('Store link',u)); break; }
