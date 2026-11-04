@@ -1,18 +1,20 @@
 """Make the scan-stitched tiles (textures/src, 352 px) sharp enough for the app.
 
-1. Real-ESRGAN x4 on the GPU (tile wrapped 3x3 first, so the seams stay seamless) -> 1408 px
-2. Blender relief pass: the upscaled tile lit by a sun through a bump made from its own
+1. Blender relief pass: the tile (bicubic) lit by a sun through a bump made from its own
    brightness, rendered at 2048 px, then matched back to the scan's colours.
+2. Wrap-around sharpening and a fine print grain finer than the scans can hold, so the
+   2048 px tile looks crisp instead of soft. Everything wraps, so the tile stays seamless.
 
-blender -b -P upres.py -- <src dir> <out dir> <path to realesrgan-ncnn-vulkan.exe>
+blender -b -P upres.py -- <src dir> <out dir> [names]
 """
-import bpy, os, sys, math, subprocess
+import bpy, os, sys, math
 import numpy as np
 from mathutils import Vector
 
-SRC, OUT, ESR = sys.argv[sys.argv.index('--') + 1:][:3]
+SRC, OUT = sys.argv[sys.argv.index('--') + 1:][:2]
 SIZE = 2048
 # how much of the card stock's relief to bring out (box-white is the embossed one)
+GRAIN = {'frame-black': 0.04, 'box-black': 0.02}
 RELIEF = {'box-white': 0.35, 'frame-white': 0.18, 'box-artifact': 0.2, 'frame-artifact': 0.15}
 os.makedirs(OUT, exist_ok=True)
 WORK = os.path.join(OUT, 'work'); os.makedirs(WORK, exist_ok=True)
@@ -34,17 +36,23 @@ def write(a, path):
     bpy.data.images.remove(im)
 
 
-def upscale(name):
-    t = read(os.path.join(SRC, name + '.png'))
-    n = t.shape[0]
-    write(np.tile(t, (3, 3, 1)), os.path.join(WORK, name + '-pad.png'))
-    out = os.path.join(WORK, name + '-x4.png')
-    subprocess.run([ESR, '-i', os.path.join(WORK, name + '-pad.png'), '-o', out,
-                    '-n', 'realesrgan-x4plus', '-s', '4'], check=True)
-    big = read(out)
-    c = big[4 * n:8 * n, 4 * n:8 * n].copy()
-    path = os.path.join(WORK, name + '-up.png'); write(c, path)
-    return path, t
+def blur(a, sigma):
+    """Separable gaussian with wrap-around edges."""
+    r = int(sigma * 3) + 1
+    k = np.exp(-0.5 * (np.arange(-r, r + 1) / sigma) ** 2); k /= k.sum()
+    for ax in (0, 1):
+        a = sum(w * np.roll(a, d, axis=ax) for d, w in zip(range(-r, r + 1), k))
+    return a
+
+
+def finish(name, a):
+    rgb = a[..., :3]
+    rgb = rgb + 0.7 * (rgb - blur(rgb, 2.5))           # unsharp mask
+    g = np.random.default_rng(7).standard_normal(rgb.shape[:2]).astype(np.float32)
+    g = blur(g, 0.7); g *= GRAIN.get(name, 0.025) / g.std()
+    rgb = rgb * (1 + g[..., None])                      # print grain
+    o = a.copy(); o[..., :3] = rgb.clip(0, 1); o[..., 3] = 1
+    return o
 
 
 def relief(name, path):
@@ -107,10 +115,10 @@ def match(lit, ref):
     return o
 
 
-names = sys.argv[sys.argv.index('--') + 4:] or sorted(f[:-4] for f in os.listdir(SRC) if f.endswith('.png'))
+names = sys.argv[sys.argv.index('--') + 3:] or sorted(f[:-4] for f in os.listdir(SRC) if f.endswith('.png'))
 for name in names:
-    up, src = upscale(name)
-    lit = relief(name, up)
-    write(match(read(lit), read(up)), os.path.join(OUT, name + '.png'))
+    src = os.path.join(SRC, name + '.png')
+    lit = relief(name, src)
+    write(finish(name, match(read(lit), read(src))), os.path.join(OUT, name + '.png'))
     print('UPRES', name, flush=True)
 print('UPRES done')
