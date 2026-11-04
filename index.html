@@ -455,7 +455,8 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 .holding{transform:scale(.93)!important;transition:transform .45s ease-out!important}
 
 /* recently viewed */
-.rail .rmeta{font-size:12.5px;color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.recgrid .p .img{border-radius:14px;aspect-ratio:488/680}.recgrid .p .img img{object-fit:cover;object-position:center}
+.rail .rmeta,.recgrid .rmeta{font-size:12.5px;color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
 .seeall{flex:none;width:110px;aspect-ratio:488/680;align-self:flex-start;border-radius:14px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-weight:650;font-size:15px}
 .seeall span{width:44px;height:44px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
 .seeall small{color:var(--muted);font-weight:500;font-size:12.5px}
@@ -1166,23 +1167,24 @@ function viewStore(){
     ${!storeQ?storeBrowseHTML(st):''}</div>`;
 }
 // Store page extras: your recommended cards that this store has in stock, and everything else it sells.
-const PICKS={}, BROWSE={}, BKIND={};
+const PICKS={}, BROWSE={}, BKIND={}, PICKN=12;
 const KINDS=[['','All products'],['booster','Boosters'],['commander deck','Commander decks'],['sleeves','Sleeves'],['playmat','Playmats'],['deck box','Deck boxes'],['binder','Binders'],['dice','Dice']];
 async function loadPicks(st){
-  const names=((RECS&&RECS.cards)||[]).slice(0,8).map(c=>c.name); const key=names.join('|');
+  const names=((RECS&&RECS.cards)||[]).slice(0,PICKN).map(c=>c.name); const key=names.join('|');
   if(!names.length||(PICKS[st.id]&&PICKS[st.id].key===key)) return; PICKS[st.id]={key,state:'loading',offers:[]};
   const qs=st.custom?`stores=_&extra=${encodeURIComponent(st.host)}`:`stores=${encodeURIComponent(st.id)}`;
   const found=await Promise.all(names.map(async n=>{ try{ const j=await (await fetch(`${API}/search?q=${encodeURIComponent(n)}&${qs}`)).json();
     const o=(j.results||[]).filter(p=>p.store===st.id&&p.available).sort((a,b)=>(a.priceMin??0)-(b.priceMin??0))[0]; return o||null; }catch(e){ return null; } }));
   PICKS[st.id]={key,state:'ok',offers:found.filter(Boolean).map(p=>remember({store:p.store,storeName:st.name,title:p.title,name:p.name,set:p.set,url:p.url,image:p.image,foil:isFoil(p.title),price:p.priceMin??0,priceMax:p.priceMax??p.priceMin??0,available:true}))};
-  if(route.name==='store'&&route.id===st.id&&!storeQ) render();
+  if((route.name==='store'&&!storeQ||route.name==='recs')&&route.id===st.id) render();
 }
 function storePicksHTML(st){
   if(!recSeeds().length) return ''; if(!RECS||!RECS.cards){ setTimeout(loadRecs,0); return ''; }
-  const pk=PICKS[st.id]; if(!pk||pk.key!==RECS.cards.slice(0,8).map(c=>c.name).join('|')) setTimeout(()=>loadPicks(st),0);
-  if(!pk||pk.state==='loading') return `<div class="h"><h2>Picks for you here</h2></div><div class="rail">${'<div class="p"><div class="skel" style="aspect-ratio:488/680"></div></div>'.repeat(3)}</div>`;
+  const pk=PICKS[st.id]; if(!pk||pk.key!==RECS.cards.slice(0,PICKN).map(c=>c.name).join('|')) setTimeout(()=>loadPicks(st),0);
+  if(!pk||pk.state==='loading') return `<div class="h"><h2>Recommended for you</h2></div><div class="rail">${'<div class="p"><div class="skel" style="aspect-ratio:488/680"></div></div>'.repeat(3)}</div>`;
   if(!pk.offers.length) return '';
-  return `<div class="h"><h2>Picks for you here</h2><span class="hint">Goes with your cards</span></div><div class="rail">${pk.offers.map(o=>tile(o,{rail:true})).join('')}</div>`;
+  const more=pk.offers.length>3;
+  return `<div class="h"><h2>Recommended for you</h2>${more?`<button class="right" data-act="go" data-to="recs" data-id="${esc(st.id)}">See all</button>`:''}</div><div class="rail">${pk.offers.slice(0,10).map(o=>tile(o,{rail:true})).join('')}${more?`<button class="seeall" data-act="go" data-to="recs" data-id="${esc(st.id)}"><span>${I.chev.replace('width="16" height="16"','width="22" height="22"')}</span>See all<small>${pk.offers.length} in stock</small></button>`:''}</div>`;
 }
 async function loadBrowse(st,kind){
   const k=st.id+'|'+kind; if(BROWSE[k]&&(BROWSE[k].state==='loading'||Date.now()-BROWSE[k].at<30*60e3)) return;
@@ -1190,7 +1192,7 @@ async function loadBrowse(st,kind){
   try{ const j=await (await fetch(`${API}/browse?host=${encodeURIComponent(st.host)}&id=${encodeURIComponent(st.id)}${kind?'&q='+encodeURIComponent(kind):''}`)).json();
     BROWSE[k]={state:'ok',at:Date.now(),items:(j.items||[]).map(p=>remember({store:st.id,storeName:st.name,title:p.title,name:p.name,set:p.set||'',url:p.url,image:p.image,foil:isFoil(p.title),price:p.priceMin??0,priceMax:p.priceMax??p.priceMin??0,available:!!p.available}))}; }
   catch(e){ BROWSE[k]={state:'err',at:Date.now(),items:[]}; }
-  if(route.name==='store'&&route.id===st.id&&!storeQ) render();
+  if((route.name==='store'&&!storeQ||route.name==='recs')&&route.id===st.id) render();
 }
 function storeBrowseHTML(st){
   const kind=BKIND[st.id]||'', k=st.id+'|'+kind, b=BROWSE[k]; if(!b) setTimeout(()=>loadBrowse(st,kind),0);
@@ -1358,9 +1360,23 @@ function recsHTML(){ if(!recSeeds().length) return ''; setTimeout(loadRecs,0); r
 function recsInner(){
   if(!RECS||!RECS.cards) return '';
   const own=new Set([...S.cart,...S.favs].map(x=>String(x.name||'').toLowerCase()));
-  const cards=RECS.cards.filter(c=>!own.has(c.name.toLowerCase())).slice(0,12); if(!cards.length) return '';
-  return `<div class="h"><h2>Recommended for you</h2><span class="hint">From what you hunt</span></div>
-    <div class="rail">${cards.map(c=>`<div class="p rec"><button class="img" data-act="q" data-q="${esc(c.name)}"><img alt="${esc(c.name)}" loading="lazy" src="${esc(scry(c.name))}"></button><div class="rmeta">Goes with ${esc(c.with[0]||'')}</div></div>`).join('')}</div>`;
+  const all=recCards(), cards=all.slice(0,10); if(!cards.length) return '';
+  const more=all.length>3;
+  return `<div class="h"><h2>Recommended for you</h2>${more?'<button class="right" data-act="go" data-to="recs">See all</button>':''}</div>
+    <div class="rail">${cards.map(recTile).join('')}${more?`<button class="seeall" data-act="go" data-to="recs"><span>${I.chev.replace('width="16" height="16"','width="22" height="22"')}</span>See all<small>${all.length} cards</small></button>`:''}</div>`;
+}
+function recCards(){ if(!RECS||!RECS.cards) return []; const own=new Set([...S.cart,...S.favs].map(x=>String(x.name||'').toLowerCase())); return RECS.cards.filter(c=>!own.has(c.name.toLowerCase())); }
+function recTile(c){ return `<div class="p rec"><button class="img" data-act="q" data-q="${esc(c.name)}"><img alt="${esc(c.name)}" loading="lazy" src="${esc(scry(c.name))}"></button><div class="rmeta">Goes with ${esc(c.with[0]||'')}</div></div>`; }
+// See all: every recommended card, or (from a store page) the ones that store has in stock.
+function viewRecs(){
+  const st=route.id&&SBY[route.id], back=`<button class="iconbtn sm" data-act="navback" aria-label="Back">${I.back}</button>`;
+  if(st){ const pk=PICKS[st.id]; if(!pk) setTimeout(()=>loadPicks(st),0);
+    const body=!pk||pk.state==='loading'?`<div class="grid">${skeletons(6)}</div>`:pk.offers.length?`<div class="grid">${pk.offers.map(o=>tile(o)).join('')}</div>`:'<div class="empty">None of your recommended cards are in stock here right now.</div>';
+    return `<div class="h">${back}<h2>Recommended for you</h2></div><p class="hint" style="margin:-4px 2px 12px">In stock at ${esc(st.name)}, and they go with your cards</p>${body}`; }
+  if(!RECS||!RECS.cards) setTimeout(loadRecs,0);
+  const cards=recCards();
+  return `<div class="h">${back}<h2>Recommended for you</h2></div><p class="hint" style="margin:-4px 2px 12px">Cards Commander players often run with what you've saved, carted and looked at</p>
+    ${cards.length?`<div class="grid recgrid">${cards.map(recTile).join('')}</div>`:'<div class="empty">Save or cart a few cards and recommendations show up here.</div>'}`;
 }
 function viewHome(){
   const sm=w=>w.replace(/width="\d+" height="\d+"/,'width="22" height="22"');
@@ -1474,7 +1490,7 @@ function viewList(){
 function render(){
   const app=$id('app');
   const active=document.activeElement; const focusId=active&&active.id; const caret=active&&active.selectionStart;
-  const views={home:viewHome, viewed:viewViewed, search:viewSearch, saved:viewSaved, lists:viewLists, list:viewList, store:viewStore};
+  const views={home:viewHome, viewed:viewViewed, recs:viewRecs, search:viewSearch, saved:viewSaved, lists:viewLists, list:viewList, store:viewStore};
   app.innerHTML=(views[route.name]||viewHome)();
   const tab=route.id==='temp'?'home':{home:'home',search:'home',store:'home',viewed:'home',saved:'saved',lists:'saved',list:'saved'}[route.name];
   for(const n of ['home','saved']) $id('nav-'+n).classList.toggle('on', tab===n);
@@ -1732,7 +1748,7 @@ document.addEventListener('click', e=>{
     if($id('sheet').querySelector('.pd')) { openProduct(o); render(); return; }
     syncHearts(o,true); if(route.name==='saved') setTimeout(render,450); return; }
   switch(a){
-    case 'go': closeSheet(); go(el.dataset.to); break;
+    case 'go': closeSheet(); go(el.dataset.to, el.dataset.id?{id:el.dataset.id}:{}); break;
     case 'navback': { closeSheet(); const b=NAVH.pop(); if(!b){ go('home'); break; } if(b.name==='search'&&b.q) searchQ=b.q; go(b.name,b,true); break; }
     case 'open': { // single tap opens, double tap favorites
       const o=offerOf(k); if(!o) break;
@@ -1847,7 +1863,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$id('sheet').inner
   if(h.startsWith('list/')) route={name:'list',id:h.slice(5)};
   else if(h.startsWith('store/')&&SBY[h.slice(6)]) route={name:'store',id:h.slice(6)};
   else if(h.startsWith('search/')){ searchQ=h.slice(7); route={name:'search'}; fetchCard(searchQ); }
-  else if(['saved','lists','viewed'].includes(h)) route={name:h};
+  else if(['saved','lists','viewed','recs'].includes(h)) route={name:h};
   render();
 })();
 if(SY) syncNow();
