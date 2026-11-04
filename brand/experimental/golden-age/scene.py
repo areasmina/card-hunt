@@ -161,16 +161,16 @@ def monkey():
     P += tube('a', L_SH, L_EL, 0.062) + tube('a', L_EL, L_HA, 0.052)
     P += tube('a', R_SH, R_EL, 0.062) + tube('a', R_EL, R_HA, 0.052)
     pts = []
-    for i in range(22):                                         # long tail rising behind, curled tip
-        t = i / 21
+    for i in range(48):                                         # long tail rising behind, curled tip
+        t = i / 47
         if t < 0.7:
             u = t / 0.7
             pts.append((0.12 + 0.6 * u, 0.32 + 0.2 * u, 0.32 + 0.9 * u * u))
         else:
-            u = (t - 0.7) / 0.3; a = math.pi * 2 * u
-            pts.append((0.72 + 0.12 * math.sin(a), 0.52, 1.22 + 0.12 * (1 - math.cos(a)) * (1 - u * 0.4)))
+            u = (t - 0.7) / 0.3; a = math.pi * 1.6 * u; r = 0.13 * (1 - 0.5 * u)
+            pts.append((0.72 + r * math.sin(a), 0.52, 1.22 + r * (1 - math.cos(a))))
     for k in range(len(pts) - 1):
-        P += tube('tail', pts[k], pts[k + 1], 0.04 - 0.02 * k / 21)
+        P += tube('tail', pts[k], pts[k + 1], 0.042 - 0.02 * k / 47)
     fuse('Fur', P, 0.014, fur)
 
     S = [sphere('m', (0, -0.25, 1.03), (0.12, 0.11, 0.09)),
@@ -324,7 +324,7 @@ def world(sc):
         e = els.new(pos); e.color = lin(col)
     L.new(ramp.outputs['Color'], bg.inputs['Color'])
     bg.inputs['Strength'].default_value = 0.45
-    vol = N.new('ShaderNodeVolumePrincipled'); vol.inputs['Density'].default_value = 0.012
+    vol = N.new('ShaderNodeVolumePrincipled'); vol.inputs['Density'].default_value = 0.0025
     vol.inputs['Color'].default_value = lin('#c89060')
     L.new(vol.outputs[0], N['World Output'].inputs['Volume'])
 
