@@ -20,17 +20,22 @@
   --line:#e6e6eb; --accent:#5433eb; --accent-text:#fff; --ok:#15803d; --warn:#b45309; --heart:#e11d48;
   --sheet:#18181b; --sheet-2:#26262b; --sheet-text:#f4f4f5; --sheet-muted:#a1a1aa;
   --shadow:0 8px 28px rgba(0,0,0,.14); --r:24px;
+  color-scheme:light dark;   /* scrollbars and form controls follow the theme (Firefox kept a white scrollbar) */
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0c0c0e; --surface:#17171a; --surface-2:#222227; --surface-3:#2d2d33; --text:#f4f4f5; --muted:#a1a1aa;
     --line:#2a2a30; --accent:#7c5cff; --ok:#4ade80; --warn:#fbbf24; --heart:#fb7185; --shadow:0 8px 28px rgba(0,0,0,.5);
+    color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0c0c0e; --surface:#17171a; --surface-2:#222227; --surface-3:#2d2d33; --text:#f4f4f5; --muted:#a1a1aa;
   --line:#2a2a30; --accent:#7c5cff; --ok:#4ade80; --warn:#fbbf24; --heart:#fb7185; --shadow:0 8px 28px rgba(0,0,0,.5);
+  color-scheme:dark;
 }
+:root[data-theme="light"]{color-scheme:light}
+html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
