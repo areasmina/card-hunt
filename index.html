@@ -494,15 +494,19 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
    and a small collector line at the bottom ---- */
 /* the card pop-up keeps its own look inside a modern card's black frame: rounded black edge, a thin cream sliver
    down the sides, and the black band at the bottom with the collector line and the little triangle */
-.sheet .body:has(> .pd){background:var(--pf-edge)!important;background-image:none!important;padding:10px 10px calc(4px + env(safe-area-inset-bottom));border-radius:30px 30px 0 0}
-.pd .pdc{position:relative;background-color:var(--bg);background-image:linear-gradient(var(--veil-sheet),var(--veil-sheet)),var(--tex);background-size:auto,340px;border-radius:20px 20px 26px 26px;padding:14px 14px 18px;box-shadow:-1.5px 0 0 var(--pf-sliver),1.5px 0 0 var(--pf-sliver),0 1px 0 var(--pf-sliver)}
-.pd .pdc > .close{top:12px;right:12px}
-.pd .pdfoot{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:10px 8px 6px;font-size:10.5px;line-height:1.35;font-weight:600;letter-spacing:.06em;color:var(--pf-ink);white-space:nowrap}
+/* the card pop-up in a real card's frame: a black outer edge (both themes), then the card's own frame band
+   (beaded black frame in dark, cream marble white frame in light), then the pop-up as it always was */
+.sheet .body:has(> .pd){background:#0c0c0c!important;background-image:none!important;padding:10px 10px calc(4px + env(safe-area-inset-bottom));border-radius:30px 30px 0 0}
+.pd .pdc{position:relative;border:6px solid transparent;border-radius:22px 22px 26px 26px;padding:10px 10px 16px;
+  background-image:linear-gradient(var(--veil-sheet),var(--veil-sheet)),var(--tex),linear-gradient(var(--pf-band),var(--pf-band)),var(--tex);
+  background-size:auto,340px,auto,300px;background-clip:padding-box,padding-box,border-box,border-box;background-origin:padding-box,padding-box,border-box,border-box;background-color:var(--bg)}
+.pd .pdc > .close{top:8px;right:8px}
+.pd .pdfoot{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:10px 8px 6px;font-size:10.5px;line-height:1.35;font-weight:600;letter-spacing:.06em;color:#f2f2f2;white-space:nowrap}
 .pd .pdfoot span:last-child{text-align:right;font-weight:500;letter-spacing:.02em}
 .pd .pdfoot b{font-weight:700}
-.pd .pdfoot i{position:absolute;left:50%;top:-1px;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:13px solid var(--pf-tri)}
-:root{--pf-edge:#1b1e1f;--pf-sliver:rgba(217,186,151,.45);--pf-ink:#c9b495;--pf-tri:#474e4e}
-:root[data-theme="light"]{--pf-edge:#3b4252;--pf-sliver:#d8dee9;--pf-ink:#e5e9f0;--pf-tri:#5c6578}
+.pd .pdfoot i{position:absolute;left:50%;top:-3px;transform:translateX(-50%);width:34px;height:14px;border-radius:0 0 17px 17px;background:linear-gradient(#9aa0a6,#5d6369);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+:root{--pf-band:rgba(0,0,0,.05)}
+:root[data-theme="light"]{--pf-band:rgba(255,250,238,.12)}
 </style>
 </head>
 <body>
