@@ -114,6 +114,7 @@ def fuse(name, parts, voxel, m, smooth=4):
     bpy.ops.object.join()
     ob = bpy.context.active_object; ob.name = name
     r = ob.modifiers.new('Remesh', 'REMESH'); r.mode = 'VOXEL'; r.voxel_size = voxel
+    r.use_smooth_shade = True
     sm = ob.modifiers.new('Smooth', 'SMOOTH'); sm.factor = 0.6; sm.iterations = smooth
     ob.data.materials.clear(); ob.data.materials.append(m)
     try:
@@ -124,82 +125,111 @@ def fuse(name, parts, voxel, m, smooth=4):
 
 
 # ---------------------------------------------------------------- the monkey
-L_SH, L_EL, L_HA = (-0.28, -0.02, 0.85), (-0.43, -0.18, 0.58), (-0.5, -0.32, 0.42)
-R_SH, R_EL, R_HA = (0.28, -0.02, 0.88), (0.47, -0.12, 1.1), (0.55, -0.17, 1.38)
+# A lean, clever little beast (not a plush mascot): long limbs, long tail, small knowing eyes.
+L_SH, L_EL, L_HA = (-0.22, 0.0, 0.88), (-0.4, -0.17, 0.62), (-0.5, -0.33, 0.45)
+R_SH, R_EL, R_HA = (0.22, 0.0, 0.9), (0.44, -0.1, 1.1), (0.52, -0.16, 1.38)
+
+
+def hand(c, toward, r, m, parts):
+    c, t = Vector(c), Vector(toward)
+    parts.append(sphere('palm', c, (r * 1.1, r * 0.8, r * 1.2), m))
+    d = (t - c).normalized()
+    side = d.cross(Vector((0, 1, 0))).normalized()
+    for k in (-1, 0, 1):
+        a = c + side * k * r * 0.6
+        parts += tube('finger', a, a + d * r * 1.6 + Vector((0, -r * 0.5, 0)), r * 0.28, m)
 
 
 def monkey():
     import bmesh
-    fur = mat('Fur', '#6b3f22', rough=0.85, bump=0.35, bump_scale=120, sheen=0.4, var=0.6, var_col='#3e2312')
-    skin = mat('Skin', '#d9a57a', rough=0.55, bump=0.08, bump_scale=60, var=0.4, var_col='#b98058')
-    dark = mat('Eye', '#0a0806', rough=0.08)
+    fur = mat('Fur', '#4a2c18', rough=0.9, bump=0.5, bump_scale=160, sheen=0.3, var=0.7, var_col='#24140a')
+    skin = mat('Skin', '#a8785a', rough=0.6, bump=0.12, bump_scale=70, var=0.5, var_col='#6e4a34')
+    dark = mat('Pupil', '#050403', rough=0.05)
+    amber = mat('Iris', '#b8801e', rough=0.08, emit=0.3)
 
-    P = [sphere('b', (0, 0.05, 0.6), (0.34, 0.3, 0.4)),
-         sphere('h', (0, -0.02, 1.15), (0.32, 0.31, 0.31)),
-         sphere('s', (0, 0.02, 1.25), (0.3, 0.3, 0.26))]
+    P = [sphere('b', (0, 0.1, 0.62), (0.26, 0.24, 0.38)),
+         sphere('chest', (0, 0.0, 0.8), (0.24, 0.2, 0.18)),
+         sphere('h', (0, -0.04, 1.12), (0.25, 0.24, 0.26)),
+         sphere('s', (0, 0.0, 1.2), (0.23, 0.23, 0.2)),
+         sphere('brow', (0, -0.2, 1.19), (0.19, 0.07, 0.05)),
+         sphere('cheekL', (-0.15, -0.13, 1.07), (0.1, 0.1, 0.1)),
+         sphere('cheekR', (0.15, -0.13, 1.07), (0.1, 0.1, 0.1))]
     for sx in (-1, 1):
-        P.append(sphere('e', (sx * 0.32, 0.02, 1.15), (0.12, 0.06, 0.12)))
-        P += tube('t', (sx * 0.17, -0.08, 0.32), (sx * 0.28, -0.42, 0.3), 0.13)
-        P += tube('s', (sx * 0.28, -0.42, 0.3), (sx * 0.3, -0.5, 0.1), 0.1)
-    P += tube('a', L_SH, L_EL, 0.085) + tube('a', L_EL, L_HA, 0.075)
-    P += tube('a', R_SH, R_EL, 0.085) + tube('a', R_EL, R_HA, 0.075)
+        P.append(sphere('e', (sx * 0.25, 0.0, 1.13), (0.08, 0.04, 0.09)))
+        P += tube('t', (sx * 0.14, -0.02, 0.34), (sx * 0.26, -0.4, 0.34), 0.09)
+        P += tube('s', (sx * 0.26, -0.4, 0.34), (sx * 0.28, -0.46, 0.1), 0.07)
+    P += tube('a', L_SH, L_EL, 0.062) + tube('a', L_EL, L_HA, 0.052)
+    P += tube('a', R_SH, R_EL, 0.062) + tube('a', R_EL, R_HA, 0.052)
     pts = []
-    for i in range(16):                                         # tail: a curl at the back right
-        t = i / 15; a = math.pi * (0.1 + 1.6 * t); r = 0.45 - 0.28 * t
-        pts.append((0.35 + r * math.cos(a) * 0.9, 0.35 + 0.1 * t, 0.2 + r * math.sin(a)))
+    for i in range(22):                                         # long tail rising behind, curled tip
+        t = i / 21
+        if t < 0.7:
+            u = t / 0.7
+            pts.append((0.12 + 0.6 * u, 0.32 + 0.2 * u, 0.32 + 0.9 * u * u))
+        else:
+            u = (t - 0.7) / 0.3; a = math.pi * 2 * u
+            pts.append((0.72 + 0.12 * math.sin(a), 0.52, 1.22 + 0.12 * (1 - math.cos(a)) * (1 - u * 0.4)))
     for k in range(len(pts) - 1):
-        P += tube('tail', pts[k], pts[k + 1], 0.055 - 0.025 * k / 15)
-    fuse('Fur', P, 0.018, fur)
+        P += tube('tail', pts[k], pts[k + 1], 0.04 - 0.02 * k / 21)
+    fuse('Fur', P, 0.014, fur)
 
-    S = [sphere('m', (0, -0.27, 1.04), (0.16, 0.12, 0.12)),
-         sphere('belly', (0, -0.2, 0.58), (0.24, 0.14, 0.3)),
-         sphere('lh', L_HA, (0.075, 0.075, 0.075)), sphere('rh', R_HA, (0.075, 0.075, 0.075))]
+    S = [sphere('m', (0, -0.25, 1.03), (0.12, 0.11, 0.09)),
+         sphere('chin', (0, -0.22, 0.97), (0.08, 0.08, 0.05)),
+         sphere('belly', (0, -0.12, 0.6), (0.17, 0.12, 0.24))]
+    hand(L_HA, (-0.62, -0.4, 0.5), 0.05, None, S)
+    hand(R_HA, (0.56, -0.2, 1.52), 0.05, None, S)
     for sx in (-1, 1):
-        S += [sphere('mask', (sx * 0.1, -0.24, 1.18), (0.12, 0.09, 0.13)),
-              sphere('ear', (sx * 0.32, -0.03, 1.15), (0.07, 0.03, 0.07)),
-              sphere('foot', (sx * 0.31, -0.58, 0.07), (0.09, 0.13, 0.05))]
-    fuse('Skin', S, 0.01, skin)
+        S += [sphere('mask', (sx * 0.075, -0.2, 1.14), (0.08, 0.06, 0.07)),
+              sphere('ear', (sx * 0.25, -0.03, 1.13), (0.05, 0.025, 0.06)),
+              sphere('foot', (sx * 0.29, -0.55, 0.06), (0.07, 0.14, 0.04))]
+        for k in (-1, 0, 1):
+            S += tube('toe', (sx * 0.29 + k * 0.035, -0.62, 0.05), (sx * 0.29 + k * 0.045, -0.72, 0.03), 0.016)
+    fuse('Skin', S, 0.008, skin)
 
     for sx in (-1, 1):
-        sphere('Eye', (sx * 0.1, -0.33, 1.19), (0.042, 0.03, 0.05), dark)
-        sphere('Nostril', (sx * 0.03, -0.388, 1.07), (0.013, 0.01, 0.01), dark)
-        prim('cylinder', 'Brow', (sx * 0.1, -0.32, 1.28), (0.07, 0.015, 0.012), (0, 0, sx * -0.25),
-             m=mat('Brow', '#3e2312', 0.9), vertices=12)
-    sphere('Mouth', (0, -0.386, 0.99), (0.055, 0.01, 0.009), dark)
+        sphere('Iris', (sx * 0.072, -0.255, 1.15), (0.026, 0.016, 0.022), amber)
+        sphere('Pupil', (sx * 0.072, -0.268, 1.15), (0.011, 0.006, 0.013), dark)
+        sphere('Nostril', (sx * 0.022, -0.355, 1.06), (0.01, 0.008, 0.008), dark)
+    sphere('Mouth', (0, -0.348, 1.0), (0.05, 0.008, 0.006), dark)
 
-    # pith hat
-    khaki = mat('Khaki', '#bba36a', rough=0.8, bump=0.15, bump_scale=200, var=0.5, var_col='#8d7748')
-    crown = prim('uv_sphere', 'Crown', (0, -0.01, 1.42), (0.3, 0.32, 0.25), m=khaki, segments=48, ring_count=24)
+    # weathered pith hat
+    khaki = mat('Khaki', '#9c8656', rough=0.85, bump=0.25, bump_scale=220, var=0.7, var_col='#5e4e2e')
+    crown = prim('uv_sphere', 'Crown', (0, -0.02, 1.32), (0.25, 0.27, 0.21), (0, math.radians(-6), 0), m=khaki,
+                 segments=48, ring_count=24)
     bm = bmesh.new(); bm.from_mesh(crown.data)
     bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < -0.05], context='VERTS')
     bm.to_mesh(crown.data); bm.free()
-    prim('cylinder', 'Brim', (0, -0.03, 1.41), (0.47, 0.49, 0.012), (math.radians(-6), 0, 0), m=khaki, vertices=64)
-    prim('cylinder', 'Band', (0, -0.01, 1.44), (0.302, 0.322, 0.035), m=mat('Band', '#7a2a1a', 0.7), vertices=64)
-    sphere('Knob', (0, -0.01, 1.66), (0.035, 0.035, 0.025), khaki)
+    prim('cylinder', 'Brim', (0, -0.04, 1.31), (0.39, 0.41, 0.01), (math.radians(-9), math.radians(-6), 0),
+         m=khaki, vertices=64)
+    prim('cylinder', 'Band', (0, -0.02, 1.34), (0.262, 0.282, 0.03), (0, math.radians(-6), 0),
+         m=mat('Band', '#5a1e14', 0.8), vertices=64)
 
-    # brass magnifier in the left hand
-    brass = mat('Brass', '#b08a3a', rough=0.28, metal=1.0, bump=0.05, var=0.4, var_col='#6e5222')
-    tube('Handle', (-0.5, -0.33, 0.36), (-0.6, -0.4, 0.49), 0.024, mat('Wood', '#3a2010', 0.6))
+    # tarnished brass magnifier in the left hand
+    brass = mat('Brass', '#8a6a2a', rough=0.4, metal=1.0, bump=0.1, var=0.6, var_col='#3e3018')
+    tube('Handle', (-0.5, -0.34, 0.38), (-0.6, -0.41, 0.5), 0.022, mat('Wood', '#2a160a', 0.6))
     rot = (math.radians(80), 0, math.radians(15))
-    prim('torus', 'Rim', (-0.63, -0.43, 0.63), (1, 1, 1), rot, m=brass,
-         major_radius=0.14, minor_radius=0.018, major_segments=48, minor_segments=12)
+    prim('torus', 'Rim', (-0.63, -0.44, 0.64), (1, 1, 1), rot, m=brass,
+         major_radius=0.14, minor_radius=0.017, major_segments=48, minor_segments=12)
     glass = bpy.data.materials.new('Glass'); glass.use_nodes = True
-    gp = glass.node_tree.nodes['Principled BSDF']
-    gp.inputs['Base Color'].default_value = lin('#d8eeee'); gp.inputs['Roughness'].default_value = 0.02
-    gp.inputs['Alpha'].default_value = 0.22
+    gn = glass.node_tree.nodes; gn.clear()
+    gl = gn.new('ShaderNodeBsdfGlossy'); gl.inputs['Roughness'].default_value = 0.05
+    gt = gn.new('ShaderNodeBsdfTransparent')
+    gm = gn.new('ShaderNodeMixShader'); gm.inputs[0].default_value = 0.25
+    go = gn.new('ShaderNodeOutputMaterial')
+    glass.node_tree.links.new(gt.outputs[0], gm.inputs[1]); glass.node_tree.links.new(gl.outputs[0], gm.inputs[2])
+    glass.node_tree.links.new(gm.outputs[0], go.inputs['Surface'])
     try:
         glass.surface_render_method = 'BLENDED'
     except AttributeError:
         glass.blend_method = 'BLEND'
-    prim('cylinder', 'Lens', (-0.63, -0.43, 0.63), (0.13, 0.13, 0.004), rot, m=glass, vertices=48)
+    prim('cylinder', 'Lens', (-0.63, -0.44, 0.64), (0.13, 0.13, 0.003), rot, m=glass, vertices=48)
 
-    # the card held up in the right hand, face to the viewer
+    # the card held up, face to the viewer
     rz = math.radians(-6)
-    prim('cube', 'Card', (0.58, -0.2, 1.53), (0.13, 0.003, 0.18), (0, 0, rz), m=mat('CardEdge', '#0b0b0b', 0.5))
+    prim('cube', 'Card', (0.55, -0.2, 1.56), (0.13, 0.003, 0.18), (0, 0, rz), m=mat('CardEdge', '#0b0b0b', 0.5))
     if os.path.exists(CARD_FACE):
-        prim('plane', 'CardFace', (0.58, -0.205, 1.53), (0.125, 0.175, 1), (math.radians(90), 0, rz),
+        prim('plane', 'CardFace', (0.55, -0.205, 1.56), (0.125, 0.175, 1), (math.radians(90), 0, rz),
              m=image_mat('CardFace', CARD_FACE))
-    sphere('Thumb', (0.53, -0.22, 1.4), (0.035, 0.03, 0.05), skin)
 
 
 # ---------------------------------------------------------------- the hoard and the lamp
@@ -232,11 +262,11 @@ def hoard():
          major_radius=0.06, minor_radius=0.012)
     flame = bpy.data.materials.new('Flame'); flame.use_nodes = True
     fn = flame.node_tree.nodes; fn.clear()
-    fe = fn.new('ShaderNodeEmission'); fe.inputs['Color'].default_value = lin('#ff8a2a'); fe.inputs['Strength'].default_value = 5
+    fe = fn.new('ShaderNodeEmission'); fe.inputs['Color'].default_value = lin('#ff8a2a'); fe.inputs['Strength'].default_value = 2.5
     fo = fn.new('ShaderNodeOutputMaterial'); flame.node_tree.links.new(fe.outputs[0], fo.inputs['Surface'])
     prim('uv_sphere', 'Flame', (-0.64, -0.55, 0.26), (0.03, 0.03, 0.07), m=flame,
          segments=16, ring_count=8)
-    l = bpy.data.lights.new('LampLight', 'POINT'); l.energy = 90; l.color = (1.0, 0.62, 0.3); l.shadow_soft_size = 0.05
+    l = bpy.data.lights.new('LampLight', 'POINT'); l.energy = 160; l.color = (1.0, 0.62, 0.3); l.shadow_soft_size = 0.05
     lo = link(bpy.data.objects.new('LampLight', l)); lo.location = (-0.64, -0.6, 0.3)
 
 
@@ -267,13 +297,13 @@ def desert():
         prim('cone', 'MinaretTop', (x, 14.2, 3.4), (0.13, 0.13, 0.3), m=city, vertices=12)
     # crescent moon
     moon = prim('cylinder', 'Moon', (2.6, 18, 5.4), (0.75, 0.75, 0.02), (math.radians(90), 0, 0),
-                m=mat('Moon', '#f4e2b0', emit=4.0), vertices=64)
+                m=mat('Moon', '#f4e2b0', emit=2.0), vertices=64)
     cut = prim('cylinder', 'MoonCut', (2.95, 17.9, 5.6), (0.68, 0.68, 0.2), (math.radians(90), 0, 0), vertices=64)
     b = moon.modifiers.new('Crescent', 'BOOLEAN'); b.operation = 'DIFFERENCE'; b.object = cut
     cut.hide_render = True; cut.hide_viewport = True
     rnd = random.Random(11)
-    star = mat('Star', '#fff1d0', emit=8.0)
-    for i in range(160):
+    star = mat('Star', '#fff1d0', emit=3.0)
+    for i in range(90):
         x = rnd.uniform(-12, 12); z = rnd.uniform(2.6, 9)
         s = rnd.uniform(0.012, 0.035)
         prim('uv_sphere', 'Star', (x, 19, z), (s, s, s), m=star, segments=8, ring_count=4)
@@ -293,7 +323,10 @@ def world(sc):
     for pos, col in ((0.06, '#9a4a2c'), (0.14, '#4a2a3a'), (0.25, '#1c1a34')):
         e = els.new(pos); e.color = lin(col)
     L.new(ramp.outputs['Color'], bg.inputs['Color'])
-    bg.inputs['Strength'].default_value = 0.9
+    bg.inputs['Strength'].default_value = 0.45
+    vol = N.new('ShaderNodeVolumePrincipled'); vol.inputs['Density'].default_value = 0.012
+    vol.inputs['Color'].default_value = lin('#c89060')
+    L.new(vol.outputs[0], N['World Output'].inputs['Volume'])
 
 
 # ---------------------------------------------------------------- scene, lights, camera
@@ -328,10 +361,12 @@ def lights():
     def area(name, loc, energy, size, col, target=(0, -0.1, 0.8)):
         l = bpy.data.lights.new(name, 'AREA'); l.energy = energy; l.size = size; l.color = col
         o = link(bpy.data.objects.new(name, l)); o.location = loc; look(o, target)
-    area('Key', (-2.2, -2.6, 2.6), 260, 1.6, (1.0, 0.78, 0.55))         # warm lamplight key
-    area('Fill', (2.6, -2.8, 1.0), 70, 3.0, (0.55, 0.62, 0.8))          # cool moonlit fill
-    area('Rim', (1.5, 2.5, 2.8), 420, 1.5, (0.75, 0.85, 1.0))           # moon rim on the fur
-    area('Bounce', (0, -1.2, -0.3), 40, 2.0, (1.0, 0.7, 0.35), (0, 0, 1))  # gold bounce from the hoard
+    # chiaroscuro: one warm low key, a cold moon rim, almost no fill
+    area('Key', (-2.0, -2.2, 1.2), 220, 0.8, (1.0, 0.7, 0.42))
+    area('Fill', (2.6, -2.8, 1.0), 12, 3.0, (0.45, 0.55, 0.8))
+    area('Rim', (1.4, 2.4, 2.6), 700, 1.2, (0.7, 0.82, 1.0))
+    area('Rim2', (-1.6, 2.2, 1.8), 260, 1.0, (0.9, 0.7, 0.5))
+    area('Bounce', (0, -1.0, -0.3), 25, 2.0, (1.0, 0.65, 0.3), (0, 0, 1))
 
 
 def camera(loc, target, lens):
@@ -349,7 +384,7 @@ def render(sc, name):
 if WHICH in ('art', 'both'):
     sc = setup((1500, 1200), False)
     monkey(); hoard(); desert(); lights()
-    camera((0.15, -4.6, 1.15), (0.05, 0, 0.82), 52)
+    camera((0.12, -3.9, 0.95), (0.05, 0, 0.86), 50)
     render(sc, 'scene-art.png')
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, 'scene.blend'))
 if WHICH in ('art', 'both', 'mask'):
@@ -370,7 +405,7 @@ if WHICH in ('art', 'both', 'mask'):
     bpy.context.view_layer.material_override = white
     sc.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.0
     sc.view_settings.view_transform = 'Standard'
-    camera((0.15, -4.6, 1.15), (0.05, 0, 0.82), 52)
+    camera((0.12, -3.9, 0.95), (0.05, 0, 0.86), 50)
     render(sc, 'scene-mask.png')
 if WHICH in ('mascot', 'both'):
     sc = setup((1600, 1600), True)
