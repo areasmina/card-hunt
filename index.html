@@ -552,6 +552,11 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 /* back arrow in the bottom pill: only there when there is somewhere to go back to */
 .navpill #nav-back{width:48px}
 .navpill #nav-back.hidden{display:none}
+
+/* prices in a subtle green, like the leafy frame of a green card: a soft gradient across the digits */
+:root{--price-g1:#9cc77a;--price-g2:#c6dc8e}
+:root[data-theme="light"]{--price-g1:#2f6a35;--price-g2:#5d8a33}
+.p .price,.pd .pr{background:linear-gradient(100deg,var(--price-g1),var(--price-g2));-webkit-background-clip:text;background-clip:text;color:transparent;width:fit-content;max-width:100%}
 </style>
 </head>
 <body>
