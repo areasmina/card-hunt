@@ -174,7 +174,7 @@ async function browse(url, ctx) {
   const host = String(url.searchParams.get('host') || '').toLowerCase(), id = String(url.searchParams.get('id') || 'x:' + host).slice(0, 120);
   const q = String(url.searchParams.get('q') || '').trim().slice(0, 60);
   if (!HOST_RE.test(host)) return Response.json({ ok: false, error: 'bad host' }, { status: 400, headers: CORS });
-  const key = new Request(`https://cardhunt.cache/v1/browse/${host}?q=${encodeURIComponent(q.toLowerCase())}`);
+  const key = new Request(`https://cardhunt.cache/v2/browse/${host}?q=${encodeURIComponent(q.toLowerCase())}`);
   const hit = await caches.default.match(key); if (hit) return hit;
   const s = { name: STORES[id]?.name || host, host };
   const sug = async term => { try { const r = await fetch(`https://${host}/search/suggest.json?q=${encodeURIComponent(term)}&resources[type]=product&resources[limit]=10&resources[options][unavailable_products]=last`, { headers: { 'User-Agent': UA, Accept: 'application/json' }, cf: { cacheTtl: 900, cacheEverything: true } });
@@ -182,11 +182,12 @@ async function browse(url, ctx) {
   let items = [], source = 'search';
   if (q) items = await sug(q);
   else {
-    try { const r = await fetch(`https://${host}/products.json?limit=30`, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+    try { const r = await fetch(`https://${host}/products.json?limit=80`, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
       if (r.ok) { const j = await r.json(); items = (j.products || []).map(p => toOffer(id, s, p)); source = 'newest'; } } catch {}
     if (!items.length) items = (await Promise.all(BROWSE_KINDS.map(sug))).flat();
   }
-  const seen = new Set(); items = items.filter(o => !seen.has(o.url) && seen.add(o.url));
+  // Event tickets, gift cards and services aren't things to hunt for.
+  const seen = new Set(); items = items.filter(o => !/\bticket\b|\bevent\b|gift card|admission|registration|entry fee/i.test(`${o.title} ${o.type}`) && !seen.has(o.url) && seen.add(o.url)).slice(0, 40);
   const res = Response.json({ ok: true, source, items }, { headers: { ...CORS, 'Cache-Control': 'public, max-age=1800' } });
   if (items.length) ctx.waitUntil(caches.default.put(key, res.clone()));
   return res;
