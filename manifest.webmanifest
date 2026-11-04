@@ -1,6 +1,6 @@
 {
-  "name": "Card Hunt",
-  "short_name": "Card Hunt",
+  "name": "CardHunt",
+  "short_name": "CardHunt",
   "description": "Search five Canadian MTG stores at once, save favorites, wishlists and decks.",
   "id": "./",
   "start_url": "./",

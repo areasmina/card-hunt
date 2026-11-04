@@ -1,4 +1,4 @@
-// Card Hunt search helper: searches several Shopify MTG stores at once.
+// CardHunt search helper: searches several Shopify MTG stores at once.
 // GET /search?q=<card name>[&stores=ea,mana]  ->  JSON list of matching products with price range and stock.
 // Note: Shopify rate-limits Cloudflare Worker traffic on product pages (HTTP 429), so this only uses each
 // store's predictive search endpoint, which gives product-level price (min/max) and availability.
@@ -318,7 +318,7 @@ async function checkStore(raw) {
   if (r && r.url) { try { const h = new URL(r.url).host; if (HOST_RE.test(h)) host = h; } catch {} } // follow e.g. shop.com -> www.shop.com
   let ok = false; try { ok = !!(r && r.ok && (await r.json()).resources); } catch {}
   if (!ok && r && r.status === 429) return Response.json({ ok: false, host, busy: true, error: 'This store is busy right now. Try adding it again in a minute.' }, { headers: CORS });
-  if (!ok) return Response.json({ ok: false, host, status: r && r.status, error: "Card Hunt can only search stores built on Shopify, and this one didn't answer like a Shopify store." }, { headers: CORS });
+  if (!ok) return Response.json({ ok: false, host, status: r && r.status, error: "CardHunt can only search stores built on Shopify, and this one didn't answer like a Shopify store." }, { headers: CORS });
   const prof = await readHome(host);
   let name = prof.name || '', logo = prof.logo || null;
   if (!name) { try { const m = await get(host, '/meta.json'); if (m.ok) { const j = await m.json(); if (j.name) name = j.name; } } catch {} }
@@ -364,7 +364,7 @@ export default {
   async fetch(req, env, ctx) {
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
     const url = new URL(req.url);
-    if (url.pathname === '/') return new Response('Card Hunt helper is running. Try /search?q=Lightning+Bolt', { headers: CORS });
+    if (url.pathname === '/') return new Response('CardHunt helper is running. Try /search?q=Lightning+Bolt', { headers: CORS });
     if (url.pathname === '/store') return checkStore(url.searchParams.get('url') || '');
     if (url.pathname === '/profile') return profile(url, ctx);
     if (url.pathname === '/nearby') return nearby(url, ctx);

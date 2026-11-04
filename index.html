@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#262a2b">
 <script>try{var t=JSON.parse(localStorage.getItem('cardhunt2.theme')||'"dark"');document.documentElement.dataset.theme=t==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}</script>
-<title>Card Hunt</title>
+<title>CardHunt</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Card Hunt">
+<meta name="apple-mobile-web-app-title" content="CardHunt">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="description" content="Search five Canadian MTG stores at once, save favorites, wishlists and decks.">
 <style>
@@ -730,9 +730,9 @@ function openStore(st){
     <div class="sihead">${storeLogo(st)}<div class="grow"><b>${esc(st.name)}</b><span>${esc(st.host||'')}${st.deck?' · One-tap cart':''}</span></div></div>
     <div id="about" data-s="${esc(st.id)}">${aboutHTML(st)}</div>
     <a class="sicard silink" href="${esc(storeHome(st))}" target="_blank" rel="noopener"><span>Visit Online Store</span>${I.arrow}</a>
-    ${here?'':`<button class="sicard silink" data-act="gostore" data-s="${esc(st.id)}"><span>Open store page in Card Hunt</span>${I.chev.replace('width="16" height="16"','width="20" height="20"')}</button>`}
-    <div class="sicard"><h3>In Card Hunt</h3>
-      <button class="row" data-act="storetoggle" data-s="${esc(st.id)}"><span class="grow"><div class="t">Include in searches</div><div class="s">${on?'Card Hunt checks this store every time you search':'Skipped when you search'}</div></span><span class="switch${on?' on':''}"><i></i></span></button>
+    ${here?'':`<button class="sicard silink" data-act="gostore" data-s="${esc(st.id)}"><span>Open store page in CardHunt</span>${I.chev.replace('width="16" height="16"','width="20" height="20"')}</button>`}
+    <div class="sicard"><h3>In CardHunt</h3>
+      <button class="row" data-act="storetoggle" data-s="${esc(st.id)}"><span class="grow"><div class="t">Include in searches</div><div class="s">${on?'CardHunt checks this store every time you search':'Skipped when you search'}</div></span><span class="switch${on?' on':''}"><i></i></span></button>
       <button class="row" data-act="deckedit" aria-expanded="false"><span class="grow"><div class="t">Checking out ${st.deck?'<span class="okpill">One tap</span>':''}</div><div class="s">${st.deck?'Sends your whole cart to the store\'s deck list page. Tap to change it':'One card at a time. Tap to add the store\'s deck list page and send your whole cart in one tap'}</div></span><span class="chev2">${I.chev}</span></button>
       <div class="deckbox hidden" id="deckbox"><div class="sub" style="margin:4px 0 0">Find the store's deck list, multi-card search or "deck builder" page on their site and paste its link here. It usually looks like …/pages/deck-list.</div>
         <div class="field"><input id="decklink" placeholder="https://…/pages/deck-list" value="${esc(st.deck||'')}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn" data-act="savedeck" data-s="${esc(st.id)}">Save</button></div>
@@ -750,7 +750,7 @@ function openStore(st){
 function openAddStore(msg=''){
   sheet(`<div class="grab"></div><button class="close" data-act="close">${I.x}</button><div class="syncs">
     <div class="h" style="margin-top:4px"><h2>Add a store</h2></div>${addTabs('link')}
-    <p class="sub" style="margin-top:12px">Paste the store's website. Card Hunt checks that it can search it and whether it has a deck list page for sending your cart.</p>
+    <p class="sub" style="margin-top:12px">Paste the store's website. CardHunt checks that it can search it and whether it has a deck list page for sending your cart.</p>
     <div class="field"><input id="storeurl" placeholder="e.g. www.yourlocalstore.ca" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn" data-act="storeadd">Add</button></div>
     <p class="sub" id="storemsg" style="margin-top:4px">${msg}</p>
     <p class="note">Works with stores built on Shopify, which most Canadian card shops use.</p></div>`);
@@ -767,7 +767,7 @@ async function addStore(raw){
     for(const k in DATA) delete DATA[k];
     closeSheet(); render(); toast(j.deck?`Added ${j.name}. It has a deck list page`:`Added ${j.name}`);
     if(!j.deck) setTimeout(()=>openStore(SBY['x:'+j.host]),400);
-  }catch(e){ m.textContent="Couldn't reach Card Hunt's helper. Try again."; b.disabled=false; }
+  }catch(e){ m.textContent="Couldn't reach CardHunt's helper. Try again."; b.disabled=false; }
 }
 function openSync(){
   const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -791,10 +791,10 @@ function openSync(){
 let installEvt=null;
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); installEvt=e; if(route&&route.name==='home') render(); });
-addEventListener('appinstalled',()=>{ installEvt=null; toast('Card Hunt is installed'); render(); });
+addEventListener('appinstalled',()=>{ installEvt=null; toast('CardHunt is installed'); render(); });
 if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});
 // An installed app can stay open for days. When it comes back to the screen, check whether a newer version
-// of Card Hunt is live, and if so reload into it (only when no panel is open, so nothing is interrupted).
+// of CardHunt is live, and if so reload into it (only when no panel is open, so nothing is interrupted).
 let pageTag=null; const getTag=()=>fetch(location.pathname,{method:'HEAD',cache:'no-store'}).then(r=>r.headers.get('etag')||r.headers.get('last-modified')).catch(()=>null);
 if(location.protocol==='https:') getTag().then(t=>pageTag=t);
 document.addEventListener('visibilitychange',async()=>{ if(document.visibilityState!=='visible'||!pageTag) return;
@@ -1126,7 +1126,7 @@ const SOC_ICON={
 
 // ---------- find stores nearby ----------
 // A map (OpenStreetMap, through Leaflet) with a circle that stays in the middle while you move the map around.
-// Card Hunt ships a ready list of Canada's game, comic and hobby shops (stores-ca.json, from OpenStreetMap), so the
+// CardHunt ships a ready list of Canada's game, comic and hobby shops (stores-ca.json, from OpenStreetMap), so the
 // stores in the circle show up instantly as you move. A live lookup and a Google Maps link are there as back-ups.
 let NEAR=LS.get('near',{lat:43.6532,lon:-79.3832,r:15,z:10}), nearMap=null, nearCircle=null, nearLayer=null, nearRes=null, nearBusy=false, CA=null;
 function loadLeaflet(){
@@ -1179,7 +1179,7 @@ function nearRefresh(){
   const at={lat:NEAR.lat,lon:NEAR.lon}; if(nearMap){ const c=nearMap.getCenter(); at.lat=c.lat; at.lon=c.lng; }
   const g=$id('gmaps'); if(g) g.href=`https://www.google.com/maps/search/trading+card+game+store/@${at.lat.toFixed(4)},${at.lon.toFixed(4)},12z`;
   const live=(nearRes&&nearRes.live)||[], seen=new Set(), all=[];
-  // Your Card Hunt stores come first, placed where their own website says they are (always up to date).
+  // Your CardHunt stores come first, placed where their own website says they are (always up to date).
   const norm=x=>String(x||'').toLowerCase().replace(/^the\s+/,'').replace(/[^a-z0-9]/g,'');
   const mineGeo=STORES.flatMap(st=>locsOf(st).map(l=>({name:st.name,lat:l.lat,lon:l.lon,website:storeHome(st),addr:l.address,mine:st.id,shop:'games'})));
   const isMine=s=>mineGeo.some(m=>{ const h=hostOf(s.website); return (h&&h===hostOf(m.website))||(norm(s.name).startsWith(norm(m.name))&&norm(m.name).length>3); });
@@ -1222,7 +1222,7 @@ async function nearSearch(){
   let err=null, live=[];
   try{ const j=await (await fetch(`${API}/nearby?lat=${at.lat.toFixed(4)}&lon=${at.lon.toFixed(4)}&r=${NEAR.r*1000}`)).json();
     if(j.ok) live=j.stores; else err="The live map service is busy. The stores above are still up to date, or try Google Maps.";
-  }catch(e){ err="Couldn't reach Card Hunt's helper. Try again."; }
+  }catch(e){ err="Couldn't reach CardHunt's helper. Try again."; }
   nearBusy=false; if(b) b.disabled=false;
   nearRes={...(nearRes||{}),live:[...((nearRes&&nearRes.live)||[]),...live]}; nearRefresh();
   if(err) toast(err); else { const added=live.filter(s=>!(CA||[]).some(c=>c.name.toLowerCase()===s.name.toLowerCase())).length; toast(added?`Found ${added} more store${added===1?'':'s'}`:'No new stores found'); }
@@ -1231,10 +1231,10 @@ async function nearSearch(){
 async function nearAdd(i, btn){
   const s=nearRes.stores[i], msg=$id('nmsg'+i); btn.disabled=true; btn.textContent='Checking…';
   try{ const j=await (await fetch(`${API}/store?url=${encodeURIComponent(s.website)}`)).json();
-    if(!j.ok){ btn.disabled=false; btn.textContent='Add'; if(j.busy){ msg.textContent='The store is busy. Try again in a minute.'; } else { btn.replaceWith(Object.assign(document.createElement('span'),{className:'noweb',textContent:"Can't search"})); msg.textContent="Its website isn't a Shopify store, so Card Hunt can't search it."; } return; }
+    if(!j.ok){ btn.disabled=false; btn.textContent='Add'; if(j.busy){ msg.textContent='The store is busy. Try again in a minute.'; } else { btn.replaceWith(Object.assign(document.createElement('span'),{className:'noweb',textContent:"Can't search"})); msg.textContent="Its website isn't a Shopify store, so CardHunt can't search it."; } return; }
     if(!STORES.some(x=>x.host===j.host)){ S.myStores=[...S.myStores,{host:j.host,name:j.name||s.name,deck:j.deck||null,logo:j.logo||null,v:2}]; save('myStores'); rebuildStores(); for(const k in DATA) delete DATA[k]; }
     btn.replaceWith(Object.assign(document.createElement('span'),{className:'added',textContent:'✓ Added'})); msg.textContent=j.deck?'Added. It has a deck list page for one-tap carts.':'Added to your stores.'; buzz(); render();
-  }catch(e){ btn.disabled=false; btn.textContent='Add'; msg.textContent="Couldn't reach Card Hunt's helper. Try again."; }
+  }catch(e){ btn.disabled=false; btn.textContent='Add'; msg.textContent="Couldn't reach CardHunt's helper. Try again."; }
 }
 
 // ---------- views ----------
@@ -1268,7 +1268,7 @@ function viewHome(){
   const recent=S.searches.slice(0,8);
   return `<header class="hello">
       <picture class="hlogo" aria-hidden="true"><source srcset="icons/logo-badge.png" media="(prefers-reduced-motion: reduce)"><img src="icons/logo-badge.webp" alt="" width="192" height="192"></picture>
-      <div><h1>Card Hunt</h1><p>${STORES.length} stores, one search</p></div>
+      <div><h1>CardHunt</h1><p>${STORES.length} stores, one search</p></div>
       <button class="iconbtn${SY?' on':''}" data-act="sync" title="Sync across devices" aria-label="Sync across devices">${sm(I.cloud)}${SY?'<i></i>':''}</button>
       <button class="iconbtn" data-act="theme" title="${S.theme==='light'?'Light mode. Tap for dark':'Dark mode. Tap for light'}" aria-label="Change light or dark mode">${themeIcon()}</button>
     </header>
@@ -1281,8 +1281,8 @@ function viewHome(){
       <button class="sbub" data-act="addstore"><span class="logo add">${I.plus}</span><span class="nm">Add store</span></button></div>
     ${recsHTML()}
     ${S.viewed.length?`<div class="h"><h2>Recently viewed</h2>${S.viewed.length>3?'<button class="right" data-act="seeviewed">See all</button>':''}</div><div class="rail">${S.viewed.slice(0,12).map(o=>tile(o,{rail:true})).join('')}${S.viewed.length>3?`<button class="seeall" data-act="seeviewed"><span>${I.chev.replace('width="16" height="16"','width="22" height="22"')}</span>See all<small>${S.viewed.length} cards</small></button>`:''}</div>`:''}
-    ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use Card Hunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
-    ${installEvt&&!standalone()?`<button class="promo soft" data-act="install"><span class="ic">${I.phone}</span><span class="grow"><b>Install the app</b><span>Open Card Hunt from your home screen or taskbar</span></span>${I.chev}</button>`:''}`;
+    ${!SY?`<button class="promo soft" data-act="sync"><span class="ic">${I.cloud}</span><span class="grow"><b>Use CardHunt on all your devices</b><span>Turn on sync to keep favorites, lists and cart everywhere</span></span>${I.chev}</button>`:''}
+    ${installEvt&&!standalone()?`<button class="promo soft" data-act="install"><span class="ic">${I.phone}</span><span class="grow"><b>Install the app</b><span>Open CardHunt from your home screen or taskbar</span></span>${I.chev}</button>`:''}`;
 }
 function dayLabel(t){ if(!t) return 'Earlier'; const d=new Date(t), n=new Date(); const k=x=>x.toDateString();
   if(k(d)===k(n)) return 'Today'; const y=new Date(n); y.setDate(n.getDate()-1); if(k(d)===k(y)) return 'Yesterday';
@@ -1355,7 +1355,7 @@ function viewList(){
     return `<div class="li"><img alt="" loading="lazy" src="${esc(scry(it.name))}"><button class="grow" style="text-align:left" data-act="q" data-q="${esc(it.name)}"><div class="n">${esc(it.name)}</div>${line}</button>
       <div class="stepper"><button data-act="liq" data-i="${i}" data-d="-1" title="${it.qty>1?'Fewer':'Remove'}">${it.qty>1?I.minus:I.trash}</button><span>${it.qty}</span><button data-act="liq" data-i="${i}" data-d="1" title="More">${I.plus}</button></div></div>`;
   }).join('');
-  const top = temp ? `<div class="h"><h2>Search a list of cards</h2></div><div class="sub">Paste a decklist or type cards. Card Hunt checks all ${STORES.length} stores for each one.</div>`
+  const top = temp ? `<div class="h"><h2>Search a list of cards</h2></div><div class="sub">Paste a decklist or type cards. CardHunt checks all ${STORES.length} stores for each one.</div>`
     : `<input class="titleedit" id="lname" value="${esc(l.name)}" aria-label="List name">`;
   return `${top}
     <div class="field${temp&&!l.items.length?' hidden':''}"><input id="addcard" placeholder="Add a card or product" autocomplete="off"><button class="btn" data-act="additem">Add</button><div class="suggest hidden" id="sug2"></div></div>
@@ -1478,7 +1478,7 @@ function openProduct(o, fromCart=productFromCart){
     </div>
     ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost block" style="margin-top:10px" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
     ${fromCart?`<button class="btn ghost block" style="margin-top:10px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
-    </div><div class="pdfoot"><span class="col">${(()=>{const st=SBY[o.store], L=st?locsOf(st):[], a=L[0]&&shortAddr(L[0].address); return a?`<svg class="pin" viewBox="0 0 10 13" width="8" height="11" aria-hidden="true"><path d="M5 0a5 5 0 0 0-5 5c0 3.6 5 8 5 8s5-4.4 5-8a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="currentColor"/></svg>${esc(a)}${L.length>1?` +${L.length-1}`:''}`:esc(((st&&st.host)||'').replace(/^www\./,'').toUpperCase())})()}<br>CHT • EN <svg class="brush" viewBox="0 0 20 10" width="18" height="9" aria-hidden="true"><path d="M1 8.6c2.6-.2 4.2-1.4 5.3-3.3l1.6 1.2C6.5 8.4 4.4 9.3 1 8.6z" fill="currentColor"/><path d="M7.5 5l1.2-1.4L19 1.2 9.6 6.3z" fill="currentColor"/></svg><span class="cred">${esc(o.storeName||'').split(' ').map(w=>`<em>${w.slice(0,1)}</em>${w.slice(1)}`).join(' ')}</span></span><i></i><span>© Card Hunt<br>${esc(new Date().getFullYear())} · ${STORES.length} stores</span></div>
+    </div><div class="pdfoot"><span class="col">${(()=>{const st=SBY[o.store], L=st?locsOf(st):[], a=L[0]&&shortAddr(L[0].address); return a?`<svg class="pin" viewBox="0 0 10 13" width="8" height="11" aria-hidden="true"><path d="M5 0a5 5 0 0 0-5 5c0 3.6 5 8 5 8s5-4.4 5-8a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="currentColor"/></svg>${esc(a)}${L.length>1?` +${L.length-1}`:''}`:esc(((st&&st.host)||'').replace(/^www\./,'').toUpperCase())})()}<br>CHT • EN <svg class="brush" viewBox="0 0 20 10" width="18" height="9" aria-hidden="true"><path d="M1 8.6c2.6-.2 4.2-1.4 5.3-3.3l1.6 1.2C6.5 8.4 4.4 9.3 1 8.6z" fill="currentColor"/><path d="M7.5 5l1.2-1.4L19 1.2 9.6 6.3z" fill="currentColor"/></svg><span class="cred">${esc(o.storeName||'').split(' ').map(w=>`<em>${w.slice(0,1)}</em>${w.slice(1)}`).join(' ')}</span></span><i></i><span>© CardHunt<br>${esc(new Date().getFullYear())} · ${STORES.length} stores</span></div>
   </div>`);
 }
 function chooseList(name){
@@ -1513,7 +1513,7 @@ function openCart(){
         <button class="later" data-act="later" data-k="${esc(c.url)}">Save for later</button></div></div></div>`).join('')}
       <div class="subt"><span>Subtotal from</span><span>${money(sub)}</span></div>
       <button class="co" data-act="checkout" data-s="${s.id}">${s.deck?`Send to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart`:`Add to ${esc(s.name)}${s.name.endsWith('s')?"'":"'s"} cart, one by one`}</button>
-      <div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} ${s.deck?'Opens the store\'s deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store\'s cart.':'Card Hunt opens each card on the store\'s site, one at a time. Add it to their cart, come back, and tap Next.'}</div>
+      <div class="info">${I.cart.replace('width="30" height="30"','width="22" height="22"')} ${s.deck?'Opens the store\'s deck list with these cards. Tap "Submit decklist", pick conditions, and they go into the store\'s cart.':'CardHunt opens each card on the store\'s site, one at a time. Add it to their cart, come back, and tap Next.'}</div>
       <div class="info">${I.ship} Each store ships and checks out separately.</div>
       <button class="later" style="margin-top:12px" data-act="bought" data-s="${s.id}">✓ I bought these, clear them</button></div></div></div>`}).join('')
       +`<div class="grandrow"><span>${picking?`Total from, ${shown.length} store${shown.length===1?'':'s'} (${shownN} item${shownN===1?'':'s'})`:'Total from, all stores'}</span><span>${money(grand)}</span></div>`
@@ -1532,7 +1532,7 @@ function openWalk(){
       <div class="walk done"><div class="big">🎉</div><h2>${its.filter(c=>c.added).length} of ${n} added</h2>${its.some(c=>!c.added)?`<div class="sub">You skipped ${its.filter(c=>!c.added).length}. Tap the cart button again to go back to them.</div>`:""}
       <div class="sub">Your ${esc(st.name)} cart should now have everything. Finish paying on their site.</div>
       ${home?`<a class="btn block" href="${esc(home)}/cart" target="_blank" rel="noopener" style="text-decoration:none">${I.ext} Go to ${esc(st.name)} checkout</a>`:''}
-      <button class="btn ghost block" style="margin-top:10px" data-act="bought" data-s="${st.id}">✓ I paid, clear these from Card Hunt</button>
+      <button class="btn ghost block" style="margin-top:10px" data-act="bought" data-s="${st.id}">✓ I paid, clear these from CardHunt</button>
       <button class="btn ghost block" style="margin-top:10px" data-act="cart">Back to my cart</button></div>`,'cartsheet');
   }
   const c=its[walk.i];
@@ -1703,7 +1703,7 @@ document.addEventListener('click', e=>{
       (async()=>{ try{ const j=await (await fetch(`${API}/geo?q=${encodeURIComponent(q)}`)).json();
         if(!j.ok){ toast(j.error||"Couldn't find that address"); el.disabled=false; el.textContent='Save'; return; }
         S.addrOv={...S.addrOv,[st.id]:{address:q,lat:j.lat,lon:j.lon}}; save('addrOv'); tick(); toast('Location saved'); openStore(st); if(nearMap) nearRefresh();
-      }catch(e){ toast("Couldn't reach Card Hunt's helper. Try again"); el.disabled=false; el.textContent='Save'; } })();
+      }catch(e){ toast("Couldn't reach CardHunt's helper. Try again"); el.disabled=false; el.textContent='Save'; } })();
       break; }
     case 'deckclear': $id('decklink').value=''; /* falls through */
     case 'savedeck': { const st=SBY[el.dataset.s]; const v=$id('decklink').value.trim(); let u=null;
@@ -1716,7 +1716,7 @@ document.addEventListener('click', e=>{
     case 'syncon': turnOnSync(); break;
     case 'synclink': linkCode($id('synccode').value); break;
     case 'synccopy': { const u=syncLink(SY.code); (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copied'),()=>prompt('Copy this link',u)); break; }
-    case 'syncshare': navigator.share({title:'Card Hunt sync',url:syncLink(SY.code)}).catch(()=>{}); break;
+    case 'syncshare': navigator.share({title:'CardHunt sync',url:syncLink(SY.code)}).catch(()=>{}); break;
     case 'syncnow': syncNow().then(()=>toast(syncState==='ok'?'Synced':"Couldn't sync")); break;
     case 'syncoff': if(confirm('Turn off sync on this device? Your saved cards stay here, and your other devices keep their copy.')){ SY=null; LS.set('sync',null); closeSheet(); render(); toast('Sync is off on this device'); } break;
     case 'install': if(installEvt){ installEvt.prompt(); installEvt.userChoice.finally(()=>{installEvt=null; render();}); } break;
