@@ -560,11 +560,11 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 
 /* foil cards shine instead of saying "Foil": a soft rainbow sheen and a glare that drifts across the card */
 .foilfx{position:absolute;inset:0;pointer-events:none;border-radius:inherit;z-index:1;
-  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 42%,transparent 54%),
-    repeating-linear-gradient(125deg,#ff7a9a 0,#ffd97a 24px,#8dffb0 48px,#7ad6ff 72px,#c29cff 96px,#ff7a9a 120px);
-  background-size:300% 300%,auto;mix-blend-mode:color-dodge;opacity:.16;animation:foilmove 7s ease-in-out infinite alternate}
-:root[data-theme="light"] .foilfx{opacity:.15}
-@keyframes foilmove{from{background-position:100% 0,0 0}to{background-position:0 100%,240px 0}}
+  background:radial-gradient(ellipse 70% 55% at 30% 25%,rgba(255,255,255,.14),transparent 70%),
+    linear-gradient(125deg,#ff8fab,#ffd98f 14%,#9dffbf 28%,#8fdcff 42%,#c9a8ff 57%,#ff8fab 71%,#ffd98f 85%,#9dffbf);
+  background-size:200% 200%,170% 170%;mix-blend-mode:color-dodge;opacity:.13;animation:foilmove 9s ease-in-out infinite alternate}
+:root[data-theme="light"] .foilfx{opacity:.12}
+@keyframes foilmove{from{background-position:0 0,0 50%}to{background-position:100% 100%,100% 50%}}
 @media (prefers-reduced-motion: reduce){.foilfx{animation:none;background-position:50% 50%,50% 50%}}
 .p .img.foil .tag,.p .img.foil .heart{z-index:2}
 .pd .pdc > .foilwrap{position:relative;flex:0 1 auto;min-height:110px;height:min(42vh,460px);aspect-ratio:488/680;max-width:100%;margin:6px auto 0;border-radius:18px;overflow:hidden;display:block}
