@@ -557,6 +557,19 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 :root{--price-g1:#bccdaa;--price-g2:#d9dfba}
 :root[data-theme="light"]{--price-g1:#3d5a40;--price-g2:#5f7148}
 .p .price,.pd .pr{background:linear-gradient(100deg,var(--price-g1),var(--price-g2));-webkit-background-clip:text;background-clip:text;color:transparent;width:fit-content;max-width:100%}
+
+/* foil cards shine instead of saying "Foil": a soft rainbow sheen and a glare that drifts across the card */
+.foilfx{position:absolute;inset:0;pointer-events:none;border-radius:inherit;z-index:1;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 42%,transparent 54%),
+    repeating-linear-gradient(125deg,#ff7a9a 0,#ffd97a 24px,#8dffb0 48px,#7ad6ff 72px,#c29cff 96px,#ff7a9a 120px);
+  background-size:300% 300%,auto;mix-blend-mode:color-dodge;opacity:.16;animation:foilmove 7s ease-in-out infinite alternate}
+:root[data-theme="light"] .foilfx{opacity:.15}
+@keyframes foilmove{from{background-position:100% 0,0 0}to{background-position:0 100%,240px 0}}
+@media (prefers-reduced-motion: reduce){.foilfx{animation:none;background-position:50% 50%,50% 50%}}
+.p .img.foil .tag,.p .img.foil .heart{z-index:2}
+.pd .pdc > .foilwrap{position:relative;flex:0 1 auto;min-height:110px;height:min(42vh,460px);aspect-ratio:488/680;max-width:100%;margin:6px auto 0;border-radius:18px;overflow:hidden;display:block}
+.pd .pdc > .foilwrap > .big{height:100%!important;width:100%;min-height:0;margin:0;border-radius:0}
+@media (max-height:760px){.pd .pdc > .foilwrap{height:min(42vh,460px)}}
 </style>
 </head>
 <body>
@@ -949,7 +962,7 @@ function imgTag(o, cls=''){
 function tile(o, opts={}){
   const fav=isFav(o);
   return `<div class="p${o.available?'':' out'}">
-    <button class="img" data-act="open" data-k="${esc(o.url)}">${imgTag(o)}
+    <button class="img${isFoil(o.title)?' foil':''}" data-act="open" data-k="${esc(o.url)}">${imgTag(o)}${isFoil(o.title)?'<i class="foilfx" aria-hidden="true"></i>':''}
       ${opts.cheapest?'<span class="tag">Cheapest</span>':''}${!o.available?'<span class="tag sold">Sold out</span>':''}
       <span class="heart${fav?' on':''}" data-act="fav" data-k="${esc(o.url)}">${fav?I.heartFill:I.heart}</span>
     </button>
@@ -1540,10 +1553,10 @@ function openProduct(o, fromCart=productFromCart){
   const c=inCart(o);
   sheet(`<div class="pd"><div class="pdc"><div class="grab"></div>
     <div class="pdname">${SBY[o.store]?`<button class="ttl" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}" title="Open the store">${esc(o.storeName)}</button>`:`<span class="ttl">${esc(o.storeName)}</span>`}<button class="mana" data-act="close" aria-label="Close" title="Close">${I.skull}</button></div>
-    ${imgTag(o,'big')}
+    ${isFoil(o.title)?`<span class="foilwrap">${imgTag(o,'big')}<i class="foilfx" aria-hidden="true"></i></span>`:imgTag(o,'big')}
     <h3>${esc(o.title)}</h3>
     <div class="pr">${esc(priceText(o))}</div>
-    <div class="st${o.available?'':' sold'}"><span class="stamp ${o.available?'in':'out'}"><b>${o.available?'In stock':'Sold out'}</b></span>${isFoil(o.title)?'<span class="foil">Foil</span>':''}</div>
+    <div class="st${o.available?'':' sold'}"><span class="stamp ${o.available?'in':'out'}"><b>${o.available?'In stock':'Sold out'}</b></span></div>
     <div class="hint">${o.priceMax>o.price+0.001?'Price depends on condition. You choose the condition on the store\'s page.':'Check the condition on the store\'s page.'}</div>
     <div class="buy">
       ${c?`<div class="incart"><div><b>In your cart</b><span>${esc(money(c.price*c.qty))} from</span></div><div class="bigstep">
