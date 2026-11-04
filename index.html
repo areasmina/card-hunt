@@ -34,11 +34,11 @@
 html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
 /* Vintage texture: the old card frame, greyed and almost hidden under the theme colour, on the page only.
    To turn it off, delete this block (or set --tex:none). */
-:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.78)}
-:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.79)}
+:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.88); --veil-sheet:rgba(46,52,64,.78)}
+:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.89); --veil-sheet:rgba(229,233,240,.79)}
 body{min-height:100vh;min-height:100dvh}
 body,.top,.stools{background-color:var(--bg);background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px;background-attachment:fixed}
-.sheet .body:not(.cartsheet .body){background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px}
+.sheet .body:not(.cartsheet .body){background-image:linear-gradient(var(--veil-sheet),var(--veil-sheet)),var(--tex);background-size:auto,340px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
 body{background-color:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -488,30 +488,23 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 .row.open .chev2{transform:rotate(90deg)}
 .deckbox{padding:0 0 10px}
 
-/* ---- card frame (modern card layout): near-black card edge, rounded title and type bars, text-box panels ---- */
-:root{--fr-edge:#242933;--fr-bar:linear-gradient(#4c566a,#434c5e);--fr-bar-line:#2e3440;--fr-bar-hi:rgba(236,239,244,.22);--fr-bar-text:#eceff4;--fr-box:#3b4252;--fr-box-line:#4c566a}
-:root[data-theme="light"]{--fr-edge:#3b4252;--fr-bar:linear-gradient(#eceff4,#d8dee9);--fr-bar-line:#4c566a;--fr-bar-hi:rgba(255,255,255,.8);--fr-bar-text:#2e3440;--fr-box:#eceff4;--fr-box-line:#4c566a}
-body::after{content:'';position:fixed;inset:0;border:6px solid var(--fr-edge);border-radius:24px;pointer-events:none;z-index:60;box-shadow:0 0 0 40px var(--fr-edge)}
-.hello{background:var(--fr-bar);color:var(--fr-bar-text);border:2px solid var(--fr-bar-line);border-radius:14px;padding:8px 10px;margin-top:10px;box-shadow:inset 0 1px 0 var(--fr-bar-hi),0 2px 0 rgba(0,0,0,.25)}
-.hello h1{font-size:26px}
-.hello p{color:inherit;opacity:.8}
-.pill{background:var(--fr-bar);color:var(--fr-bar-text);border:2px solid var(--fr-bar-line);border-radius:12px;box-shadow:inset 0 1px 0 var(--fr-bar-hi)}
-.pill input{color:var(--fr-bar-text)}
-.promo.soft,.lcard,.sicard{background:var(--fr-box);border:2px solid var(--fr-box-line);border-radius:12px}
-.promo:not(.soft){border:2px solid var(--fr-bar-line);border-radius:12px}
-/* the opened card: title bar, art box, type bar, text box */
-.pd .mf{margin:24px 0 0;background:var(--fr-edge);border-radius:20px;padding:8px}
-.pd .mbar{background:var(--fr-bar);color:var(--fr-bar-text);border:2px solid var(--fr-bar-line);border-radius:12px;padding:8px 12px;box-shadow:inset 0 1px 0 var(--fr-bar-hi);display:flex;align-items:center;gap:10px;position:relative;z-index:1}
-.pd .mtitle{padding-right:50px}
-.pd .mtitle h3{margin:0;font-size:19px;line-height:1.2;flex:1;min-width:0}
-.pd .mart{margin:-6px 6px;padding:12px 8px;background:var(--surface-2);border:2px solid var(--fr-bar-line);display:flex;justify-content:center}
+/* ---- the opened card looks like a real card: a black edge with curved corners, and inside it the
+   title bar (name), the art, the type bar (price) and the text box (details), all kept inside the frame ---- */
+:root{--fr-edge:#0e1014;--fr-in:#434c5e;--fr-bar:linear-gradient(#4c566a,#434c5e);--fr-bar-text:#eceff4;--fr-line:#2e3440;--fr-box:#3b4252}
+:root[data-theme="light"]{--fr-in:#d8dee9;--fr-bar:linear-gradient(#eceff4,#e5e9f0);--fr-bar-text:#2e3440;--fr-line:#4c566a;--fr-box:#eceff4}
+.pd .mf{margin:22px 0 0;background:var(--fr-edge);border-radius:26px;padding:12px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.pd .mfin{background:var(--fr-in);border-radius:14px;padding:6px;display:flex;flex-direction:column;gap:6px}
+.pd .mbar{background:var(--fr-bar);color:var(--fr-bar-text);border:1.5px solid var(--fr-line);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:10px}
+.pd .mtitle{padding-right:44px}
+.pd .mtitle h3{margin:0;font-size:18px;line-height:1.2;flex:1;min-width:0}
+.pd .mart{display:flex;justify-content:center;padding:4px 0}
 .pd .mart .big:not(.btn){margin:0;border-radius:4.5%/3.3%;height:min(40vh,460px)}
 .pd .mtype{justify-content:space-between}
-.pd .mtype .pr{font-size:20px}
+.pd .mtype .pr{font-size:19px}
 .pd .mtype .st{margin:0}
-.pd .mbox{margin:-6px 6px 2px;padding:14px 12px 12px;background:var(--fr-box);border:2px solid var(--fr-bar-line);border-radius:0 0 12px 12px}
-.pd .mbox .store{margin-top:4px}
-.pd > .close{top:53px;right:30px;width:32px;height:32px;z-index:2;background:transparent;color:var(--fr-bar-text)}
+.pd .mbox{padding:12px;background:var(--fr-box);border:1.5px solid var(--fr-line);border-radius:4px 4px 10px 10px}
+.pd .mbox .store{margin-top:0}
+.pd > .close{top:60px;right:36px;width:30px;height:30px;z-index:2;background:transparent;color:var(--fr-bar-text)}
 </style>
 </head>
 <body>
@@ -1394,7 +1387,7 @@ function openProduct(o, fromCart=productFromCart){
   productFromCart=fromCart; viewed(o);
   const c=inCart(o);
   sheet(`<div class="pd"><div class="grab"></div><button class="close" data-act="close">${I.x}</button>
-    <div class="mf">
+    <div class="mf"><div class="mfin">
     <div class="mbar mtitle"><h3>${esc(o.title)}</h3></div>
     <div class="mart">${imgTag(o,'big')}</div>
     <div class="mbar mtype"><span class="pr">${esc(priceText(o))}</span><span class="st${o.available?'':' sold'}">${o.available?'In stock':'Sold out'}${isFoil(o.title)?' · Foil':''}</span></div>
@@ -1414,7 +1407,7 @@ function openProduct(o, fromCart=productFromCart){
     </div>
     ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost block" style="margin-top:10px" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
     ${fromCart?`<button class="btn ghost block" style="margin-top:10px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
-    </div></div>
+    </div></div></div>
   </div>`);
 }
 function chooseList(name){
