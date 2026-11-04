@@ -1296,11 +1296,12 @@ function viewSaved(){
   const lists=`<div class="h"><h2>Collections and decks</h2><span class="hint">${S.lists.length}</span></div>
     <div class="rail lrail">${S.lists.map(l=>`<button class="lcard" data-act="list" data-id="${l.id}">${listStack(l)}<div class="n">${esc(l.name)}</div><div class="c">${countCards(l)} card${countCards(l)===1?'':'s'}</div></button>`).join('')}
       <button class="lcard newcard" data-act="newlist">${I.plus} New list</button></div>`;
-  return `<div class="h"><h2 style="font-size:28px">Favorites</h2></div>${lists}
-    <div class="h"><h2>Saved cards</h2>${S.favs.length?`<span class="hint">${S.favs.length}</span>`:''}</div>
-    ${S.favs.length?`<div class="pill" style="height:46px">${I.search}<input id="favq" type="search" autocomplete="off" spellcheck="false" placeholder="Filter your favorites" value="${esc(favF.q)}"></div>
-    ${chipsHTML('favs')}
-    <div id="favgrid">${favGrid()}</div>`:`<div class="empty">No saved cards yet. Tap the heart, or double-tap any card, to save it here.</div>`}`;
+  return `<div class="h"><h2 style="font-size:28px">Saved cards</h2>${S.favs.length?`<span class="hint">${S.favs.length}</span>`:''}</div>
+    ${S.favs.length?`<div class="pill" style="height:46px">${I.search}<input id="favq" type="search" autocomplete="off" spellcheck="false" placeholder="Filter your saved cards" value="${esc(favF.q)}"></div>
+    ${chipsHTML('favs')}`:''}
+    ${lists}
+    <div class="h"><h2>Single cards</h2></div>
+    ${S.favs.length?`<div id="favgrid">${favGrid()}</div>`:`<div class="empty">No saved cards yet. Tap the heart, or double-tap any card, to save it here.</div>`}`;
 }
 function listsGrid(){
   return `<div class="lcards" style="margin-top:14px">${S.lists.map(l=>`<button class="lcard" data-act="list" data-id="${l.id}">${listStack(l)}<div class="n">${esc(l.name)}</div><div class="c">${countCards(l)} card${countCards(l)===1?'':'s'}</div></button>`).join('')}
