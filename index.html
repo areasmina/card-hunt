@@ -35,7 +35,7 @@ html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
 /* Vintage texture: the old card frame, greyed and almost hidden under the theme colour, on the page only.
    To turn it off, delete this block (or set --tex:none). */
 :root{--tex:url(textures/frame-tutor.jpg); --veil:rgba(38,42,43,.9); --veil-sheet:rgba(38,42,43,.82)}   /* dark: the beaded frame of an Alpha black card (Demonic Tutor), kept subtle */
-:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.94); --veil-sheet:rgba(229,233,240,.84)}
+:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.87); --veil-sheet:rgba(229,233,240,.8)}   /* light: the white-card frame stitched from Academy Rector, Swords to Plowshares and Divine Retribution; veil tuned so it shows as much as the dark one */
 body{min-height:100vh;min-height:100dvh}
 body,.top,.stools{background-color:var(--bg);background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px;background-attachment:fixed}
 .sheet .body:not(.cartsheet .body){background-image:linear-gradient(var(--veil-sheet),var(--veil-sheet)),var(--tex);background-size:auto,340px}
@@ -489,6 +489,19 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 .chev2{color:var(--muted);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
 .row.open .chev2{transform:rotate(90deg)}
 .deckbox{padding:0 0 10px}
+
+/* ---- the card pop-up wears a card frame: black card edge, the frame texture as the border, the details in an inset box,
+   and a small collector line at the bottom ---- */
+.sheet .body:has(> .pd){background:#0d0e0f!important;background-image:none!important}
+.pd .pdf{margin-top:30px;border-radius:18px;padding:9px 9px 6px;background-color:var(--bg);background-image:linear-gradient(var(--fr-veil),var(--fr-veil)),var(--tex);background-size:auto,300px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.pd .pdin{background:var(--bg);border-radius:10px;padding:12px 14px 14px;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06)}
+.pd .pdin .big:not(.btn){margin-top:4px}
+.pd .pdfoot{display:flex;justify-content:space-between;gap:10px;padding:6px 6px 0;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--fr-ink);white-space:nowrap;overflow:hidden}
+.pd .pdfoot span:first-child{overflow:hidden;text-overflow:ellipsis}
+.sheet .body:has(> .pd) > .pd > .close{top:14px;right:14px;background:#24272a;color:#efe2cb}
+.sheet .body:has(> .pd) .grab{background:#3a3d40}
+:root{--fr-veil:rgba(38,42,43,.25);--fr-ink:#c9b495}
+:root[data-theme="light"]{--fr-veil:rgba(229,233,240,.15);--fr-ink:#2e3440}
 </style>
 </head>
 <body>
@@ -1411,6 +1424,7 @@ function openProduct(o, fromCart=productFromCart){
   productFromCart=fromCart; viewed(o);
   const c=inCart(o);
   sheet(`<div class="pd"><div class="grab"></div><button class="close" data-act="close">${I.x}</button>
+    <div class="pdf"><div class="pdin">
     ${imgTag(o,'big')}
     ${SBY[o.store]?`<button class="store" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}">${esc(o.storeName)} ${I.chev}</button>`:`<div class="store">${esc(o.storeName)}</div>`}<h3>${esc(o.title)}</h3>
     <div class="pr">${esc(priceText(o))}</div>
@@ -1429,6 +1443,7 @@ function openProduct(o, fromCart=productFromCart){
     </div>
     ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost block" style="margin-top:10px" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
     ${fromCart?`<button class="btn ghost block" style="margin-top:10px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
+    </div><div class="pdfoot"><span>${esc((o.storeName||'').toUpperCase())} • ${o.available?'IN STOCK':'SOLD OUT'}</span><span>CARD HUNT</span></div></div>
   </div>`);
 }
 function chooseList(name){
