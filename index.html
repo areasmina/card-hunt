@@ -980,6 +980,8 @@ function imgTag(o, cls=''){
   if(!src) return `<span class="noimg ${cls}">${CARD_SVG}</span>`;
   return `<img class="${cls}" loading="lazy" alt="" src="${esc(src)}" data-scry="${esc(sc)}" onerror="imgFail(this)">`;
 }
+// A store's name as you have it now (a saved card keeps the name from when you saved it, which may be just the web address).
+const sname=o=>(SBY[o.store]&&SBY[o.store].name)||o.storeName||'';
 function tile(o, opts={}){
   const fav=isFav(o);
   return `<div class="p${o.available?'':' out'}">
@@ -987,7 +989,7 @@ function tile(o, opts={}){
       ${opts.cheapest?'<span class="tag">Cheapest</span>':''}${!o.available?'<span class="tag sold">Sold out</span>':''}
       <span class="heart${fav?' on':''}" data-act="fav" data-k="${esc(o.url)}">${fav?I.heartFill:I.heart}</span>
     </button>
-    ${opts.rail?`<div class="rmeta">${esc(o.storeName||'')}</div>`:`<div class="meta"><div class="store">${esc(o.storeName)}</div><div class="title">${esc(o.title)}</div><div class="price">${esc(priceText(o))}</div></div>`}
+    ${opts.rail?`<div class="rmeta">${esc(sname(o))}</div>`:`<div class="meta"><div class="store">${esc(sname(o))}</div><div class="title">${esc(o.title)}</div><div class="price">${esc(priceText(o))}</div></div>`}
   </div>`;
 }
 function skeletons(n=4){return Array.from({length:n},()=>'<div class="p"><div class="skel"></div><div class="skel t"></div><div class="skel t" style="width:45%"></div></div>').join('')}
@@ -1616,7 +1618,7 @@ function openProduct(o, fromCart=productFromCart){
   productFromCart=fromCart; viewed(o);
   const c=inCart(o);
   sheet(`<div class="pd"><div class="pdc"><div class="grab"></div>
-    <div class="pdname">${SBY[o.store]?`<button class="ttl" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}" title="Open the store">${esc(o.storeName)}</button>`:`<span class="ttl">${esc(o.storeName)}</span>`}<button class="mana" data-act="close" aria-label="Close" title="Close">${I.skull}</button></div>
+    <div class="pdname">${SBY[o.store]?`<button class="ttl" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}" title="Open the store">${esc(sname(o))}</button>`:`<span class="ttl">${esc(sname(o))}</span>`}<button class="mana" data-act="close" aria-label="Close" title="Close">${I.skull}</button></div>
     ${isFoil(o.title)?`<span class="foilwrap">${imgTag(o,'big')}${foilFx(o,'center')}</span>`:imgTag(o,'big')}
     <h3>${esc(o.title)}</h3>
     <div class="pr">${esc(priceText(o))}</div>
@@ -1911,6 +1913,10 @@ if(SY) syncNow();
 (async()=>{ let changed=false;
   for(const m of S.myStores.filter(x=>!x.v)){ try{ const j=await (await fetch(`${API}/store?url=${encodeURIComponent(m.host)}`)).json();
       if(j.ok){ if(j.name&&(!m.name||m.name.includes('.'))) m.name=j.name; if(j.logo) m.logo=j.logo; if(j.deck&&!m.deck) m.deck=j.deck; m.v=2; changed=true; } }catch(e){} }
+  // Still only a web address: ask for the name the store's own site shows (tried again once a day).
+  for(const m of S.myStores.filter(x=>(!x.name||/\.[a-z]{2,}$/i.test(x.name))&&!(x.nt>Date.now()-864e5))){ m.nt=Date.now(); changed=true;
+    try{ const j=await (await fetch(`${API}/profile?host=${encodeURIComponent(m.host)}`)).json(); const n=String(j.name||'').split(/\s[|–—-]\s/)[0].trim();
+      if(j.ok&&n&&n.length<60&&!/\.[a-z]{2,}$/i.test(n)) m.name=n; }catch(e){} }
   if(changed){ save('myStores'); rebuildStores(); render(); } })();
 document.addEventListener('visibilitychange',()=>{ if(!SY) return; if(document.visibilityState==='visible') syncNow();
   else if(SY.dirty){ clearTimeout(syncT); SY.dirty=false; saveSY(); cloudPut(SY.code,snapshot(),true).then(at=>{SY.at=at;saveSY()},()=>{SY.dirty=true;saveSY()}); } });
