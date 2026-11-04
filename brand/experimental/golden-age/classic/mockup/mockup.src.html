@@ -1,0 +1,99 @@
+<meta charset="utf-8">
+<title>Card Hunt Vintage UI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Metamorphous&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root {
+  --page: #141210; --ink: #ece4d4; --dim: #a89c88; --gold: #c8973f;
+  --title: "Metamorphous", Georgia, serif; --body: "Crimson Text", Georgia, serif;
+  color-scheme: dark;
+}
+body { margin: 0; background: var(--page); color: var(--ink); font: 17px/1.45 var(--body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 36px max(16px, env(safe-area-inset-right, 0px)) 80px max(16px, env(safe-area-inset-left, 0px)); }
+h1 { font: 400 clamp(28px, 4vw, 40px)/1.1 var(--title); margin: 0 0 6px; }
+.lede { color: var(--dim); max-width: 64ch; margin: 0 0 28px; font-size: 18px; }
+.phones { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; }
+figure { margin: 0; display: grid; gap: 10px; justify-items: center; }
+figcaption { font: 15px var(--title); color: var(--dim); letter-spacing: .04em; }
+
+/* ---------- the phone screen ---------- */
+.ph { width: 360px; max-width: calc(100vw - 32px); height: 760px; border-radius: 40px; overflow: hidden; position: relative;
+  box-shadow: 0 0 0 10px #050505, 0 24px 60px #000a; background: #090807; }
+.scr { position: absolute; inset: 0; overflow: hidden; padding: 22px 16px 0; background-size: 300px; }
+.dark .scr { background-image: linear-gradient(#0008, #0008), url(__FRAME_BLACK__); color: #f0ebe2; }
+.light .scr { background-image: linear-gradient(#fff3, #fff3), url(__FRAME_WHITE__); color: #16120e; }
+
+.hd { display: flex; align-items: flex-start; gap: 10px; }
+.hd .grow { flex: 1; }
+.brand { font: 400 30px/1 var(--title); }
+.dark .brand { text-shadow: 1.5px 1.5px 0 #000; }
+.tag { font: italic 15px/1.3 var(--body); opacity: .8; margin-top: 4px; }
+.pip { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; box-shadow: 2px 3px 0 #000; flex: none; }
+.dark .pip { background: #c8c8c4; color: #111; }
+.light .pip { background: #f6f0d8; color: #111; }
+.pip svg { width: 22px; height: 22px; }
+
+/* inset well = the printed art box bevel */
+.well { position: relative; border-radius: 3px; }
+.dark .well { box-shadow: inset 3px 3px 0 #0009, inset -2px -2px 0 #ffffff22; }
+.light .well { box-shadow: inset 3px 3px 0 #0003, inset -3px -3px 0 #fff9; }
+.search { margin-top: 18px; display: flex; align-items: center; gap: 10px; padding: 12px 14px; font: italic 17px var(--body); background-size: 260px; }
+.dark .search { background-image: linear-gradient(#0006, #0006), url(__BOX_BLACK__); color: #2a1a0c; }
+.light .search { background-image: url(__BOX_WHITE__); color: #3a3430; }
+.dark .search { background-image: url(__BOX_BLACK__); }
+.search svg { width: 20px; height: 20px; flex: none; }
+
+.chips { display: flex; gap: 8px; margin-top: 14px; overflow: hidden; }
+.chip { flex: none; padding: 5px 12px; font: 15px var(--title); border-radius: 3px; white-space: nowrap; }
+.dark .chip { background: #0c0b0a; color: #e8e0d0; box-shadow: inset 1px 1px 0 #ffffff1c, 2px 2px 0 #000; }
+.light .chip { background: #ece6dc; color: #1a1612; box-shadow: inset 1px 1px 0 #fff, 2px 2px 0 #0003; }
+
+/* text-box panel: parchment on black, grey stone on white */
+.panel { margin-top: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: center; background-size: 280px; color: #1a120a; }
+.dark .panel { background-image: url(__BOX_BLACK__); clip-path: polygon(0 3%, 6% 0, 21% 2%, 40% 0, 58% 3%, 77% 0, 94% 2%, 100% 0, 99% 30%, 100% 62%, 98% 100%, 80% 97%, 60% 100%, 38% 97%, 18% 100%, 2% 98%, 0 70%, 1% 36%); }
+.light .panel { background-image: url(__BOX_WHITE__); }
+.panel .t { font: 400 19px/1.15 var(--title); }
+.panel .s { font: 15px/1.3 var(--body); margin-top: 3px; }
+.panel .grow { flex: 1; }
+.chev { font: 28px var(--title); opacity: .7; }
+.panel svg { width: 30px; height: 30px; display: block; }
+
+.sec { display: flex; align-items: baseline; margin-top: 22px; }
+.sec h2 { font: 400 22px var(--title); margin: 0; flex: 1; }
+.dark .sec h2 { text-shadow: 1px 1px 0 #000; }
+.sec span { font: italic 14px var(--body); opacity: .8; }
+.stores { display: flex; gap: 14px; margin-top: 12px; }
+.store { display: grid; justify-items: center; gap: 6px; width: 62px; font: 13px/1.15 var(--body); text-align: center; }
+.store i { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; font: normal 22px var(--title); color: #111; box-shadow: 2px 3px 0 #000; }
+
+/* bottom bar */
+.nav { position: absolute; left: 16px; right: 16px; bottom: 22px; display: flex; align-items: center; gap: 12px; }
+.bar { flex: 1; display: flex; justify-content: space-around; padding: 10px 6px; border-radius: 4px; }
+.dark .bar { background: #0a0908ee; box-shadow: inset 1px 1px 0 #ffffff1a, 2px 3px 0 #000; }
+.light .bar { background: #efe9e0ee; box-shadow: inset 1px 1px 0 #fff, 2px 3px 0 #0004; }
+.bar svg { width: 24px; height: 24px; }
+.bar .on { color: var(--gold); }
+.cart { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; position: relative; box-shadow: 2px 4px 0 #000; background: radial-gradient(circle at 35% 30%, #f0d08a, #b8862e 60%, #6e4c14); color: #1a1208; }
+.cart svg { width: 26px; height: 26px; }
+.cart b { position: absolute; top: -2px; right: -2px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--body); background: #f4ecdc; color: #111; box-shadow: 1px 2px 0 #000; }
+
+/* results */
+.q { margin-top: 2px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; margin-top: 14px; }
+.res img { width: 100%; display: block; border-radius: 6px; box-shadow: 2px 3px 0 #000a; }
+.res .st { font: 13px var(--body); opacity: .8; margin-top: 6px; }
+.res .pr { font: 18px var(--title); }
+.res .cond { font: italic 13px var(--body); opacity: .75; }
+.dark .res .pr { color: #f0d08a; text-shadow: 1px 1px 0 #000; }
+.light .res .pr { color: #6e1f17; }
+.filt { display: flex; gap: 8px; margin-top: 12px; }
+</style>
+
+<div class="wrap">
+  <h1>Card Hunt, vintage style</h1>
+  <p class="lede">This is your current app layout with the card style applied. Dark mode uses the black beaded frame with parchment panels. Light mode uses the white stone frame with grey panels. Fonts, cost circles and the bevels come from the cards, and gold replaces the purple. The cards in the results are stand-ins; the real app shows real card images.</p>
+  <div class="phones">
+__PHONES__
+  </div>
+</div>
