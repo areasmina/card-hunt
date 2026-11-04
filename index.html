@@ -519,10 +519,14 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 
 /* stock status as a set-symbol plate: gold (like a rare) when in stock, silver (like an uncommon) when sold out */
 .pd .st{margin-top:6px}
-.stamp{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:6px;border:1.5px solid #111;font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(0,0,0,.35),0 1px 0 rgba(0,0,0,.4)}
-.stamp.in{background:linear-gradient(#f1d98f,#c9a04a 55%,#8c6a2a);color:#1d1508;text-shadow:0 1px 0 rgba(255,240,200,.45)}
-.stamp.out{background:linear-gradient(#f0f2f5,#aab2ba 55%,#6e767e);color:#15181b;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.stamp{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:6px;border:2px solid transparent;
+  font:700 12.5px/1 Georgia,"Times New Roman",serif;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;box-shadow:0 0 0 1px #050505,0 2px 3px rgba(0,0,0,.45)}
+/* in stock: a polished gold plate with dark engraved letters (like the M19 symbol) */
+.stamp.in{background:linear-gradient(#f6e2a0,#d8b25a 45%,#a77b2c 55%,#e4c777) padding-box,linear-gradient(#fff4cf,#8a6420 50%,#f2d88e) border-box;
+  color:#24190a;text-shadow:0 1px 0 rgba(255,244,205,.6),0 -1px 0 rgba(60,40,0,.35)}
+/* sold out: a gunmetal plate in a silver rim with embossed silver letters (like the M11 symbol) */
+.stamp.out{background:linear-gradient(#6b737b,#3a4046 48%,#24282c 52%,#454c53) padding-box,linear-gradient(#ffffff,#8d959d 50%,#e3e7eb) border-box;
+  color:#e6eaee;text-shadow:0 -1px 0 #000,0 1px 0 rgba(255,255,255,.18)}
 </style>
 </head>
 <body>
@@ -956,6 +960,16 @@ const countCards = l => l.items.reduce((a,i)=>a+i.qty,0);
 // Each store gets its own page: its logo on a header in its own colours, a search of just that store, and what you have saved there.
 // The description, socials and policies come from the store's own home page through the helper, kept for 3 days.
 let PROF=LS.get('prof4',{});
+// A short card-style address: "1124 Wellington Road South, Unit 5, London, ON N6E 1M3, Canada" -> "1124 WELLINGTON RD S · LONDON"
+const ADDR_AB={street:'ST',road:'RD',avenue:'AVE',boulevard:'BLVD',drive:'DR',lane:'LN',court:'CT',crescent:'CRES',place:'PL',highway:'HWY',parkway:'PKWY',square:'SQ',terrace:'TER',circle:'CIR',way:'WAY',north:'N',south:'S',east:'E',west:'W',suite:'#',unit:'#'};
+function shortAddr(a){
+  const parts=String(a||'').split(',').map(x=>x.trim()).filter(Boolean)
+    .filter(x=>!/^(canada|ca)$/i.test(x)&&!/^[A-Z]{2}\b\s*([A-Z]\d[A-Z]\s?\d[A-Z]\d)?$/i.test(x)&&!/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i.test(x)&&!/^(unit|suite|#|apt)\b/i.test(x));
+  if(!parts.length) return '';
+  const ab=t=>t.split(/\s+/).map(w=>ADDR_AB[w.toLowerCase().replace(/\.$/,'')]||w).join(' ');
+  const street=ab(parts[0]).replace(/\s+(unit|suite)\s+\S+/i,''), city=(parts[1]||'').replace(/\s+[A-Z]{2}(\s+[A-Z]\d[A-Z]\s?\d[A-Z]\d)?$/i,'');
+  return (city?`${street} · ${city}`:street).toUpperCase();
+}
 // Where a store is: the address set by hand, else every location its own website lists.
 const locsOf = st => { const o=st&&(S.addrOv||{})[st.id]; if(o&&o.lat!=null) return [o]; const p=profOf(st); if(!p) return [];
   return p.locations&&p.locations.length?p.locations:(p.geo?[{address:p.address,...p.geo}]:[]); };
@@ -1464,7 +1478,7 @@ function openProduct(o, fromCart=productFromCart){
     </div>
     ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost block" style="margin-top:10px" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
     ${fromCart?`<button class="btn ghost block" style="margin-top:10px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
-    </div><div class="pdfoot"><span class="col">${(()=>{const st=SBY[o.store], L=st?locsOf(st):[], a=L[0]&&L[0].address; return a?`<svg class="pin" viewBox="0 0 10 13" width="8" height="11" aria-hidden="true"><path d="M5 0a5 5 0 0 0-5 5c0 3.6 5 8 5 8s5-4.4 5-8a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="currentColor"/></svg>${esc(a.toUpperCase())}${L.length>1?` +${L.length-1}`:''}`:esc(((st&&st.host)||'').replace(/^www\./,'').toUpperCase())})()}<br>CHT • EN <svg class="brush" viewBox="0 0 20 10" width="18" height="9" aria-hidden="true"><path d="M1 8.6c2.6-.2 4.2-1.4 5.3-3.3l1.6 1.2C6.5 8.4 4.4 9.3 1 8.6z" fill="currentColor"/><path d="M7.5 5l1.2-1.4L19 1.2 9.6 6.3z" fill="currentColor"/></svg><span class="cred">${esc(o.storeName||'').split(' ').map(w=>`<em>${w.slice(0,1)}</em>${w.slice(1)}`).join(' ')}</span></span><i></i><span>© Card Hunt<br>${esc(new Date().getFullYear())} · ${STORES.length} stores</span></div>
+    </div><div class="pdfoot"><span class="col">${(()=>{const st=SBY[o.store], L=st?locsOf(st):[], a=L[0]&&shortAddr(L[0].address); return a?`<svg class="pin" viewBox="0 0 10 13" width="8" height="11" aria-hidden="true"><path d="M5 0a5 5 0 0 0-5 5c0 3.6 5 8 5 8s5-4.4 5-8a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="currentColor"/></svg>${esc(a)}${L.length>1?` +${L.length-1}`:''}`:esc(((st&&st.host)||'').replace(/^www\./,'').toUpperCase())})()}<br>CHT • EN <svg class="brush" viewBox="0 0 20 10" width="18" height="9" aria-hidden="true"><path d="M1 8.6c2.6-.2 4.2-1.4 5.3-3.3l1.6 1.2C6.5 8.4 4.4 9.3 1 8.6z" fill="currentColor"/><path d="M7.5 5l1.2-1.4L19 1.2 9.6 6.3z" fill="currentColor"/></svg><span class="cred">${esc(o.storeName||'').split(' ').map(w=>`<em>${w.slice(0,1)}</em>${w.slice(1)}`).join(' ')}</span></span><i></i><span>© Card Hunt<br>${esc(new Date().getFullYear())} · ${STORES.length} stores</span></div>
   </div>`);
 }
 function chooseList(name){
