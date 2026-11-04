@@ -518,17 +518,25 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 :root[data-theme="light"]{--pf-band:rgba(255,250,238,.12)}
 
 /* stock status as a set-symbol plate: gold (like a rare) when in stock, silver (like an uncommon) when sold out */
-.pd .st{margin-top:6px}
+.pd .st{margin-top:6px;display:flex;align-items:center;gap:8px}.pd .st .foil{font-size:13px;font-weight:600;color:var(--muted)}
 .stamp{position:relative;display:inline-flex;align-items:center;justify-content:center;height:21px;padding:0 6px 0 5px;white-space:nowrap;vertical-align:middle}
 /* the letters: big black serif, mottled like the printed M, set tight to the plate's edges */
-.stamp b{font:700 15px/1 Georgia,"Times New Roman",serif;letter-spacing:-.01em;color:transparent;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .55 0 0 0 0 .55 0 0 0 .26 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),linear-gradient(#1a1917,#030302);-webkit-background-clip:text;background-clip:text;transform:translateY(.5px)}
+.stamp b{font:700 15px/1 Georgia,"Times New Roman",serif;letter-spacing:-.01em;color:transparent;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.3' numOctaves='3' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .48 0 0 0 0 .45 0 0 0 1.5 -.68'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),linear-gradient(#1a1917,#030302);-webkit-background-clip:text;background-clip:text;transform:translateY(.5px)}
 /* in stock, like M19: one black keyline around a brushed-gold plate, brighter in the middle, a soft sheen on top */
 .stamp.in{border-radius:6px;border:1px solid #0d0c08;
   background:linear-gradient(rgba(255,250,220,.22),rgba(255,250,220,0) 48%,rgba(0,0,0,.08)),linear-gradient(90deg,#7a6a2c,#ad9645 18%,#cdb862 45%,#d6c26d 55%,#b39c48 82%,#7c6b2d)}
-/* sold out, like M11: dark keyline, polished silver rim, an inner black line, then a pale steel-blue face with a diagonal reflection */
-.stamp.out{border-radius:8px;border:2px solid transparent;
-  background:linear-gradient(112deg,#8eaab3 0%,#cfe1e5 22%,#e9f3f4 34%,#a9c3ca 52%,#d9e8eb 72%,#93afb7 100%) padding-box,linear-gradient(#fbfcfc,#c9ced2 45%,#9aa2a8 55%,#e8ebed) border-box;
-  box-shadow:0 0 0 1px #1d2428,inset 0 0 0 1px #12181b;padding:0 7px}
+/* sold out, like M11: one black keyline around a pale steel-blue face with a diagonal reflection */
+.stamp.out{border-radius:6px;border:1px solid #0d0c08;
+  background:linear-gradient(rgba(255,255,255,.25),rgba(255,255,255,0) 48%,rgba(0,0,0,.06)),linear-gradient(112deg,#8eaab3 0%,#cfe1e5 22%,#e9f3f4 34%,#a9c3ca 52%,#d9e8eb 72%,#93afb7 100%)}
+
+/* the card pop-up always fits the screen: the card image gives up height so everything else shows without scrolling */
+.sheet .body:has(> .pd){max-height:calc(100dvh - 24px);display:flex;flex-direction:column;overflow:hidden}
+.pd{display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+.pd .pdc{display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+.pd .pdc > *{flex-shrink:0}
+.pd .pdc > .big:not(.btn){flex:0 1 auto;min-height:110px;height:min(42vh,460px);object-fit:contain;background:none}
+.pd .pdfoot{flex-shrink:0}
+@media (max-height:760px){.pd .tile2{height:62px;gap:4px}.pd .btn.big{height:50px}.pd .pdc{padding-bottom:12px}.pd .hint{font-size:12.5px}}
 </style>
 </head>
 <body>
@@ -1470,7 +1478,7 @@ function openProduct(o, fromCart=productFromCart){
     ${imgTag(o,'big')}
     ${SBY[o.store]?`<button class="store" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}">${esc(o.storeName)} ${I.chev}</button>`:`<div class="store">${esc(o.storeName)}</div>`}<h3>${esc(o.title)}</h3>
     <div class="pr">${esc(priceText(o))}</div>
-    <div class="st${o.available?'':' sold'}"><span class="stamp ${o.available?'in':'out'}"><b>${o.available?'In stock':'Sold out'}${isFoil(o.title)?' · Foil':''}</b></span></div>
+    <div class="st${o.available?'':' sold'}"><span class="stamp ${o.available?'in':'out'}"><b>${o.available?'In stock':'Sold out'}</b></span>${isFoil(o.title)?'<span class="foil">Foil</span>':''}</div>
     <div class="hint">${o.priceMax>o.price+0.001?'Price depends on condition. You choose the condition on the store\'s page.':'Check the condition on the store\'s page.'}</div>
     <div class="buy">
       ${c?`<div class="incart"><div><b>In your cart</b><span>${esc(money(c.price*c.qty))} from</span></div><div class="bigstep">
@@ -1485,7 +1493,7 @@ function openProduct(o, fromCart=productFromCart){
     </div>
     ${route.name==='search'&&searchQ.toLowerCase()===(o.name||'').toLowerCase()?'':`<button class="btn ghost block" style="margin-top:10px" data-act="q" data-q="${esc(o.name||o.title)}">${I.search} Compare all stores</button>`}
     ${fromCart?`<button class="btn ghost block" style="margin-top:10px" data-act="cart">${I.cart.replace('width="30" height="30"','width="20" height="20"')} Back to cart</button>`:''}
-    </div><div class="pdfoot"><span class="col">${(()=>{const st=SBY[o.store], L=st?locsOf(st):[], a=L[0]&&shortAddr(L[0].address); return a?`<svg class="pin" viewBox="0 0 10 13" width="8" height="11" aria-hidden="true"><path d="M5 0a5 5 0 0 0-5 5c0 3.6 5 8 5 8s5-4.4 5-8a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="currentColor"/></svg>${esc(a)}${L.length>1?` +${L.length-1}`:''}`:esc(((st&&st.host)||'').replace(/^www\./,'').toUpperCase())})()}<br>CHT • EN <svg class="brush" viewBox="0 0 20 10" width="18" height="9" aria-hidden="true"><path d="M1 8.6c2.6-.2 4.2-1.4 5.3-3.3l1.6 1.2C6.5 8.4 4.4 9.3 1 8.6z" fill="currentColor"/><path d="M7.5 5l1.2-1.4L19 1.2 9.6 6.3z" fill="currentColor"/></svg><span class="cred">${esc(o.storeName||'').split(' ').map(w=>`<em>${w.slice(0,1)}</em>${w.slice(1)}`).join(' ')}</span></span><i></i><span>© CardHunt<br>${esc(new Date().getFullYear())} · ${STORES.length} stores</span></div>
+    </div><div class="pdfoot"><span class="col">${(()=>{const st=SBY[o.store], L=st?locsOf(st):[], a=L[0]&&String(L[0].address||'').replace(/,\s*canada$/i,'').toUpperCase(); return a?`<svg class="pin" viewBox="0 0 10 13" width="8" height="11" aria-hidden="true"><path d="M5 0a5 5 0 0 0-5 5c0 3.6 5 8 5 8s5-4.4 5-8a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="currentColor"/></svg>${esc(a)}${L.length>1?` +${L.length-1}`:''}`:esc(((st&&st.host)||'').replace(/^www\./,'').toUpperCase())})()}<br>CHT • EN <svg class="brush" viewBox="0 0 20 10" width="18" height="9" aria-hidden="true"><path d="M1 8.6c2.6-.2 4.2-1.4 5.3-3.3l1.6 1.2C6.5 8.4 4.4 9.3 1 8.6z" fill="currentColor"/><path d="M7.5 5l1.2-1.4L19 1.2 9.6 6.3z" fill="currentColor"/></svg><span class="cred">${esc(o.storeName||'').split(' ').map(w=>`<em>${w.slice(0,1)}</em>${w.slice(1)}`).join(' ')}</span></span><i></i><span>© CardHunt<br>${esc(new Date().getFullYear())} · ${STORES.length} stores</span></div>
   </div>`);
 }
 function chooseList(name){
