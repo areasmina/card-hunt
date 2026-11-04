@@ -515,6 +515,13 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 .pd .pdfoot .cred em{font-style:normal;font-size:12.5px}
 :root{--pf-band:rgba(0,0,0,.05)}
 :root[data-theme="light"]{--pf-band:rgba(255,250,238,.12)}
+
+/* stock status as a set-symbol plate: gold (like a rare) when in stock, silver (like an uncommon) when sold out */
+.pd .st{margin-top:6px}
+.stamp{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:6px;border:1.5px solid #111;font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(0,0,0,.35),0 1px 0 rgba(0,0,0,.4)}
+.stamp.in{background:linear-gradient(#f1d98f,#c9a04a 55%,#8c6a2a);color:#1d1508;text-shadow:0 1px 0 rgba(255,240,200,.45)}
+.stamp.out{background:linear-gradient(#f0f2f5,#aab2ba 55%,#6e767e);color:#15181b;text-shadow:0 1px 0 rgba(255,255,255,.5)}
 </style>
 </head>
 <body>
@@ -1441,7 +1448,7 @@ function openProduct(o, fromCart=productFromCart){
     ${imgTag(o,'big')}
     ${SBY[o.store]?`<button class="store" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}">${esc(o.storeName)} ${I.chev}</button>`:`<div class="store">${esc(o.storeName)}</div>`}<h3>${esc(o.title)}</h3>
     <div class="pr">${esc(priceText(o))}</div>
-    <div class="st${o.available?'':' sold'}">${o.available?'In stock':'Sold out'}${isFoil(o.title)?' · Foil':''}</div>
+    <div class="st${o.available?'':' sold'}"><span class="stamp ${o.available?'in':'out'}">${o.available?'In stock':'Sold out'}${isFoil(o.title)?' · Foil':''}</span></div>
     <div class="hint">${o.priceMax>o.price+0.001?'Price depends on condition. You choose the condition on the store\'s page.':'Check the condition on the store\'s page.'}</div>
     <div class="buy">
       ${c?`<div class="incart"><div><b>In your cart</b><span>${esc(money(c.price*c.qty))} from</span></div><div class="bigstep">
