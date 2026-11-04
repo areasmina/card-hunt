@@ -2,7 +2,7 @@
 
 blender -b -P flip.py -- A|B|C    (needs <D>/card-front.png and <D>/card-back.png from compose.py)
   A: smooth 800 px, 30 fps, 2.4 s, warm lamplight
-  B: 200 px render snapped to the 20-colour palette with dither + 1 px outline, x4, 15 fps (the original idea)
+  B: 320 px render (card about 1:1 with its native pixels) snapped to the 20-colour palette with dither + 1 px outline, x3, 15 fps (the original idea)
   C: 400 px render with palette dither (no outline), x2, 15 fps
 -> <D>/frames/*.png, <D>/card-flip.webm (transparent), <D>/card-flip.mp4 (on #120e0c)
 """
@@ -13,7 +13,7 @@ from mathutils import Vector
 HERE = os.path.dirname(os.path.abspath(__file__))
 D = sys.argv[sys.argv.index('--') + 1] if '--' in sys.argv else 'A'
 OD = os.path.join(HERE, D)
-CFG = {'A': (800, 1, 30, 72, None), 'B': (200, 4, 15, 48, True), 'C': (400, 2, 15, 48, False)}
+CFG = {'A': (800, 1, 30, 72, None), 'B': (320, 3, 15, 48, True), 'C': (400, 2, 15, 48, False)}
 PIX, UP, FPS, N, OUTLINE = CFG[D]
 PALETTE = ['#120e0c', '#2a1c14', '#4a2e1c', '#6e4426', '#9a6232', '#c88a44', '#e8b866', '#f6dc9a',
            '#1c2018', '#353a22', '#5a5a30', '#86803e', '#1a1830', '#2e2648', '#4a3058',
@@ -56,6 +56,8 @@ def face(name, path, z, flip, W, H, parent):
     if 'Coat Weight' in p.inputs:
         p.inputs['Coat Weight'].default_value = 0.15
     t = N.new('ShaderNodeTexImage'); t.image = bpy.data.images.load(path)
+    if D == 'B':
+        t.interpolation = 'Closest'          # keep the card's own pixels crisp
     nt.links.new(t.outputs['Color'], p.inputs['Base Color'])
     nt.links.new(t.outputs['Alpha'], p.inputs['Alpha'])
     try:
