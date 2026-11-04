@@ -333,6 +333,26 @@ if WHICH in ('art', 'both'):
     camera((0.15, -4.6, 1.15), (0.05, 0, 0.82), 52)
     render(sc, 'scene-art.png')
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, 'scene.blend'))
+if WHICH in ('art', 'both', 'mask'):
+    # silhouette of the monkey + hoard from the same camera, for the hybrid direction
+    sc = setup((1500, 1200), False)
+    monkey(); hoard()
+    keep = set(o.name for o in bpy.data.objects)
+    desert()
+    for o in bpy.data.objects:
+        if o.name not in keep and o.type == 'MESH':
+            o.hide_render = True
+    for o in [o for o in bpy.data.objects if o.type == 'LIGHT']:
+        o.hide_render = True
+    white = bpy.data.materials.new('White'); white.use_nodes = True
+    n = white.node_tree.nodes; n.clear()
+    e = n.new('ShaderNodeEmission'); e.inputs['Color'].default_value = (1, 1, 1, 1)
+    out = n.new('ShaderNodeOutputMaterial'); white.node_tree.links.new(e.outputs[0], out.inputs['Surface'])
+    bpy.context.view_layer.material_override = white
+    sc.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.0
+    sc.view_settings.view_transform = 'Standard'
+    camera((0.15, -4.6, 1.15), (0.05, 0, 0.82), 52)
+    render(sc, 'scene-mask.png')
 if WHICH in ('mascot', 'both'):
     sc = setup((1600, 1600), True)
     monkey(); hoard(); lights()
