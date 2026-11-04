@@ -16,24 +16,25 @@
 <meta name="description" content="Search five Canadian MTG stores at once, save favorites, wishlists and decks.">
 <style>
 :root{
-  /* Nord palette. Dark (Polar Night) is the default; light (Snow Storm) when chosen.
-     Accent: Frost nord8 #88c0d0 (dark) / nord10 #5e81ac (light). Aurora: nord11 red, nord13 yellow, nord14 green. */
-  --bg:#2e3440; --surface:#3b4252; --surface-2:#434c5e; --surface-3:#4c566a; --text:#eceff4; --muted:#b4bccb;
-  --line:#434c5e; --accent:#88c0d0; --accent-text:#2e3440; --ok:#a3be8c; --warn:#ebcb8b; --heart:#bf616a;
-  --sheet-bg:#2e3440; --sheet:#3b4252; --sheet-2:#434c5e; --sheet-text:#eceff4; --sheet-muted:#b4bccb;
+  /* Nord, Polar Night (#2e3440 #3b4252 #434c5e #4c566a) and Snow Storm (#d8dee9 #e5e9f0 #eceff4) only.
+     Dark is the default: Polar Night surfaces, Snow Storm text and accent. Light flips them.
+     Only the status colours (ok, warn, heart) come from Nord's Aurora. */
+  --bg:#2e3440; --surface:#3b4252; --surface-2:#434c5e; --surface-3:#4c566a; --text:#eceff4; --muted:#d8dee9;
+  --line:#434c5e; --accent:#eceff4; --accent-text:#2e3440; --ok:#a3be8c; --warn:#ebcb8b; --heart:#bf616a;
+  --sheet-bg:#2e3440; --sheet:#3b4252; --sheet-2:#434c5e; --sheet-text:#eceff4; --sheet-muted:#d8dee9;
   --shadow:0 8px 28px rgba(0,0,0,.35); --r:24px;
   color-scheme:dark;   /* scrollbars and form controls follow the theme (Firefox kept a white scrollbar) */
 }
 :root[data-theme="light"]{
-  --bg:#e5e9f0; --surface:#eceff4; --surface-2:#d8dee9; --surface-3:#ccd3df; --text:#2e3440; --muted:#4c566a;
-  --line:#d8dee9; --accent:#5e81ac; --accent-text:#fff; --ok:#4f7a3a; --warn:#9a6a10; --heart:#bf616a; --shadow:0 8px 28px rgba(46,52,64,.14);
+  --bg:#e5e9f0; --surface:#eceff4; --surface-2:#d8dee9; --surface-3:#d8dee9; --text:#2e3440; --muted:#4c566a;
+  --line:#d8dee9; --accent:#3b4252; --accent-text:#eceff4; --ok:#4f7a3a; --warn:#9a6a10; --heart:#bf616a; --shadow:0 8px 28px rgba(46,52,64,.14);
   color-scheme:light;
 }
 html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
 /* Vintage texture: the old card frame, greyed and almost hidden under the theme colour, on the page only.
    To turn it off, delete this block (or set --tex:none). */
-:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.71)}
-:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.72)}
+:root{--tex:url(textures/frame-black.jpg); --veil:rgba(46,52,64,.78)}
+:root[data-theme="light"]{--tex:url(textures/frame-white.jpg); --veil:rgba(229,233,240,.79)}
 body{min-height:100vh;min-height:100dvh}
 body,.top,.stools{background-color:var(--bg);background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px;background-attachment:fixed}
 .sheet .body:not(.cartsheet .body){background-image:linear-gradient(var(--veil),var(--veil)),var(--tex);background-size:auto,340px}
@@ -205,7 +206,7 @@ a.btn{text-decoration:none}
 .hello>div{flex:1;min-width:0}
 .hello h1{margin:0;font-size:30px;letter-spacing:-.03em;line-height:1.1}
 .hello .hlogo{flex:none;display:block;margin-right:4px}
-.hello .hlogo img{display:block;height:58px;width:auto}
+.hello .hlogo img{display:block;height:56px;width:56px;image-rendering:pixelated}
 .hello p{margin:2px 0 0;color:var(--muted);font-size:15px}
 .iconbtn{position:relative;width:44px;height:44px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--text);flex:none}
 .iconbtn.on{color:var(--accent)}
@@ -261,7 +262,7 @@ a.btn{text-decoration:none}
 .pd .hint{color:var(--muted);font-size:13px;margin-top:4px}
 
 /* cart (dark, like Shop) */
-.cartsheet{--accent:#88c0d0;--accent-text:#2e3440}
+.cartsheet{--accent:#eceff4;--accent-text:#2e3440}
 .cartsheet .body{background:var(--sheet-bg);color:var(--sheet-text)}
 .cartsheet .grab{background:#333}
 .cartsheet .close{background:var(--sheet-2);color:var(--sheet-text)}
@@ -335,7 +336,7 @@ a.btn{text-decoration:none}
 .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:60;box-shadow:var(--shadow);transition:opacity .2s;max-width:calc(100% - 32px);text-align:center;display:flex;align-items:center;gap:14px;white-space:nowrap}
 .toast span{overflow:hidden;text-overflow:ellipsis}
 body:has(#sheet .cartsheet) .toast{background:#eceff4;color:#2e3440}
-body:has(#sheet .cartsheet) .toast button{color:#5e81ac;filter:none}
+body:has(#sheet .cartsheet) .toast button{color:#3b4252;filter:none}
 .toast button{color:var(--accent);font-weight:750;font-size:15px;padding:4px 2px;flex:none;filter:brightness(1.35)}
 
 /* store page */
@@ -403,7 +404,7 @@ a.noweb{color:var(--accent)!important;font-weight:600}
 .nrow.flash{animation:flash 1.2s ease-out}
 @keyframes flash{0%{background:color-mix(in srgb,var(--accent) 22%,transparent)}100%{background:transparent}}
 .btn.small{height:38px;padding:0 16px;font-size:14px;flex:none}
-.npin span{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#5e81ac;color:#fff;font:700 12px/1 system-ui;box-shadow:0 2px 6px rgba(0,0,0,.35);border:2px solid #fff}
+.npin span{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#4c566a;color:#fff;font:700 12px/1 system-ui;box-shadow:0 2px 6px rgba(0,0,0,.35);border:2px solid #fff}
 .npin i{transform:rotate(45deg);font-style:normal}
 .npin.dim span{background:#8a8a94}
 .leaflet-container{font:inherit}
@@ -505,10 +506,10 @@ a.noweb{color:var(--accent)!important;font-weight:600}
 // ---------- config ----------
 const API = 'https://card-hunt.areasmina.workers.dev';
 const BUILTIN = [
-  {id:'ea',     name:'EA Collectibles', color:'#8fbcbb', host:'www.eacollectibles.com', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
-  {id:'lamood', name:'La Mood',         color:'#bf616a', logo:'https://cdn.shopify.com/s/files/1/0275/7728/6793/files/LA_Mood_Logo.jpg?width=240', host:'lamoodcomics.ca', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
-  {id:'mana',   name:'Mana Lounge',     color:'#5e81ac', logo:'https://www.manalounge.ca/cdn/shop/files/favicon.png?width=180', host:'www.manalounge.ca', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
-  {id:'ge',     name:'Gamers Emporium', color:'#d08770', logo:'https://gamersemporium.ca/cdn/shop/files/GE_Logo_LinkedIn_White.jpg?crop=center&height=180&width=180', host:'gamersemporium.ca', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'ea',     name:'EA Collectibles', color:'#4c566a', host:'www.eacollectibles.com', url:q=>`https://www.eacollectibles.com/search?q=${enc(q)}&options%5Bprefix%5D=last`},
+  {id:'lamood', name:'La Mood',         color:'#4c566a', logo:'https://cdn.shopify.com/s/files/1/0275/7728/6793/files/LA_Mood_Logo.jpg?width=240', host:'lamoodcomics.ca', url:q=>`https://lamoodcomics.ca/search?q=${enc('*'+q+'*')}`},
+  {id:'mana',   name:'Mana Lounge',     color:'#4c566a', logo:'https://www.manalounge.ca/cdn/shop/files/favicon.png?width=180', host:'www.manalounge.ca', url:q=>`https://www.manalounge.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`, deck:'https://www.manalounge.ca/pages/deck-list'},
+  {id:'ge',     name:'Gamers Emporium', color:'#4c566a', logo:'https://gamersemporium.ca/cdn/shop/files/GE_Logo_LinkedIn_White.jpg?crop=center&height=180&width=180', host:'gamersemporium.ca', url:q=>`https://gamersemporium.ca/search?q=${enc(q)}&options%5Bprefix%5D=last`},
   {id:'players',name:'Players',         color:'#4c566a', logo:'https://playerscandc.com/cdn/shop/files/players.png?width=180', host:'playerscandc.com', url:q=>`https://playerscandc.com/search?page=1&q=${enc('*'+q+'*')}`, deck:'https://playerscandc.com/pages/multi-card-search'},
 ];
 // Stores the person adds themselves (any Shopify store). They sync like favorites and lists.
@@ -971,8 +972,8 @@ function readTint(st){
   im.src=st.logo;
 }
 function tintOf(st){
-  readTint(st); const t=TINT[st.id]; let [h,s]=t||hexHsl(st.color||'#5433eb'); if(!t){ const x=hexHsl(st.color||'#5433eb'); s=x[1]; }
-  s=Math.max(.35,Math.min(.75,s)); if(!t&&hexHsl(st.color||'#5433eb')[1]<.2) s=.08;   // grey stores stay grey
+  readTint(st); const t=TINT[st.id]; let [h,s]=t||hexHsl(st.color||'#4c566a'); if(!t){ const x=hexHsl(st.color||'#4c566a'); s=x[1]; }
+  s=Math.max(.35,Math.min(.75,s)); if(!t&&hexHsl(st.color||'#4c566a')[1]<.2) s=.08;   // grey stores stay grey
   return {h,s:Math.round(s*100)};
 }
 function heroStyle(st){
@@ -1074,7 +1075,7 @@ function initMap(){
   nearMap=L.map(el,{zoomControl:false,attributionControl:true}).setView([NEAR.lat,NEAR.lon],NEAR.z||10);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(nearMap);
   L.control.zoom({position:'bottomright'}).addTo(nearMap); nearMap.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
-  nearCircle=L.circle(nearMap.getCenter(),{radius:NEAR.r*1000,color:'#5e81ac',weight:2,fillColor:'#5e81ac',fillOpacity:.12,interactive:false}).addTo(nearMap);
+  nearCircle=L.circle(nearMap.getCenter(),{radius:NEAR.r*1000,color:'#4c566a',weight:2,fillColor:'#4c566a',fillOpacity:.12,interactive:false}).addTo(nearMap);
   nearLayer=L.layerGroup().addTo(nearMap);
   const fit=()=>{ const b=nearCircle.getBounds(); if(!nearMap.getBounds().contains(b)) nearMap.fitBounds(b,{padding:[10,10]}); };
   let t; const later=()=>{ clearTimeout(t); t=setTimeout(nearRefresh,180); };
@@ -1179,7 +1180,7 @@ function viewHome(){
   const sm=w=>w.replace(/width="\d+" height="\d+"/,'width="22" height="22"');
   const recent=S.searches.slice(0,8);
   return `<header class="hello">
-      <picture class="hlogo" aria-hidden="true"><source srcset="icons/card-spin.png" media="(prefers-reduced-motion: reduce)"><img src="icons/card-spin.webp" alt="" width="94" height="140"></picture>
+      <picture class="hlogo" aria-hidden="true"><source srcset="icons/logo-badge.png" media="(prefers-reduced-motion: reduce)"><img src="icons/logo-badge.webp" alt="" width="192" height="192"></picture>
       <div><h1>Card Hunt</h1><p>${STORES.length} stores, one search</p></div>
       <button class="iconbtn${SY?' on':''}" data-act="sync" title="Sync across devices" aria-label="Sync across devices">${sm(I.cloud)}${SY?'<i></i>':''}</button>
       <button class="iconbtn" data-act="theme" title="${S.theme==='light'?'Light mode. Tap for dark':'Dark mode. Tap for light'}" aria-label="Change light or dark mode">${themeIcon()}</button>
