@@ -1,0 +1,377 @@
+<title>Card Hunt Bestiary</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Cinzel+Decorative:wght@700&family=Silkscreen:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: a bound folio. One leather-dark page, three "plates" (directions), each a spread of
+   silhouette, palette, mark, icon and card. Single dark look on purpose: it is an old book at night. */
+:root {
+  --night: #100d0a;        /* page: lamp-black leather */
+  --leaf: #1a1511;         /* plate ground */
+  --rule: #3a2e22;         /* hairlines, tooled leather */
+  --vellum: #e4d5b2;       /* text */
+  --dim: #a8987a;          /* secondary text */
+  --gold: #c8973f;         /* the one accent: tarnished gilt */
+  --display: "IM Fell English SC", "IM Fell English", Georgia, serif;
+  --body: "EB Garamond", Garamond, Georgia, serif;
+  --pixel: "Silkscreen", ui-monospace, monospace;
+  color-scheme: dark;
+}
+body { background: var(--night); color: var(--vellum); font: 18px/1.55 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 48px 96px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; letter-spacing: .01em; }
+h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); line-height: 1; color: var(--vellum); }
+h2 { font-size: clamp(1.7rem, 3.6vw, 2.5rem); line-height: 1.05; }
+h3 { font-size: 1.05rem; color: var(--gold); letter-spacing: .08em; }
+p { margin: 0; max-width: 64ch; }
+.lede { color: var(--dim); font-size: 1.15rem; font-style: italic; margin-top: 14px; max-width: 58ch; }
+.eyebrow { font-family: var(--display); color: var(--gold); letter-spacing: .14em; font-size: .9rem; }
+header.top { display: grid; gap: 10px; border-bottom: 1px solid var(--rule); padding-bottom: 32px; }
+section { padding-top: 56px; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px; margin-top: 22px; }
+.notes > div { display: grid; gap: 8px; min-width: 0; }
+.notes ul { margin: 0; padding-left: 1.1em; color: var(--vellum); }
+.notes li { margin: 4px 0; }
+.plate { margin-top: 64px; border: 1px solid var(--rule); background: var(--leaf); padding: clamp(18px, 3vw, 36px); display: grid; gap: 28px; }
+.plate-head { display: grid; gap: 8px; }
+.plate-head .num { font-family: var(--display); color: var(--gold); font-size: .95rem; letter-spacing: .14em; }
+.plate-head .why { color: var(--dim); font-style: italic; }
+.spread { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 820px) { .spread { grid-template-columns: 1fr; } }
+.col { display: grid; gap: 22px; min-width: 0; }
+.tile { display: grid; gap: 10px; }
+.tile .lab { font-family: var(--display); color: var(--dim); font-size: .85rem; letter-spacing: .12em; }
+.sil { aspect-ratio: 1 / 1; max-width: 100%; display: grid; place-items: center; }
+.sil svg, .sil img { width: 100%; height: 100%; display: block; }
+.pix { image-rendering: pixelated; image-rendering: crisp-edges; }
+.swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.sw { display: grid; gap: 4px; font: 12px/1.2 var(--pixel); color: var(--dim); min-width: 0; }
+.sw i { display: block; aspect-ratio: 1.4; border: 1px solid #0006; }
+.sw span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row { display: flex; flex-wrap: wrap; gap: 18px; align-items: end; }
+.sizes { display: flex; gap: 14px; align-items: end; }
+.sizes figure { margin: 0; display: grid; gap: 4px; justify-items: center; font: 11px var(--pixel); color: var(--dim); }
+.mark { padding: 18px; display: grid; place-items: center; min-height: 130px; }
+.header-demo { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #0b0a09; border: 1px solid var(--rule); border-radius: 14px; }
+.header-demo .n { font: 600 22px/1 system-ui, sans-serif; color: #eee; }
+.card { width: min(100%, 300px); aspect-ratio: 2.5 / 3.5; border-radius: 4.5% / 3.2%; background: #0b0909; padding: 4.2%; box-shadow: 0 18px 40px #0008; }
+.card .fr { height: 100%; border-radius: 2%; background-size: 34%; display: grid; grid-template-rows: auto 1fr auto auto auto; gap: 3%; padding: 4% 4.5%; }
+.card .plt { background-size: 70%; padding: 2.2% 4%; display: flex; justify-content: space-between; align-items: center; border: 1px solid #0007; box-shadow: inset 0 0 0 1px #ffffff22; }
+.card .tt { font-size: clamp(11px, 1.35vw, 15px); color: #1a120a; }
+.card .art { border: 3px solid; overflow: hidden; display: grid; }
+.card .art svg { width: 100%; height: 100%; display: block; }
+.card .box { background-size: 60%; padding: 5%; font-size: clamp(9px, 1.05vw, 12px); line-height: 1.3; color: #1a120a; min-height: 26%; border: 1px solid #0007; }
+.card .box em { display: block; margin-top: 6px; }
+.card .foot { display: flex; justify-content: space-between; font-size: clamp(8px, .9vw, 10px); color: #e8d8b0cc; }
+.prompt { position: relative; background: #0c0a08; border: 1px solid var(--rule); padding: 14px 16px 14px; font: 15px/1.5 var(--body); color: var(--dim); }
+.prompt b { color: var(--vellum); font-weight: 600; }
+.copy { margin-top: 10px; font: 13px var(--pixel); background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 6px 10px; cursor: pointer; }
+.copy:focus-visible, .copy:hover { background: var(--gold); color: var(--night); outline: none; }
+.verdict { margin-top: 64px; border-top: 1px solid var(--rule); padding-top: 40px; display: grid; gap: 14px; }
+.verdict p { font-size: 1.12rem; }
+.placeholder { font: 10px var(--pixel); fill: #e4d5b288; letter-spacing: .08em; }
+@media (prefers-reduced-motion: no-preference) { .glow { animation: glow 3.2s ease-in-out infinite; } }
+@keyframes glow { 50% { opacity: .55; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">Card Hunt · brand exploration · golden age, 1993–98</span>
+  <h1>The Card Hunt Bestiary</h1>
+  <p class="lede">Three ways the monkey could belong to a forgotten card set. Each plate shows the silhouette, palette, mark, icon and a card. Plate II is finished pixel art. Plates I and III wait on painted illustrations, so their art windows hold a silhouette study.</p>
+</header>
+
+<section>
+  <h2>What the references say</h2>
+  <div class="notes">
+    <div>
+      <h3>THE CARD SCANS</h3>
+      <ul>
+        <li>The art window is small, so each card carries one subject, one light source and a lot of dark around it.</li>
+        <li>Frames are printed textures, not ornament: beaded black, marbled blue, mottled white, brown parchment for artifacts.</li>
+        <li>Colour stays earthy and muted, with a single saturated accent: a flame, a jewel or a sky.</li>
+        <li>Mystery comes from what's hidden. Creatures are half-lit and seen at odd angles, never posed like a mascot.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>THE APP TODAY</h3>
+      <ul>
+        <li>Dark-first, Shop-style layout. Real card images carry most of the colour on screen.</li>
+        <li>The header is plain "Card Hunt" at about 30 px, so the mark has to read at that size, and the icon at 16 to 48 px.</li>
+        <li>The purple accent fights every golden-age palette. In this theme, tarnished gold or brass should replace it.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>WHAT THAT MEANS FOR THE MONKEY</h3>
+      <ul>
+        <li>A silhouette you can read in one shape: hat brim, tail curl and the lens are the three hooks.</li>
+        <li>Lean, real primate anatomy, smaller eyes and a knowing look. No plush proportions.</li>
+        <li>Type set separately from the art, so CARD HUNT stays crisp at every size.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== PLATE I ============================== -->
+<article class="plate" id="archivist">
+  <div class="plate-head">
+    <span class="num">PLATE I · CLASSIC PAINTED</span>
+    <h2>The Archivist</h2>
+    <p class="why">A sly scholar crouched on old tomes in a candlelit vault, lens raised to one amber eye. This plate draws on the Alpha, Legends and The Dark mood: one candle, deep black, gothic quiet. The lens-to-eye pose is the most ownable silhouette of the three. It says "hunt" with no words and still reads at 16 px.</p>
+  </div>
+  <div class="spread">
+    <div class="col">
+      <div class="tile"><span class="lab">SILHOUETTE</span>
+        <div class="sil" style="background: radial-gradient(circle at 62% 42%, #6b4a22 0, #2a1d12 46%, #100d0a 72%);">
+          <svg viewBox="0 0 200 200" aria-label="Silhouette: crouched monkey raising a lens to its eye">
+            <g fill="#0b0806">
+              <rect x="34" y="158" width="132" height="16" rx="2"/><rect x="44" y="144" width="112" height="15" rx="2" transform="rotate(-2 100 150)"/>
+              <rect x="56" y="174" width="120" height="14" rx="2"/>
+              <path d="M70 140 C 62 112, 78 92, 102 94 C 124 96, 132 116, 126 136 C 120 152, 82 156, 70 140 Z"/>
+              <path d="M84 142 C 78 150, 70 152, 62 150 L 60 145 C 68 145, 74 140, 78 134 Z"/>
+              <path d="M112 140 C 120 146, 128 148, 136 146 L 137 141 C 130 141, 124 136, 120 130 Z"/>
+              <circle cx="124" cy="80" r="17"/><ellipse cx="140" cy="88" rx="10" ry="8"/>
+              <circle cx="108" cy="80" r="6"/>
+              <path d="M98 66 C 98 50, 124 46, 136 56 C 140 60, 141 64, 140 67 Z"/>
+              <path d="M88 70 C 104 62, 140 60, 160 66 L 158 70 C 136 67, 106 68, 90 74 Z"/>
+              <path d="M112 102 C 126 98, 140 94, 150 86 L 154 90 C 144 100, 130 106, 116 110 Z"/>
+              <path d="M74 132 C 52 136, 38 120, 44 102 C 48 90, 62 90, 64 100 C 66 108, 58 112, 54 106" fill="none" stroke="#0b0806" stroke-width="5" stroke-linecap="round"/>
+              <rect x="86" y="118" width="16" height="22" rx="1.5" transform="rotate(-14 94 129)"/>
+            </g>
+            <circle cx="158" cy="80" r="12" fill="none" stroke="#0b0806" stroke-width="4"/>
+            <circle cx="158" cy="80" r="10" fill="#e0a84a" opacity=".35"/>
+            <path d="M152 91 L 146 104" stroke="#0b0806" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="150" cy="150" r="3" fill="#ffcf7a" class="glow"/><path d="M150 152 v8" stroke="#3a2516" stroke-width="3"/>
+          </svg>
+        </div>
+      </div>
+      <div class="tile"><span class="lab">PALETTE</span>
+        <div class="swatches">
+          <div class="sw"><i style="background:#0e0b08"></i><span>lamp-black</span></div>
+          <div class="sw"><i style="background:#3a2516"></i><span>umber</span></div>
+          <div class="sw"><i style="background:#6e1f17"></i><span>oxblood</span></div>
+          <div class="sw"><i style="background:#c8923e"></i><span>candle gold</span></div>
+          <div class="sw"><i style="background:#d9c7a0"></i><span>vellum</span></div>
+        </div>
+      </div>
+      <div class="tile"><span class="lab">LOGO CONCEPT</span>
+        <div class="mark" style="background:#0e0b08;">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <svg width="78" height="78" viewBox="0 0 64 64" aria-hidden="true">__EYE__</svg>
+            <div style="display:grid; gap:2px;">
+              <span style="font: 400 46px/1 var(--display); color:#e4d5b2;">Card Hunt</span>
+              <span style="font: italic 15px/1 var(--body); color:#c8923e; letter-spacing:.06em;">a bestiary of every shop</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-demo"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true">__EYE__</svg><span style="font:400 26px/1 var(--display); color:#e4d5b2;">Card Hunt</span><span style="margin-left:auto; color:#888; font: 13px system-ui;">in the app header, 30 px</span></div>
+      </div>
+      <div class="tile"><span class="lab">APP ICON: THE EYE IN THE LENS</span>
+        <div class="sizes">
+          <figure><svg width="128" height="128" viewBox="0 0 64 64">__EYEICON__</svg>128</figure>
+          <figure><svg width="48" height="48" viewBox="0 0 64 64">__EYEICON__</svg>48</figure>
+          <figure><svg width="32" height="32" viewBox="0 0 64 64">__EYEICON__</svg>32</figure>
+          <figure><svg width="16" height="16" viewBox="0 0 64 64">__EYEICON__</svg>16</figure>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="tile"><span class="lab">CARD PRESENTATION (ART SLOT AWAITS THE PAINTING)</span>
+        <div class="card"><div class="fr" style="background-image:url(__FRAME_BLACK__);">
+          <div class="plt" style="background-image:url(__BOX_BLACK__);"><span class="tt" style="font-family:var(--display);">Card Hunt</span><span style="font-size:11px;">◉◉</span></div>
+          <div class="art" style="border-color:#3a3a38;"><svg viewBox="0 0 125 100" preserveAspectRatio="xMidYMid slice">
+            <defs><radialGradient id="ca" cx="62%" cy="55%" r="70%"><stop offset="0" stop-color="#8a5a24"/><stop offset=".35" stop-color="#3a2516"/><stop offset="1" stop-color="#0b0806"/></radialGradient></defs>
+            <rect width="125" height="100" fill="url(#ca)"/>
+            <path d="M0 18 Q 30 0 62 6 Q 96 0 125 16 L125 0 L0 0Z" fill="#0b0806"/>
+            <g transform="translate(14 6) scale(.48)" fill="#0b0806"><use href="#archsil"/></g>
+            <text x="62" y="84" text-anchor="middle" class="placeholder">PAINTING GOES HERE</text></svg></div>
+          <div class="plt" style="background-image:url(__BOX_BLACK__);"><span class="tt" style="font-family:var(--display); font-size:clamp(9px,1.05vw,12px);">Legendary Creature — Monkey Archivist</span><span style="font-size:10px;">⌕</span></div>
+          <div class="box" style="background-image:url(__BOX_BLACK__);"><span style="font-family:'IM Fell English',serif;">Whenever you look for a card, search every shop at once. Keep the cheapest copy.</span><em style="font-family:'IM Fell English',serif;">"Every shelf in the vault has been read twice. The monkey reads it a third time."</em></div>
+          <div class="foot"><span style="font-family:'IM Fell English',serif;">Illus. awaiting painting</span><span style="font-family:var(--display);">1/3</span></div>
+        </div></div>
+      </div>
+      <div class="tile"><span class="lab">PROMPT FOR THE PAINTING</span>
+        <div class="prompt" id="pA"><b>The Archivist.</b> A small, clever monkey scholar with intelligent amber eyes, lean wiry anatomy and a weathered, stained pith helmet, crouched on a stack of ancient leather-bound tomes in a candlelit underground archive. He holds a tarnished brass magnifying glass up to one eye, and the lens enlarges and lights that eye. In his other hand is a single trading card with a faint golden glow. A single candle at his feet lights him from below. Behind him, vaulted stone shelves fade into deep black. Traditional hand-painted fantasy illustration in the style of early-1990s fantasy trading cards and paperback covers, oil and acrylic on board, visible brushwork, textured paint, dramatic chiaroscuro, palette of lamp-black, umber, oxblood, candle gold and vellum, subtle imperfections, mysterious atmosphere. No text, no border, not cartoonish, not a mascot.
+          <br><button class="copy" type="button" data-for="pA">Copy prompt</button></div>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- ============================== PLATE II ============================== -->
+<article class="plate" id="thief">
+  <div class="plate-head">
+    <span class="num">PLATE II · PIXEL ART · FINISHED</span>
+    <h2>The Rooftop Thief</h2>
+    <p class="why">Mid-leap over moonlit bazaar domes, card clutched to his chest, magnifier curled in his tail and a red scarf streaming behind. This plate draws on Arabian Nights and the 16-bit games of the same years. It's drawn pixel by pixel at 160×128 with 43 colours in short ramps, dithering only where two bands meet, and outlines tinted from each part's darkest shade. It carries the energy, the animation and the loading screens.</p>
+  </div>
+  <div class="spread">
+    <div class="col">
+      <div class="tile"><span class="lab">SILHOUETTE (FROM THE ACTUAL SPRITE)</span>
+        <div class="sil" style="background: radial-gradient(circle at 70% 30%, #e8d8a8 0 9%, #4a3658 10%, #161428 70%);">
+          <img class="pix" src="__B_SPRITE__" alt="Silhouette of the leaping monkey sprite" style="filter: brightness(0); width:86%; height:auto;">
+        </div>
+      </div>
+      <div class="tile"><span class="lab">PALETTE (5 OF 43)</span>
+        <div class="swatches">
+          <div class="sw"><i style="background:#161428"></i><span>night</span></div>
+          <div class="sw"><i style="background:#4a3658"></i><span>dusk</span></div>
+          <div class="sw"><i style="background:#c89a3e"></i><span>dome gold</span></div>
+          <div class="sw"><i style="background:#a8382a"></i><span>scarf</span></div>
+          <div class="sw"><i style="background:#e8d8a8"></i><span>moon</span></div>
+        </div>
+      </div>
+      <div class="tile"><span class="lab">LOGO</span>
+        <div class="mark" style="background:#0a0806;"><img class="pix" src="__B_LOGO__" alt="Pixel Card Hunt logo" style="width:100%; max-width:600px;"></div>
+      </div>
+      <div class="tile"><span class="lab">APP ICON</span>
+        <div class="sizes">
+          <figure><img class="pix" src="__B_ICON__" width="128" height="128" alt="">128</figure>
+          <figure><img class="pix" src="__B_ICON__" width="48" height="48" alt="">48</figure>
+          <figure><img class="pix" src="__B_ICON__" width="32" height="32" alt="">32</figure>
+          <figure><img class="pix" src="__B_ICON__" width="16" height="16" alt="">16</figure>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="tile"><span class="lab">CARD (NATIVE PIXELS ×2) AND CARD BACK</span>
+        <div class="row">
+          <img class="pix" src="__B_FRONT__" width="192" height="268" alt="Pixel card: Legendary Monkey Thief" style="width:min(48%, 288px); height:auto;">
+          <img class="pix" src="__B_BACK__" width="192" height="268" alt="Pixel card back" style="width:min(48%, 288px); height:auto;">
+        </div>
+      </div>
+      <div class="tile"><span class="lab">ILLUSTRATION, 160×128 NATIVE</span>
+        <img class="pix" src="__B_ART__" alt="Pixel illustration: monkey leaping over moonlit domes" style="width:100%; height:auto;">
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- ============================== PLATE III ============================== -->
+<article class="plate" id="relic">
+  <div class="plate-head">
+    <span class="num">PLATE III · HYBRID</span>
+    <h2>The Relic Seeker</h2>
+    <p class="why">An old explorer standing upright on a great dead gear, lifting a glowing card out of a sleeping brass automaton. This plate draws on Antiquities and early Urza's Saga: verdigris, clockwork and reverent light. Painted creature, pixel-drawn brass ornament and the brown artifact frame. It's the most "legendary" of the three and suits card backs and the loading screen.</p>
+  </div>
+  <div class="spread">
+    <div class="col">
+      <div class="tile"><span class="lab">SILHOUETTE</span>
+        <div class="sil" style="background: radial-gradient(circle at 60% 20%, #c8d86a 0, #4f7a6a 14%, #23282a 55%, #121514 80%);">
+          <svg viewBox="0 0 200 200" id="relicSvg" aria-label="Silhouette: upright monkey on a gear lifting a glowing card">
+            <g fill="#0c0e0d" id="relicSil">
+              <path id="gear"/>
+              <path d="M88 158 L 84 132 L 94 130 L 98 158 Z"/><path d="M106 158 L 110 132 L 100 130 L 102 158 Z"/>
+              <ellipse cx="82" cy="160" rx="9" ry="4"/><ellipse cx="110" cy="160" rx="9" ry="4"/>
+              <path d="M80 136 C 74 110, 82 90, 98 88 C 114 88, 120 108, 114 136 Z"/>
+              <circle cx="100" cy="74" r="15"/><ellipse cx="88" cy="80" rx="9" ry="7"/>
+              <circle cx="114" cy="74" r="5.5"/>
+              <path d="M86 62 C 86 48, 112 44, 118 58 L 118 62 Z"/>
+              <path d="M74 64 C 92 58, 118 58, 132 64 L 130 68 C 112 64, 92 64, 76 68 Z"/>
+              <path d="M110 96 C 118 82, 124 62, 128 44 L 133 45 C 131 66, 124 88, 115 101 Z"/>
+              <path d="M84 98 C 74 108, 70 120, 72 128 L 77 128 C 77 120, 82 110, 90 102 Z"/>
+              <path d="M84 134 C 62 140, 48 120, 54 98 C 58 82, 72 84, 70 96" fill="none" stroke="#0c0e0d" stroke-width="5" stroke-linecap="round"/>
+              <rect x="122" y="20" width="16" height="22" rx="1.5" transform="rotate(8 130 31)"/>
+            </g>
+            <circle cx="130" cy="31" r="22" fill="#e8f0a0" opacity=".25" class="glow"/>
+            <path d="M74 130 q -4 8 -2 14" stroke="#0c0e0d" stroke-width="1.5" stroke-dasharray="2 2" fill="none"/>
+            <circle cx="72" cy="150" r="7" fill="none" stroke="#0c0e0d" stroke-width="3"/>
+          </svg>
+        </div>
+      </div>
+      <div class="tile"><span class="lab">PALETTE</span>
+        <div class="swatches">
+          <div class="sw"><i style="background:#23282a"></i><span>slate</span></div>
+          <div class="sw"><i style="background:#4f7a6a"></i><span>verdigris</span></div>
+          <div class="sw"><i style="background:#9a7a3a"></i><span>old brass</span></div>
+          <div class="sw"><i style="background:#c8d86a"></i><span>relic glow</span></div>
+          <div class="sw"><i style="background:#7e4222"></i><span>rust</span></div>
+        </div>
+      </div>
+      <div class="tile"><span class="lab">LOGO CONCEPT</span>
+        <div class="mark" style="background: linear-gradient(#2a302f, #1a1e1d); border:1px solid #4f7a6a55;">
+          <div style="display:grid; justify-items:center; gap:6px;">
+            <span style="font: 700 clamp(30px, 5vw, 50px)/1 'Cinzel Decorative', serif; background: linear-gradient(#f0d890, #9a7a3a 55%, #5a4418); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 0 #0a0c0b);">Card Hunt</span>
+            <span style="font: 12px var(--pixel); color:#c8d86a; letter-spacing:.2em;">⚙ RELICS OF EVERY SHOP ⚙</span>
+          </div>
+        </div>
+        <div class="header-demo"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true">__GEARICON__</svg><span style="font:700 22px/1 'Cinzel Decorative', serif; color:#d8bc72;">Card Hunt</span><span style="margin-left:auto; color:#888; font: 13px system-ui;">in the app header, 30 px</span></div>
+      </div>
+      <div class="tile"><span class="lab">APP ICON: THE CARD IN THE GEAR</span>
+        <div class="sizes">
+          <figure><svg width="128" height="128" viewBox="0 0 64 64">__GEARICON__</svg>128</figure>
+          <figure><svg width="48" height="48" viewBox="0 0 64 64">__GEARICON__</svg>48</figure>
+          <figure><svg width="32" height="32" viewBox="0 0 64 64">__GEARICON__</svg>32</figure>
+          <figure><svg width="16" height="16" viewBox="0 0 64 64">__GEARICON__</svg>16</figure>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="tile"><span class="lab">CARD PRESENTATION (ART SLOT AWAITS THE PAINTING)</span>
+        <div class="card"><div class="fr" style="background-image:url(__FRAME_ART__);">
+          <div class="plt" style="background-image:url(__BOX_ART__);"><span class="tt" style="font-family:'Cinzel Decorative',serif; font-weight:700;">Card Hunt</span><span style="font-size:11px;">⚙⚙</span></div>
+          <div class="art" style="border-color:#3d2c1e;"><svg viewBox="0 0 125 100" preserveAspectRatio="xMidYMid slice">
+            <defs><radialGradient id="cr" cx="62%" cy="20%" r="80%"><stop offset="0" stop-color="#c8d86a"/><stop offset=".18" stop-color="#4f7a6a"/><stop offset=".6" stop-color="#23282a"/><stop offset="1" stop-color="#0c0e0d"/></radialGradient></defs>
+            <rect width="125" height="100" fill="url(#cr)"/>
+            <path d="M78 8 L 64 100 L 100 100 Z" fill="#e8f0a0" opacity=".08"/>
+            <g transform="translate(22 4) scale(.48)"><use href="#relicSil"/></g>
+            <text x="62" y="84" text-anchor="middle" class="placeholder">PAINTING GOES HERE</text></svg></div>
+          <div class="plt" style="background-image:url(__BOX_ART__);"><span class="tt" style="font-family:var(--display); font-size:clamp(9px,1.05vw,12px);">Legendary Artifact Creature — Monkey</span><span style="font-size:10px;">⌕</span></div>
+          <div class="box" style="background-image:url(__BOX_ART__);"><span style="font-family:'IM Fell English',serif;">{T}: Look at every shop in the realm. Take the card you seek at the lowest price.</span><em style="font-family:'IM Fell English',serif;">"The machine had kept the card for a thousand years. It gave it up to him without a sound."</em></div>
+          <div class="foot"><span style="font-family:'IM Fell English',serif;">Illus. awaiting painting</span><span style="font-family:var(--display);">2/4</span></div>
+        </div></div>
+      </div>
+      <div class="tile"><span class="lab">PROMPT FOR THE PAINTING</span>
+        <div class="prompt" id="pC"><b>The Relic Seeker.</b> An old, wise monkey explorer with grey-streaked fur, lean believable anatomy, a battered pith helmet and a bronze-buckled leather harness, standing upright on a huge broken gear in a ruined temple full of dormant clockwork. He lifts a glowing trading card out of the open chest of a sleeping brass automaton, and its green-gold light catches his face. A tarnished magnifying glass hangs from a chain at his hip. Dusty rays fall from a crack in the ceiling. Traditional hand-painted fantasy illustration in the style of early-1990s fantasy trading cards and paperback covers, oil and acrylic on board, visible brushwork, dramatic chiaroscuro, palette of slate, verdigris, old brass, relic-glow green and rust, reverent and slightly eerie. No text, no border, not cartoonish, not a mascot.
+          <br><button class="copy" type="button" data-for="pC">Copy prompt</button></div>
+      </div>
+    </div>
+  </div>
+</article>
+
+<section class="verdict">
+  <span class="eyebrow">MY RECOMMENDATION</span>
+  <h2>Make the Archivist the mascot and the Thief his pixel double</h2>
+  <p>The lens-to-the-eye pose is the strongest single idea. It's the only silhouette that says "hunting" by itself, and its icon still reads at 16 px. Plate II is already finished, and its energy belongs in the moving parts: loading screen, card flip and empty states. The Relic Seeker's verdigris world is the best fit for the card back. Paint the Archivist first. When that image comes in, I'll redraw the Thief sprite so both share one face and one hat.</p>
+</section>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="archsil" fill="#0b0806">
+      <path d="M70 140 C 62 112, 78 92, 102 94 C 124 96, 132 116, 126 136 C 120 152, 82 156, 70 140 Z"/>
+      <circle cx="124" cy="80" r="17"/><ellipse cx="140" cy="88" rx="10" ry="8"/><circle cx="108" cy="80" r="6"/>
+      <path d="M98 66 C 98 50, 124 46, 136 56 C 140 60, 141 64, 140 67 Z"/>
+      <path d="M88 70 C 104 62, 140 60, 160 66 L 158 70 C 136 67, 106 68, 90 74 Z"/>
+      <path d="M112 102 C 126 98, 140 94, 150 86 L 154 90 C 144 100, 130 106, 116 110 Z"/>
+      <path d="M74 132 C 52 136, 38 120, 44 102 C 48 90, 62 90, 64 100 C 66 108, 58 112, 54 106" fill="none" stroke="#0b0806" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="158" cy="80" r="12" fill="none" stroke="#0b0806" stroke-width="4"/>
+      <rect x="34" y="158" width="132" height="16" rx="2"/><rect x="44" y="144" width="112" height="15" rx="2"/>
+    </g>
+  </defs>
+</svg>
+
+<script>
+// gear outline for plate III (teeth computed, so the gear is exact)
+(function () {
+  const cx = 100, cy = 205, r1 = 52, r2 = 60, n = 18; let d = '';
+  for (let i = 0; i < n * 2; i++) {
+    const a0 = (i / (n * 2)) * Math.PI * 2, a1 = ((i + 1) / (n * 2)) * Math.PI * 2, r = i % 2 ? r1 : r2;
+    d += (i ? 'L' : 'M') + (cx + r * Math.cos(a0)).toFixed(1) + ' ' + (cy + r * Math.sin(a0)).toFixed(1) +
+         'L' + (cx + r * Math.cos(a1)).toFixed(1) + ' ' + (cy + r * Math.sin(a1)).toFixed(1);
+  }
+  const g = document.getElementById('gear'); if (g) g.setAttribute('d', d + 'Z');
+})();
+document.querySelectorAll('.copy').forEach(function (b) {
+  b.addEventListener('click', function () {
+    const box = document.getElementById(b.dataset.for);
+    const text = box.firstChild.textContent ? box.innerText.replace('Copy prompt', '').trim() : '';
+    const done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy prompt'; }, 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { select(box); });
+    } else { select(box); }
+  });
+});
+function select(el) { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+</script>

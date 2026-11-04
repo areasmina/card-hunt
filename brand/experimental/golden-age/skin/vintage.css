@@ -1,0 +1,121 @@
+/* Card Hunt "Vintage" theme: the app's own layout, dressed as a 1993-95 card.
+   - page = the printed frame (black beaded in dark, white stone in light), from the user's scans
+   - panels, search and sheets = the card's text box (parchment on black, grey stone on white), inset like the printed box
+   - headings = the card title face (Metamorphous), body = the rules face (Crimson Text)
+   - round buttons = cost circles; the cart = a gold coin
+   Load after the app's styles. Files beside it: frame-black.jpg, frame-white.jpg, box-black.jpg, box-white.jpg */
+@import url("https://fonts.googleapis.com/css2?family=Metamorphous&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap");
+
+:root {
+  --bg:#d9d2c6; --surface:#ece7de; --surface-2:#e2dbd0; --surface-3:#cfc6b8; --text:#15120e; --muted:#5c544a;
+  --line:#bdb3a4; --accent:#7a2a1a; --accent-text:#f6efe2; --ok:#2f6b2a; --warn:#8a5a10; --heart:#9c1f16;
+  --sheet:#15120e; --sheet-2:#26211b; --sheet-text:#f2ebdf; --sheet-muted:#b0a490;
+  --shadow:2px 3px 0 rgba(0,0,0,.28); --r:5px;
+  --v-frame:url(frame-white.jpg); --v-veil:rgba(236,230,220,.32);
+  --v-box:url(box-white.jpg); --v-box-ink:#15120e; --v-box-muted:#4e473e;
+  --v-title-ink:#111; --v-title-shadow:none;
+  --v-hi:rgba(255,255,255,.75); --v-lo:rgba(0,0,0,.28);
+  --v-pip:#f3ecd8; --v-pip-ink:#111;
+  --v-title:"Metamorphous",Georgia,serif; --v-body:"Crimson Text",Georgia,serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#121410; --surface:#1b1d18; --surface-2:#23251f; --surface-3:#2e3029; --text:#f1ece2; --muted:#b4aa98;
+    --line:#34372e; --accent:#c8973f; --accent-text:#1a1208; --ok:#6fbf5a; --warn:#e0b040; --heart:#e06a52;
+    --shadow:2px 3px 0 rgba(0,0,0,.8);
+    --v-frame:url(frame-black.jpg); --v-veil:rgba(0,0,0,.12);
+    --v-box:url(box-black.jpg); --v-box-ink:#1e130a; --v-box-muted:#5a4230;
+    --v-title-ink:#f3efe6; --v-title-shadow:1.5px 1.5px 0 #000;
+    --v-hi:rgba(255,255,255,.14); --v-lo:rgba(0,0,0,.7);
+    --v-pip:#c9c9c4; --v-pip-ink:#111;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#121410; --surface:#1b1d18; --surface-2:#23251f; --surface-3:#2e3029; --text:#f1ece2; --muted:#b4aa98;
+  --line:#34372e; --accent:#c8973f; --accent-text:#1a1208; --ok:#6fbf5a; --warn:#e0b040; --heart:#e06a52;
+  --shadow:2px 3px 0 rgba(0,0,0,.8);
+  --v-frame:url(frame-black.jpg); --v-veil:rgba(0,0,0,.12);
+  --v-box:url(box-black.jpg); --v-box-ink:#1e130a; --v-box-muted:#5a4230;
+  --v-title-ink:#f3efe6; --v-title-shadow:1.5px 1.5px 0 #000;
+  --v-hi:rgba(255,255,255,.14); --v-lo:rgba(0,0,0,.7);
+  --v-pip:#c9c9c4; --v-pip-ink:#111;
+}
+
+/* ---- page: the printed frame ---- */
+body { font-family:var(--v-body); font-size:17px; background-color:var(--bg);
+  background-image:linear-gradient(var(--v-veil),var(--v-veil)),var(--v-frame); background-size:auto,340px; background-attachment:fixed; }
+.top, .sheet .body { background-color:var(--bg); background-image:linear-gradient(var(--v-veil),var(--v-veil)),var(--v-frame); background-size:auto,340px; background-attachment:fixed; }
+.sheet .body { border-radius:14px 14px 0 0; box-shadow:0 -1px 0 var(--v-hi); }
+
+/* ---- headings: the title face, white with a hard shadow on black, black on white ---- */
+.hello h1, .h h2, .sthead h2, .sicard h3, .sheet h2, .sheet h3 { font-family:var(--v-title); font-weight:400; letter-spacing:0; color:var(--v-title-ink); text-shadow:var(--v-title-shadow); }
+.hello h1 { font-size:32px; }
+.hello p, .sub, .h .hint { font-style:italic; }
+.h .right, .later { font-family:var(--v-title); font-weight:400; }
+
+/* ---- the text box: search, panels, list cards, store cards, fields ---- */
+.pill, .lcard, .sicard, .promo.soft, .field input, .field textarea, .suggest, .syncs .code {
+  background-color:var(--surface); background-image:var(--v-box); background-size:300px; color:var(--v-box-ink);
+  border:0; border-radius:3px; box-shadow:inset 2px 2px 0 var(--v-lo), inset -2px -2px 0 var(--v-hi), var(--shadow); }
+.pill { border-radius:3px; }
+.pill input, .field input, .field textarea { color:var(--v-box-ink); font-family:var(--v-body); }
+.pill input::placeholder { color:var(--v-box-muted); font-style:italic; opacity:1; }
+.pill svg { color:var(--v-box-ink); }
+.pill .x { background:rgba(0,0,0,.12); color:var(--v-box-ink); }
+.lcard .c, .sicard .sdesc, .promo.soft .grow span, .sicard .s { color:var(--v-box-muted); }
+.lcard .n, .sicard .t, .promo.soft b { color:var(--v-box-ink); }
+.promo.soft .ic { background:rgba(0,0,0,.08); color:var(--v-box-ink); border-radius:50%; }
+.promo b, .lcard .n { font-family:var(--v-title); font-weight:400; font-size:18px; }
+.suggest button.on, .suggest button:hover { background:rgba(0,0,0,.08); }
+.suggest .muted { color:var(--v-box-muted); }
+
+/* ---- the accent panel (decklist): the art well, a bevelled gold plate ---- */
+.promo:not(.soft) { border-radius:3px; background:linear-gradient(170deg,#e0b860,#b8862e 55%,#8a5e1c); color:#1a1208;
+  box-shadow:inset 2px 2px 0 rgba(255,240,200,.55), inset -2px -2px 0 rgba(60,30,0,.45), var(--shadow); }
+.promo:not(.soft) .ic { background:rgba(40,20,0,.16); border-radius:50%; }
+.promo:not(.soft) .grow span { opacity:.85; }
+
+/* ---- chips: small printed tags ---- */
+.chip { border:0; border-radius:3px; background:var(--surface); background-image:var(--v-box); background-size:260px; color:var(--v-box-ink);
+  font-family:var(--v-title); font-weight:400; font-size:15px; box-shadow:inset 1px 1px 0 var(--v-hi), inset -1px -1px 0 var(--v-lo), var(--shadow); }
+.chip.on { background:var(--accent); background-image:none; color:var(--accent-text); }
+
+/* ---- cost circles: icon buttons, stepper, close, heart ---- */
+.iconbtn, .sheet .close, .h .more { background:var(--v-pip); color:var(--v-pip-ink); box-shadow:2px 3px 0 #000; }
+.iconbtn.on { color:var(--accent); }
+.iconbtn i { border-color:var(--v-pip); }
+.stepper { background:var(--surface); background-image:var(--v-box); background-size:240px; color:var(--v-box-ink); border-radius:999px; box-shadow:inset 1px 1px 0 var(--v-lo), var(--shadow); }
+
+/* ---- stores: mana-circle medallions ---- */
+.sbub .logo, .sthead .logo { box-shadow:2px 3px 0 #000, inset 0 0 0 2px rgba(255,255,255,.25); font-family:var(--v-title); font-weight:400; text-shadow:1px 1px 0 rgba(0,0,0,.6); }
+.sbub .nm { font-size:13.5px; }
+
+/* ---- products: real card images get card corners and a printed shadow ---- */
+.p .img, .rail .p .img { border-radius:4.5% / 3.3%; box-shadow:2px 3px 0 rgba(0,0,0,.55); background:#0b0b0b; }
+.p .title { font-weight:600; }
+.p .price { font-family:var(--v-title); font-weight:400; font-size:18px; color:var(--v-title-ink); text-shadow:var(--v-title-shadow); }
+.heart { background:rgba(0,0,0,.55); }
+.tag { border-radius:3px; font-family:var(--v-body); }
+.li img, .li .blank, .lcard .stack img, .lcard .stack .blank { border-radius:4px; }
+
+/* ---- buttons ---- */
+.btn { border-radius:4px; font-family:var(--v-title); font-weight:400; letter-spacing:.01em;
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.35), inset -1px -1px 0 rgba(0,0,0,.35), var(--shadow); }
+.btn:not(.ghost):not(.dark) { background:linear-gradient(170deg,#e0b860,#b8862e 55%,#8a5e1c); color:#1a1208; }
+.btn.ghost { background:var(--surface); background-image:var(--v-box); background-size:260px; color:var(--v-box-ink); }
+.btn.big { border-radius:5px; }
+.tile2 { border-radius:4px; background:var(--surface); background-image:var(--v-box); background-size:260px; color:var(--v-box-ink); box-shadow:inset 1px 1px 0 var(--v-hi), inset -1px -1px 0 var(--v-lo), var(--shadow); }
+.tile2.on span { color:var(--v-box-ink); }
+
+/* ---- bottom bar and the gold coin cart ---- */
+.navpill { border-radius:6px; background:#0c0c0b; box-shadow:inset 1px 1px 0 rgba(255,255,255,.12), 2px 3px 0 #000; }
+:root:not([data-theme="dark"]) .navpill { background:#f0ebe2; box-shadow:inset 1px 1px 0 #fff, inset -1px -1px 0 rgba(0,0,0,.2), 2px 3px 0 rgba(0,0,0,.35); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .navpill { background:#0c0c0b; box-shadow:inset 1px 1px 0 rgba(255,255,255,.12), 2px 3px 0 #000; } }
+.navpill button { border-radius:4px; }
+.navpill button.on { background:transparent; color:var(--accent); }
+.cartbtn { background:radial-gradient(circle at 35% 30%,#f2d48e,#b8862e 58%,#6e4c14); color:#1a1208; box-shadow:2px 4px 0 #000, inset 0 0 0 2px rgba(255,235,180,.35); }
+.cartbtn span { background:#f4ecdc; color:#111; box-shadow:1px 1px 0 #000; }
+
+/* ---- small things ---- */
+.switch.on { background:var(--accent); }
+.links a { background:var(--surface); background-image:var(--v-box); background-size:220px; color:var(--v-box-ink); border-radius:3px; }

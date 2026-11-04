@@ -1,0 +1,22 @@
+/* Card Hunt vintage skin: colours and frame textures only. Layout, fonts and components stay as they are.
+   Load after the app's own styles. Textures: brand/experimental/golden-age/skin/frame-*.jpg (from the user's scans). */
+:root {
+  --bg:#ece6dc; --surface:#fbf8f2; --surface-2:#f1ebe1; --surface-3:#e5ddcf; --text:#1c1812; --muted:#6e6458;
+  --line:#e0d7c8; --accent:#8e5f1c; --accent-text:#fff; --heart:#b3261e;
+  --sheet:#1b1814; --sheet-2:#2a251f; --sheet-text:#f2ebdf; --sheet-muted:#b0a490;
+  --skin-tex:url(frame-white.jpg); --skin-veil:rgba(244,239,230,.72);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#0d0c0a; --surface:#1a1714; --surface-2:#25211c; --surface-3:#302a23; --text:#f2ebdf; --muted:#a89c88;
+    --line:#2f2922; --accent:#c8973f; --accent-text:#1a1208; --heart:#e0705e;
+    --skin-tex:url(frame-black.jpg); --skin-veil:rgba(10,9,8,.55);
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#0d0c0a; --surface:#1a1714; --surface-2:#25211c; --surface-3:#302a23; --text:#f2ebdf; --muted:#a89c88;
+  --line:#2f2922; --accent:#c8973f; --accent-text:#1a1208; --heart:#e0705e;
+  --skin-tex:url(frame-black.jpg); --skin-veil:rgba(10,9,8,.55);
+}
+/* the frame texture sits under everything, softened by a veil so text stays readable */
+body { background-color:var(--bg); background-image:linear-gradient(var(--skin-veil),var(--skin-veil)),var(--skin-tex); background-size:auto,360px; background-attachment:fixed; }
