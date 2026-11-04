@@ -135,11 +135,14 @@ function findAddress(html, text) { return findAddresses(html, text)[0] || null; 
 // Free geocoding through OpenStreetMap's Nominatim (one lookup per address, cached for a month).
 async function geocode(addr, ctx) {
   if (!addr) return null;
-  const key = new Request('https://cardhunt.cache/v1/geo/' + encodeURIComponent(addr.toLowerCase()));
+  const key = new Request('https://cardhunt.cache/v2/geo/' + encodeURIComponent(addr.toLowerCase()));
   const hit = await caches.default.match(key); if (hit) return hit.json();
   const tryQ = async q => { try { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca&q=${encodeURIComponent(q)}`, { headers: { 'User-Agent': 'CardHunt/1.0 (https://areasmina.github.io/card-hunt/)' }, signal: AbortSignal.timeout(8000) }); const j = await r.json(); return j[0] ? { lat: +(+j[0].lat).toFixed(5), lon: +(+j[0].lon).toFixed(5) } : null; } catch { return null; } };
   const pc = (addr.match(/[A-Z]\d[A-Z][ -]?\d[A-Z]\d/i) || [])[0];
-  const geo = await tryQ(addr.replace(/\b(unit|suite)\s*\w+,?/i, '')) || (pc && await tryQ(pc.replace(/[ -]/, ' ')));
+  // Photon (also free, built on OpenStreetMap) forgives spelling, like "Meadowbrooke" for Meadowbrook Drive.
+  const photon = async q => { try { const r = await fetch(`https://photon.komoot.io/api/?limit=1&bbox=-141,41.6,-52.6,83.2&q=${encodeURIComponent(q)}`, { headers: { 'User-Agent': 'CardHunt/1.0 (https://areasmina.github.io/card-hunt/)' }, signal: AbortSignal.timeout(8000) }); const j = await r.json(); const c = j.features && j.features[0] && j.features[0].geometry.coordinates; return c ? { lat: +c[1].toFixed(5), lon: +c[0].toFixed(5) } : null; } catch { return null; } };
+  const clean = addr.replace(/\b(unit|suite)\s*[\w-]+,?/i, '').replace(/,?\s*canada\b/i, '');
+  const geo = await tryQ(clean) || await photon(clean) || (pc && await tryQ(pc.replace(/[ -]/, ' ')));
   if (geo) ctx.waitUntil(caches.default.put(key, Response.json(geo, { headers: { 'Cache-Control': 'public, max-age=2592000' } })));
   return geo;
 }
@@ -148,7 +151,7 @@ async function geocode(addr, ctx) {
 async function profile(url, ctx) {
   const host = String(url.searchParams.get('host') || '').toLowerCase();
   if (!HOST_RE.test(host)) return Response.json({ ok: false, error: 'bad host' }, { status: 400, headers: CORS });
-  const key = new Request(`https://cardhunt.cache/v4/profile/${host}`);
+  const key = new Request(`https://cardhunt.cache/v5/profile/${host}`);
   const hit = url.searchParams.has('fresh') ? null : await caches.default.match(key);
   if (hit) return hit;
   const p = await readHome(host);
