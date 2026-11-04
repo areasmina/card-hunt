@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f6f6f8">
-<script>try{var t=JSON.parse(localStorage.getItem('cardhunt2.theme')||'"auto"');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="theme-color" content="#2e3440">
+<script>try{var t=JSON.parse(localStorage.getItem('cardhunt2.theme')||'"dark"');document.documentElement.dataset.theme=t==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}</script>
 <title>Card Hunt</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -16,25 +16,18 @@
 <meta name="description" content="Search five Canadian MTG stores at once, save favorites, wishlists and decks.">
 <style>
 :root{
-  --bg:#f6f6f8; --surface:#ffffff; --surface-2:#efeff2; --surface-3:#e4e4e9; --text:#121214; --muted:#6c6c75;
-  --line:#e6e6eb; --accent:#5433eb; --accent-text:#fff; --ok:#15803d; --warn:#b45309; --heart:#e11d48;
-  --sheet:#18181b; --sheet-2:#26262b; --sheet-text:#f4f4f5; --sheet-muted:#a1a1aa;
-  --shadow:0 8px 28px rgba(0,0,0,.14); --r:24px;
-  color-scheme:light dark;   /* scrollbars and form controls follow the theme (Firefox kept a white scrollbar) */
+  /* Nord palette. Dark (Polar Night) is the default; light (Snow Storm) when chosen. */
+  --bg:#2e3440; --surface:#3b4252; --surface-2:#434c5e; --surface-3:#4c566a; --text:#eceff4; --muted:#b4bccb;
+  --line:#434c5e; --accent:#8f7bff; --accent-text:#fff; --ok:#a3be8c; --warn:#ebcb8b; --heart:#e88b94;
+  --sheet-bg:#2e3440; --sheet:#3b4252; --sheet-2:#434c5e; --sheet-text:#eceff4; --sheet-muted:#b4bccb;
+  --shadow:0 8px 28px rgba(0,0,0,.35); --r:24px;
+  color-scheme:dark;   /* scrollbars and form controls follow the theme (Firefox kept a white scrollbar) */
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0c0c0e; --surface:#17171a; --surface-2:#222227; --surface-3:#2d2d33; --text:#f4f4f5; --muted:#a1a1aa;
-    --line:#2a2a30; --accent:#7c5cff; --ok:#4ade80; --warn:#fbbf24; --heart:#fb7185; --shadow:0 8px 28px rgba(0,0,0,.5);
-    color-scheme:dark;
-  }
+:root[data-theme="light"]{
+  --bg:#e5e9f0; --surface:#eceff4; --surface-2:#d8dee9; --surface-3:#ccd3df; --text:#2e3440; --muted:#4c566a;
+  --line:#d8dee9; --accent:#5433eb; --ok:#3f7d3a; --warn:#9a6a10; --heart:#bf3b4a; --shadow:0 8px 28px rgba(46,52,64,.14);
+  color-scheme:light;
 }
-:root[data-theme="dark"]{
-  --bg:#0c0c0e; --surface:#17171a; --surface-2:#222227; --surface-3:#2d2d33; --text:#f4f4f5; --muted:#a1a1aa;
-  --line:#2a2a30; --accent:#7c5cff; --ok:#4ade80; --warn:#fbbf24; --heart:#fb7185; --shadow:0 8px 28px rgba(0,0,0,.5);
-  color-scheme:dark;
-}
-:root[data-theme="light"]{color-scheme:light}
 html{background:var(--bg);scrollbar-color:var(--surface-3) var(--bg)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
@@ -258,7 +251,8 @@ a.btn{text-decoration:none}
 .pd .hint{color:var(--muted);font-size:13px;margin-top:4px}
 
 /* cart (dark, like Shop) */
-.cartsheet .body{background:#0b0b0d;color:var(--sheet-text)}
+.cartsheet{--accent:#8f7bff}
+.cartsheet .body{background:var(--sheet-bg);color:var(--sheet-text)}
 .cartsheet .grab{background:#333}
 .cartsheet .close{background:var(--sheet-2);color:var(--sheet-text)}
 .cartsheet h2{margin:4px 0 14px;font-size:24px}
@@ -273,11 +267,11 @@ a.btn{text-decoration:none}
 .sc .scb>div{overflow:hidden;min-height:0;padding-top:12px;transition:padding .35s}
 .sc.folded .scb{grid-template-rows:0fr}
 .sc.folded .scb>div{padding-top:0}
-.cjump{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 14px;padding:8px 16px;position:sticky;top:-14px;z-index:3;background:#0b0b0d}
+.cjump{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 14px;padding:8px 16px;position:sticky;top:-14px;z-index:3;background:var(--sheet-bg)}
 .cartsheet .sc{scroll-margin-top:66px}
 .cjump::-webkit-scrollbar{display:none}
 .cjump button{flex:none;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:999px;background:var(--sheet-2);color:var(--sheet-text);font-size:14px;font-weight:600}
-.cjump button.on{background:#fff;color:#121214}
+.cjump button.on{background:#eceff4;color:#2e3440}
 .cjump button.on b{background:rgba(0,0,0,.1)}
 .cpick{color:var(--sheet-muted);font-size:13px;margin:-6px 0 12px}
 .cpicked{display:flex;align-items:center;gap:12px;background:var(--sheet);border-radius:20px;padding:14px 18px;margin:-4px 0 14px}
@@ -330,7 +324,7 @@ a.btn{text-decoration:none}
 
 .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:60;box-shadow:var(--shadow);transition:opacity .2s;max-width:calc(100% - 32px);text-align:center;display:flex;align-items:center;gap:14px;white-space:nowrap}
 .toast span{overflow:hidden;text-overflow:ellipsis}
-body:has(#sheet .cartsheet) .toast{background:#fff;color:#121214}
+body:has(#sheet .cartsheet) .toast{background:#eceff4;color:#2e3440}
 body:has(#sheet .cartsheet) .toast button{color:#5433eb;filter:none}
 .toast button{color:var(--accent);font-weight:750;font-size:15px;padding:4px 2px;flex:none;filter:brightness(1.35)}
 
@@ -558,14 +552,13 @@ document.querySelector('.cartbtn').insertAdjacentHTML('afterbegin', I.cart);
 const SUN='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>';
 const MOON='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>';
 const AUTO='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>';
-function themeIcon(){return S.theme==='light'?SUN:S.theme==='dark'?MOON:AUTO}
+function themeIcon(){return S.theme==='light'?SUN:MOON}
 function applyTheme(){
   const r=document.documentElement;
-  if(S.theme==='auto') delete r.dataset.theme; else r.dataset.theme=S.theme;
-  const dark=S.theme==='dark'||(S.theme==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
-  document.querySelector('meta[name="theme-color"]').content=dark?'#0c0c0e':'#f6f6f8';
+  if(S.theme!=='light') S.theme='dark';   // only light and dark now; the old "follow device" setting becomes dark
+  r.dataset.theme=S.theme;
+  document.querySelector('meta[name="theme-color"]').content=S.theme==='dark'?'#2e3440':'#e5e9f0';
 }
-matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>applyTheme());
 
 // ---------- utils ----------
 function $id(i){return document.getElementById(i)}
@@ -594,7 +587,7 @@ const S = {
   searches: LS.get('searches', []),    // {q, at}
   lists: LS.get('lists', null),        // {id,name,items:[{name,qty}],at}
   prefs: LS.get('prefs', {off:[], inStock:true, foil:false, sort:'low'}),
-  theme: LS.get('theme', 'auto'),
+  theme: LS.get('theme', 'dark'),
   temp: LS.get('temp', {id:'temp', name:'Card list', items:[]}),   // the quick multi-card search
   myStores: LS.get('myStores', []),
   deckOv: LS.get('deckOv', {}),
@@ -1153,7 +1146,7 @@ function viewHome(){
   return `<header class="hello">
       <div><h1>Card Hunt</h1><p>${STORES.length} stores, one search</p></div>
       <button class="iconbtn${SY?' on':''}" data-act="sync" title="Sync across devices" aria-label="Sync across devices">${sm(I.cloud)}${SY?'<i></i>':''}</button>
-      <button class="iconbtn" data-act="theme" title="Light or dark mode: ${({auto:'follows device',light:'light',dark:'dark'})[S.theme]}" aria-label="Change light or dark mode">${themeIcon()}</button>
+      <button class="iconbtn" data-act="theme" title="${S.theme==='light'?'Light mode. Tap for dark':'Dark mode. Tap for light'}" aria-label="Change light or dark mode">${themeIcon()}</button>
     </header>
     ${searchPill('')}
     ${recent.length?`<div class="recent">${recent.map(x=>`<button class="chip" data-act="q" data-q="${esc(x.q)}">${esc(x.q)}</button>`).join('')}<button class="chip clear" data-act="clearhist" aria-label="Clear recent searches">${I.x}</button></div>`
@@ -1514,7 +1507,7 @@ document.addEventListener('click', e=>{
     case 'savetemp': { const name=prompt('Name this list', 'My deck'); if(name==null) break; const l={id:uid(),name:name.trim()||'My deck',items:S.temp.items.map(i=>({...i})),at:Date.now()}; S.lists.push(l); S.temp.items=[]; save('lists'); toast('Saved to your lists'); go('list',{id:l.id}); break; }
     case 'cleartemp': S.temp.items=[]; save('lists'); render(); break;
     case 'clearhist': S.searches=[]; save('searches'); render(); break;
-    case 'theme': S.theme={auto:'light',light:'dark',dark:'auto'}[S.theme]; save('theme'); applyTheme(); render(); toast(S.theme==='auto'?'Theme follows your device':S.theme==='light'?'Light mode':'Dark mode'); break;
+    case 'theme': S.theme=S.theme==='light'?'dark':'light'; save('theme'); applyTheme(); render(); tick(); toast(S.theme==='light'?'Light mode':'Dark mode'); break;
     case 'close': dismissSheet(); break;
     case 'q': closeSheet(); doSearch(el.dataset.q); break;
     case 'clearq': searchQ=''; go('home'); setTimeout(()=>$id('q')&&$id('q').focus(),0); break;
