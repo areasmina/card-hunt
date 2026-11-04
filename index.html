@@ -790,6 +790,8 @@ async function fetchCard(name){
       catch(e){ return {results:[],errors:(g?g.map(h=>'x:'+h):BUILTIN.map(b=>b.id)).map(store=>({store,error:String(e.message||e)}))}; }
     }));
     const j={results:parts.flatMap(x=>x.results||[]),errors:parts.flatMap(x=>x.errors||[])};
+    // When some store has the exact card, close matches from the others (another card with that word in its name) are dropped.
+    if(j.results.some(x=>x.exact)) j.results=j.results.filter(x=>x.exact||x.exact===undefined);
     if(!j.results.length&&j.errors.length&&j.errors.length>=STORES.length) throw new Error('No store answered');
     const offers=(j.results||[]).map(p=>remember({store:p.store, storeName:(SBY[p.store]&&SBY[p.store].name)||p.storeName, title:p.title, name:p.name||name, set:p.set, url:p.url,
       image:p.image, foil:isFoil(p.title), price:p.priceMin??0, priceMax:p.priceMax??p.priceMin??0, available:!!p.available}));

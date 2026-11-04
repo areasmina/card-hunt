@@ -45,7 +45,9 @@ async function searchStore(id, q) {
   let prods = (sug.resources?.results?.products || []).filter(p => !OTHER_GAMES.test(`${p.type || ''} ${p.vendor || ''} ${p.title}`));
   const nq = norm(q), words = nq.split(' ');
   const exact = prods.filter(p => norm(baseName(p.title)) === nq);
-  prods = exact.length ? exact : prods.filter(p => { const t = norm(p.title); return words.every(w => t.includes(w)); });
+  // No exact name here: keep products whose own name has every word you typed as a whole word, so "Ultima"
+  // finds "Ultima, Origin of Oblivion" but not "Ultimate Guard" sleeves or cards from the set "Ultimate Masters".
+  prods = exact.length ? exact : prods.filter(p => { const t = ` ${norm(baseName(p.title))} `; return words.every(w => t.includes(` ${w} `)); });
 
   return prods.map(p => {
     const handle = (p.url || '').split('?')[0];
@@ -57,7 +59,7 @@ async function searchStore(id, q) {
       image: img(p.featured_image?.url || p.image),
       foil: /\betched\b/i.test(p.title) || /\bfoil\b/i.test(p.title.replace(/\bnon[\s-]?foil\b/ig, '')),
       priceMin: min, priceMax: max,
-      available: !!p.available,
+      available: !!p.available, exact: exact.length > 0,
     };
   });
 }
@@ -297,7 +299,7 @@ export default {
     const ids = [...new Set([...(url.searchParams.get('stores') || Object.keys(STORES).join(',')).split(',').filter(id => STORES[id]), ...extra])];
 
     const cache = caches.default;
-    const key = new Request(`https://cardhunt.cache/v3/search?q=${encodeURIComponent(norm(q))}&s=${ids.sort().join(',')}`);
+    const key = new Request(`https://cardhunt.cache/v4/search?q=${encodeURIComponent(norm(q))}&s=${ids.sort().join(',')}`);
     const hit = url.searchParams.has('fresh') ? null : await cache.match(key);
     if (hit) return hit;
 
