@@ -588,7 +588,8 @@ const S = {
   theme: LS.get('theme', 'auto'),
   temp: LS.get('temp', {id:'temp', name:'Card list', items:[]}),   // the quick multi-card search
   myStores: LS.get('myStores', []),
-  deckOv: LS.get('deckOv', {}),        // deck list links set by hand for built-in stores ('' = none)   // {host, name, deck}
+  deckOv: LS.get('deckOv', {}),
+  addrOv: LS.get('addrOv', {}),        // store addresses set by hand: {id: {address, lat, lon}}        // deck list links set by hand for built-in stores ('' = none)   // {host, name, deck}
 };
 rebuildStores();
 if(!S.lists){
@@ -600,7 +601,7 @@ if(!S.lists){
 const save = k => { LS.set(k, S[k]); if(k==='lists') LS.set('temp', S.temp); if(SYNCED.includes(k)) markDirty(); };
 // ---------- sync across devices ----------
 // Each person gets a secret sync code. Every device that has the code shares the same favorites, lists and cart.
-const SYNCED=['favs','cart','viewed','searches','lists','temp','myStores','deckOv'];
+const SYNCED=['favs','cart','viewed','searches','lists','temp','myStores','deckOv','addrOv'];
 let SY=LS.get('sync',null);            // {code, at (last server version we have), dirty}
 let syncState='idle', syncT=null, syncBusy=false;
 const ALPH='abcdefghjkmnpqrstuvwxyz23456789';
@@ -622,6 +623,7 @@ function mergeData(a,b){ // a = this device, b = the cloud; nothing is lost from
     lists: unionBy(a.lists,b.lists,l=>l.id,(x,y)=>({...((x.at||0)>=(y.at||0)?x:y),items:mergeItems(x.items,y.items)})),
     myStores: unionBy(a.myStores,b.myStores,x=>x.host),
     deckOv: {...(b.deckOv||{}),...(a.deckOv||{})},
+    addrOv: {...(b.addrOv||{}),...(a.addrOv||{})},
     temp: {...(a.temp||b.temp||{id:'temp',name:'Card list'}), items:mergeItems(a.temp&&a.temp.items,b.temp&&b.temp.items)},
   };
 }
@@ -682,6 +684,10 @@ function openStore(st){
       <div class="deckbox hidden" id="deckbox"><div class="sub" style="margin:4px 0 0">Find the store's deck list, multi-card search or "deck builder" page on their site and paste its link here. It usually looks like …/pages/deck-list.</div>
         <div class="field"><input id="decklink" placeholder="https://…/pages/deck-list" value="${esc(st.deck||'')}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn" data-act="savedeck" data-s="${esc(st.id)}">Save</button></div>
         <div class="actions" style="margin:0">${st.host?`<a class="btn ghost small" href="https://${esc(st.host)}/search?q=deck" target="_blank" rel="noopener">${I.search.replace('width="24" height="24"','width="16" height="16"')} Look on their site</a>`:''}${st.deck?`<button class="btn ghost small" data-act="deckclear" data-s="${esc(st.id)}">Remove link</button>`:''}</div></div>
+      ${(()=>{ const l=locsOf(st), o=(S.addrOv||{})[st.id]; return `<button class="row" data-act="addredit" aria-expanded="false"><span class="grow"><div class="t">Location ${o?'<span class="okpill">Set by you</span>':''}</div><div class="s">${l.length?esc(l.map(x=>x.address).join(' · '))+'. Tap to change it':'Not found on their website yet. Tap to add the address so the store shows on the map'}</div></span><span class="chev2">${I.chev}</span></button>
+      <div class="deckbox hidden" id="addrbox"><div class="sub" style="margin:4px 0 0">Type the store's street address and city, like it shows on Google Maps.</div>
+        <div class="field"><input id="addrin" placeholder="e.g. 100 Kellogg Lane, London ON" value="${esc(o?o.address:'')}" autocomplete="off"><button class="btn" data-act="saveaddr" data-s="${esc(st.id)}">Save</button></div>
+        ${o?`<div class="actions" style="margin:0"><button class="btn ghost small" data-act="addrclear" data-s="${esc(st.id)}">Use their website's address</button></div>`:''}</div>`; })()}
       ${st.custom?`<div class="sub" style="margin:14px 0 0">Store name</div>
         <div class="field"><input id="storename" value="${esc(st.name)}" autocomplete="off"><button class="btn ghost" data-act="savename" data-s="${esc(st.id)}">Save</button></div>
         <button class="btn ghost block" data-act="removestore" data-s="${esc(st.id)}" style="color:var(--heart);margin-top:6px">${I.trash} Remove store</button>`:''}
@@ -889,7 +895,10 @@ const countCards = l => l.items.reduce((a,i)=>a+i.qty,0);
 // ---------- store pages ----------
 // Each store gets its own page: its logo on a header in its own colours, a search of just that store, and what you have saved there.
 // The description, socials and policies come from the store's own home page through the helper, kept for 3 days.
-let PROF=LS.get('prof3',{});
+let PROF=LS.get('prof4',{});
+// Where a store is: the address set by hand, else every location its own website lists.
+const locsOf = st => { const o=st&&(S.addrOv||{})[st.id]; if(o&&o.lat!=null) return [o]; const p=profOf(st); if(!p) return [];
+  return p.locations&&p.locations.length?p.locations:(p.geo?[{address:p.address,...p.geo}]:[]); };
 const profOf = st => (st&&st.host&&PROF[st.host]&&PROF[st.host].data)||null;
 async function loadProfile(st){
   if(!st||!st.host) return null; const p=PROF[st.host];
@@ -899,7 +908,7 @@ async function loadProfile(st){
     PROF[st.host]=j.ok?{at:Date.now(),data:j}:{at:Date.now(),data:p&&p.data||null};
     if(!j.ok&&p&&p.data) PROF[st.host].at=Date.now()-3*864e5+5*60e3;
   }catch(e){ PROF[st.host]={at:Date.now(),data:p&&p.data||null}; }
-  LS.set('prof3',PROF); return PROF[st.host].data;
+  LS.set('prof4',PROF); return PROF[st.host].data;
 }
 const SDATA={};   // store searches, keyed "<store id>|<query>"
 let storeQ='', storeBack=null;
@@ -992,7 +1001,8 @@ function aboutHTML(st){
   const row=(href,label,icon,ext)=>`<a class="sirow" href="${esc(href)}"${ext?' target="_blank" rel="noopener"':''}><span>${esc(label)}</span>${icon}</a>`;
   return `${showDesc?`<div class="sicard"><h3>About</h3><p class="sdesc">${esc(desc)}</p></div>`:''}
     ${p.policies&&p.policies.length?`<div class="sicard"><h3>Policies</h3>${p.policies.map(x=>row(x.url,x.title==='Terms of service'?'Terms and conditions':x.title,I[POL_ICON[x.title]]||I.info,1)).join('')}</div>`:''}
-    ${p.email||p.phone||p.address?`<div class="sicard"><h3>Contact</h3>${p.address?row('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((p.name||st.name)+' '+p.address),p.address,I.pin.replace('width="16" height="16"','width="22" height="22"'),1):''}${p.email?row('mailto:'+p.email,p.email,I.mail):''}${p.phone?row('tel:'+p.phone.replace(/[^\d+]/g,''),p.phone,I.phone2):''}</div>`:''}
+    ${(()=>{ const locs=locsOf(st), addrs=locs.length?locs.map(l=>l.address):(p.addresses||[]).length?p.addresses:(p.address?[p.address]:[]);
+      return addrs.length||p.email||p.phone?`<div class="sicard"><h3>Contact</h3>${addrs.map(a=>row('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((p.name||st.name)+' '+a),a,I.pin.replace('width="16" height="16"','width="22" height="22"'),1)).join('')}${p.email?row('mailto:'+p.email,p.email,I.mail):''}${p.phone?row('tel:'+p.phone.replace(/[^\d+]/g,''),p.phone,I.phone2):''}</div>`:''; })()}
     ${soc.length?`<div class="sicard"><h3>Follow</h3>${soc.map(([k,u])=>row(u,SOCIAL[k],SOC_ICON[k]||I.ext,1)).join('')}</div>`:''}`;
 }
 const SOC_ICON={
@@ -1060,7 +1070,7 @@ function nearRefresh(){
   const live=(nearRes&&nearRes.live)||[], seen=new Set(), all=[];
   // Your Card Hunt stores come first, placed where their own website says they are (always up to date).
   const norm=x=>String(x||'').toLowerCase().replace(/^the\s+/,'').replace(/[^a-z0-9]/g,'');
-  const mineGeo=STORES.map(st=>{ const p=profOf(st); return p&&p.geo?{name:st.name,lat:p.geo.lat,lon:p.geo.lon,website:storeHome(st),addr:p.address,mine:st.id,shop:'games'}:null; }).filter(Boolean);
+  const mineGeo=STORES.flatMap(st=>locsOf(st).map(l=>({name:st.name,lat:l.lat,lon:l.lon,website:storeHome(st),addr:l.address,mine:st.id,shop:'games'})));
   const isMine=s=>mineGeo.some(m=>{ const h=hostOf(s.website); return (h&&h===hostOf(m.website))||(norm(s.name).startsWith(norm(m.name))&&norm(m.name).length>3); });
   for(const s of mineGeo){ const d=km(at,s); if(d<=NEAR.r) all.push({...s,d}); seen.add(s.name.toLowerCase()+'|'+s.lat.toFixed(3)); }
   for(const s of [...(CA||[]),...live]){ if(isMine(s)) continue; const k=s.name.toLowerCase()+'|'+s.lat.toFixed(3); if(seen.has(k)) continue; seen.add(k); const d=km(at,s); if(d<=NEAR.r) all.push({...s,d}); }
@@ -1520,6 +1530,15 @@ document.addEventListener('click', e=>{
     case 'nearadd': nearAdd(+el.dataset.i, el); break;
     case 'savename': { const st=SBY[el.dataset.s], v=$id('storename').value.trim(); if(!v) break; const m=S.myStores.find(x=>'x:'+x.host===st.id); m.name=v; save('myStores'); rebuildStores(); openStore(SBY[st.id]); render(); toast('Name saved'); break; }
     case 'deckedit': { const bx=$id('deckbox'); const open=bx.classList.toggle('hidden'); el.setAttribute('aria-expanded',String(!open)); el.classList.toggle('open',!open); if(!open){ bounce(bx); setTimeout(()=>{ const i=$id('decklink'); if(i){ i.focus(); i.scrollIntoView({block:'center',behavior:'smooth'}); } },120); } break; }
+    case 'addredit': { const bx=$id('addrbox'); const open=bx.classList.toggle('hidden'); el.setAttribute('aria-expanded',String(!open)); el.classList.toggle('open',!open); if(!open){ bounce(bx); setTimeout(()=>{ const i=$id('addrin'); if(i){ i.focus(); i.scrollIntoView({block:'center',behavior:'smooth'}); } },120); } break; }
+    case 'addrclear': { const st=SBY[el.dataset.s]; S.addrOv={...S.addrOv}; delete S.addrOv[st.id]; save('addrOv'); tick(); toast('Using the address from their website'); openStore(st); if(nearMap) nearRefresh(); break; }
+    case 'saveaddr': { const st=SBY[el.dataset.s]; const q=$id('addrin').value.trim(); if(q.length<6){ toast('Type the street address and city'); break; }
+      el.disabled=true; el.textContent='…';
+      (async()=>{ try{ const j=await (await fetch(`${API}/geo?q=${encodeURIComponent(q)}`)).json();
+        if(!j.ok){ toast(j.error||"Couldn't find that address"); el.disabled=false; el.textContent='Save'; return; }
+        S.addrOv={...S.addrOv,[st.id]:{address:q,lat:j.lat,lon:j.lon}}; save('addrOv'); tick(); toast('Location saved'); openStore(st); if(nearMap) nearRefresh();
+      }catch(e){ toast("Couldn't reach Card Hunt's helper. Try again"); el.disabled=false; el.textContent='Save'; } })();
+      break; }
     case 'deckclear': $id('decklink').value=''; /* falls through */
     case 'savedeck': { const st=SBY[el.dataset.s]; const v=$id('decklink').value.trim(); let u=null;
       if(v){ try{ u=new URL(/^https?:/i.test(v)?v:'https://'+v); }catch(e){} if(!u||!/^\/pages\//.test(u.pathname)){ toast('Paste the link to a page on the store, like …/pages/deck-list'); break; } u=u.origin+u.pathname; }

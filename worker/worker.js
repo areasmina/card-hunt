@@ -76,7 +76,7 @@ function prettyHost(h) { const b = h.replace(/^(www|store|shop|en)\./, '').split
 // Read a store's home page once: name, favicon logo, a banner picture, short description, theme colour,
 // contact email and social links. Shopify sometimes rate-limits us, so retry once after a pause.
 async function readHome(host) {
-  const out = { name: '', logo: null, banner: null, description: '', color: null, email: null, phone: null, address: null, socials: {} };
+  const out = { name: '', logo: null, banner: null, description: '', color: null, email: null, phone: null, addresses: [], pages: [], socials: {} };
   try {
     const get = () => fetch(`https://${host}/`, { headers: { 'User-Agent': UA, Accept: 'text/html' }, redirect: 'follow' });
     let hp = await get();
@@ -103,7 +103,8 @@ async function readHome(host) {
     if (!out.email) { const m = text.match(/\b[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|ca|net|org|co|io|shop|store)\b/i); if (m && !/example|domain|sentry|shopify/i.test(m[0])) out.email = m[0]; }
     const tel = t.match(/href=["']tel:([+\d][\d\s().-]{6,20})["']/i) || text.match(/(?:\+?1[\s.-]?)?\(?\b[2-9]\d{2}\)?[\s.-]\d{3}[\s.-]\d{4}\b/);
     out.phone = tel ? (tel[1] || tel[0]).trim() : null;
-    out.address = findAddress(t, text);
+    out.addresses = findAddresses(t, text);
+    out.pages = [...new Set([...t.matchAll(/href=["'](\/pages\/[a-z0-9-]*(?:contact|location|our-store|stores|visit|about|hours|find-us)[a-z0-9-]*)["']/gi)].map(m => m[1].toLowerCase()))].slice(0, 4);
     const SOC = { instagram: /instagram\.com/, facebook: /facebook\.com/, tiktok: /tiktok\.com/, youtube: /youtube\.com|youtu\.be/, x: /(?:twitter|x)\.com/, discord: /discord\.(?:gg|com)/ };
     for (const m of t.matchAll(/href=["'](https?:\/\/[^"']+)["']/gi)) {
       const u = dec(m[1]); for (const [k, re] of Object.entries(SOC)) if (!out.socials[k] && re.test(u) && !/sharer|share\?|intent\/|\/plugins\//i.test(u)) out.socials[k] = u;
@@ -112,26 +113,25 @@ async function readHome(host) {
   return out;
 }
 
-// A shop's street address, from its own site: structured data first, else the text around a Canadian postal code.
+// A shop's street addresses (some have several locations), from its own site: structured data, the text around a
+// Canadian postal code, or a "123 Something Street, City" line when there's no postal code.
 const STREET = /\b(st|street|rd|road|ave|avenue|lane|ln|blvd|boulevard|dr|drive|way|cres|crescent|hwy|highway|pkwy|court|ct|place|pl|square|sq|trail|line|unit|suite|rue|chemin|boul)\b/i;
-function findAddress(html, text) {
-  const ld = html.match(/"streetAddress"\s*:\s*"([^"]{3,120})"/);
-  if (ld) {
-    const g = k => (html.match(new RegExp(`"${k}"\\s*:\\s*"([^"]{1,80})"`)) || [])[1] || '';
-    const a = [ld[1], g('addressLocality'), [g('addressRegion'), g('postalCode')].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-    if (/\d/.test(a)) return a;
-  }
-  const flat = text.replace(/\s+/g, ' ');
+const PROV = '(?:ON|Ontario|QC|Qu[eé]bec|BC|British Columbia|AB|Alberta|MB|Manitoba|SK|Saskatchewan|NS|Nova Scotia|NB|New Brunswick|NL|PE|PEI)';
+function findAddresses(html, text) {
+  const out = [], add = a => { a = a.replace(/\s+,/g, ',').replace(/\s*,\s*/g, ', ').replace(/\s+/g, ' ').replace(/[\s,.-]+$/, '').trim();
+    const k = (a.match(/^\d+\s+\S+/) || [a])[0].toLowerCase(); if (a.length > 8 && !out.some(x => (x.match(/^\d+\s+\S+/) || [x])[0].toLowerCase() === k)) out.push(a); };
+  for (const m of html.matchAll(/"streetAddress"\s*:\s*"([^"]{3,120})"[^}]{0,300}?"addressLocality"\s*:\s*"([^"]{1,60})"/g)) add(`${m[1]}, ${m[2]}`);
+  const flat = text.replace(/\s+/g, ' ').replace(/​/g, '');
   for (const m of flat.matchAll(/\b[A-CEGHJ-NPR-TVXY]\d[A-CEGHJ-NPR-TV-Z][ -]?\d[A-CEGHJ-NPR-TV-Z]\d\b/gi)) {
     const before = flat.slice(Math.max(0, m.index - 110), m.index);
     const starts = [...before.matchAll(/\b\d{1,6}[A-Za-z]?\s+(?=[A-Za-z])/g)].map(x => x.index);
-    for (let i = starts.length - 1; i >= 0; i--) {
-      const seg = before.slice(starts[i]);
-      if (STREET.test(seg)) return (seg + m[0]).replace(/\s*,\s*/g, ', ').replace(/\s+/g, ' ').trim();
-    }
+    for (let i = starts.length - 1; i >= 0; i--) { const seg = before.slice(starts[i]); if (STREET.test(seg)) { add(seg + m[0]); break; } }
   }
-  return null;
+  const noPc = new RegExp(String.raw`\b\d{1,6}\s+(?:[A-Z][\w.'-]*\s+){1,4}(?:St|Street|Rd|Road|Ave|Avenue|Dr|Drive|Blvd|Boulevard|Way|Lane|Cres|Crescent|Line|Hwy|Highway|Pkwy|Court|Ct|Place|Pl|Trail)\b\.?(?:\s*(?:E|W|N|S|East|West|North|South)\b)?(?:,?\s*(?:Unit|Suite|#)\s*[\w-]+)?\s*,?\s*(?:[A-Z][a-z]+\s*){1,2},?\s*${PROV}\b`, 'g');
+  for (const m of flat.matchAll(noPc)) add(m[0]);
+  return out.slice(0, 6);
 }
+function findAddress(html, text) { return findAddresses(html, text)[0] || null; }
 // Free geocoding through OpenStreetMap's Nominatim (one lookup per address, cached for a month).
 async function geocode(addr, ctx) {
   if (!addr) return null;
@@ -148,16 +148,25 @@ async function geocode(addr, ctx) {
 async function profile(url, ctx) {
   const host = String(url.searchParams.get('host') || '').toLowerCase();
   if (!HOST_RE.test(host)) return Response.json({ ok: false, error: 'bad host' }, { status: 400, headers: CORS });
-  const key = new Request(`https://cardhunt.cache/v3/profile/${host}`);
+  const key = new Request(`https://cardhunt.cache/v4/profile/${host}`);
   const hit = url.searchParams.has('fresh') ? null : await caches.default.match(key);
   if (hit) return hit;
   const p = await readHome(host);
-  // No address on the home page: look on the usual contact pages (stop at the first that has one).
-  if (!p.status && !p.address) for (const path of ['/pages/contact', '/pages/contact-us', '/pages/about-us', '/pages/about']) {
-    try { const r = await fetch(`https://${host}${path}`, { headers: { 'User-Agent': UA, Accept: 'text/html' }, redirect: 'follow' }); if (!r.ok) continue;
-      const t = (await r.text()).slice(0, 400000); const a = findAddress(t, t.replace(/<(script|style|svg)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/g, ' ')); if (a) { p.address = a; break; } } catch {}
+  // No address on the home page: look on the store's own contact or locations pages, then the usual ones.
+  if (!p.status && !p.addresses.length) {
+    const paths = [...new Set([...p.pages, '/pages/contact', '/pages/contact-us', '/pages/about-us'])].slice(0, 5);
+    for (const path of paths) {
+      try { let r = await fetch(`https://${host}${path}`, { headers: { 'User-Agent': UA, Accept: 'text/html' }, redirect: 'follow' });
+        if (r.status === 429) { await new Promise(res => setTimeout(res, 1200)); r = await fetch(`https://${host}${path}`, { headers: { 'User-Agent': UA, Accept: 'text/html' }, redirect: 'follow' }); }
+        if (!r.ok) continue;
+        const t = (await r.text()).slice(0, 400000); const a = findAddresses(t, t.replace(/<(script|style|svg)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/g, ' '));
+        if (a.length) { p.addresses = a; break; } } catch {}
+    }
   }
-  if (p.address) p.geo = await geocode(p.address, ctx);
+  p.locations = [];
+  for (const a of p.addresses.slice(0, 4)) { const g = await geocode(a, ctx); if (g) p.locations.push({ address: a, ...g }); }
+  p.address = p.addresses[0] || null; p.geo = p.locations[0] ? { lat: p.locations[0].lat, lon: p.locations[0].lon } : null;
+  delete p.pages;
   const policies = [['Refund policy', 'refund-policy'], ['Shipping policy', 'shipping-policy'], ['Privacy policy', 'privacy-policy'], ['Terms of service', 'terms-of-service']]
     .map(([title, slug]) => ({ title, url: `https://${host}/policies/${slug}` }));
   const ok = !p.status && !p.error;
@@ -271,6 +280,8 @@ export default {
     if (url.pathname === '/store') return checkStore(url.searchParams.get('url') || '');
     if (url.pathname === '/profile') return profile(url, ctx);
     if (url.pathname === '/nearby') return nearby(url, ctx);
+    if (url.pathname === '/geo') { const q = String(url.searchParams.get('q') || '').slice(0, 200).trim(); const g = q.length > 5 ? await geocode(q, ctx) : null;
+      return Response.json(g ? { ok: true, ...g } : { ok: false, error: "Couldn't find that address. Try adding the city." }, { headers: CORS }); }
     if (url.pathname.startsWith('/sync/')) return sync(req, env, url.pathname.slice(6));
     if (url.pathname !== '/search') return new Response('Not found', { status: 404, headers: CORS });
 
