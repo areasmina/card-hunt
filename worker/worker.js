@@ -160,7 +160,7 @@ async function geocode(addr, ctx) {
 
 // GET /recs?names=A|B|C -> cards that Commander decks with those cards often play (EDHREC's public card pages),
 // ranked by how many of your cards they go with and how high EDHREC lists them. Each card page is cached for a week.
-const REC_LISTS = /^(highsynergycards|topcards|creatures|instants|sorceries|utilityartifacts|enchantments|planeswalkers|gamechangers)$/;
+const REC_LISTS = /^(highliftcards|highsynergycards|topcards|creatures|instants|sorceries|utilityartifacts|enchantments|planeswalkers|manaartifacts)$/;
 const edhSlug = n => n.split(' // ')[0].toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/['’,.!?:]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 async function edhCard(name, ctx) {
   const slug = edhSlug(name); if (!slug) return null;
@@ -180,15 +180,19 @@ async function recs(url, ctx) {
   const names = [...new Set(String(url.searchParams.get('names') || '').split('|').map(x => x.trim()).filter(x => x.length > 1 && x.length < 120))].slice(0, 6);
   if (!names.length) return Response.json({ ok: false, error: 'names required' }, { status: 400, headers: CORS });
   const mine = new Set(names.map(n => n.toLowerCase())), score = new Map();
-  const pages = await Promise.all(names.map(n => edhCard(n, ctx)));
+  // EDHREC's "High Lift" list is the real synergy signal; its "top cards" are staples every deck plays, so those
+  // (and anything on the Sol Ring page, a stand-in for "every deck") count for little.
+  const [pages, base] = await Promise.all([Promise.all(names.map(n => edhCard(n, ctx))), edhCard('Sol Ring', ctx)]);
+  const staple = new Set((base || []).flatMap(l => l.cards.map(c => c.name.toLowerCase())));
   pages.forEach((lists, i) => { if (!lists) return;
-    for (const l of lists) l.cards.forEach((c, k) => {
-      const low = c.name.toLowerCase(); if (mine.has(low)) return;
-      const w = (l.tag === 'highsynergycards' ? 3 : l.tag === 'topcards' ? 2 : 1) + (c.syn > 0 ? c.syn * 4 : 0) + (12 - k) / 12;
-      const e = score.get(low) || { name: c.name, score: 0, with: [] }; e.score += w; if (!e.with.includes(names[i])) e.with.push(names[i]); score.set(low, e);
-    }); });
-  const out = [...score.values()].map(e => ({ ...e, score: e.score * e.with.length })).sort((a, b) => b.score - a.score).slice(0, 18)
-    .map(e => ({ name: e.name, with: e.with.slice(0, 2) }));
+    for (const l of lists) { if (l.tag === 'topcards' || l.tag === 'manaartifacts') continue;
+      l.cards.forEach((c, k) => {
+        const low = c.name.toLowerCase(); if (mine.has(low)) return;
+        let w = (l.tag === 'highliftcards' || l.tag === 'highsynergycards' ? 3 : 1) * (1 + (12 - k) / 12);
+        if (staple.has(low)) w *= 0.2;
+        const e = score.get(low) || { name: c.name, score: 0, with: [] }; e.score += w; if (!e.with.includes(names[i])) e.with.push(names[i]); score.set(low, e);
+      }); } });
+  const out = [...score.values()].sort((a, b) => b.score - a.score).slice(0, 18).map(e => ({ name: e.name, with: e.with.slice(0, 2) }));
   return Response.json({ ok: true, seeds: names, cards: out, found: pages.filter(Boolean).length },
     { headers: { ...CORS, 'Cache-Control': 'public, max-age=3600' } });
 }
