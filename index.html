@@ -519,13 +519,16 @@ a.noweb{color:var(--accent-ink)!important;font-weight:600}
 
 /* stock status as a set-symbol plate: gold (like a rare) when in stock, silver (like an uncommon) when sold out */
 .pd .st{margin-top:6px}
-.stamp{position:relative;display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:4px;overflow:hidden;
-  font:700 13px/1 Georgia,"Times New Roman",serif;letter-spacing:0;white-space:nowrap}
-/* in stock: the M19 look, a flat gold plaque with a black keyline and black serif letters */
-.stamp.in{border:2px solid transparent;background:linear-gradient(118deg,rgba(255,255,255,.22) 0 34%,transparent 35%) padding-box,linear-gradient(#f4dc8e,#d9b257 52%,#c49a3e 53%,#e1c06c) padding-box,linear-gradient(#fbeab0,#b8892f 50%,#f0d283) border-box;color:#0d0b07;box-shadow:inset 0 0 0 1.2px #0d0b07,0 0 0 1px #0d0b07;height:22px}
-/* sold out: the M11 look, a chrome rim around a dark slate-blue face with silver letters outlined in black */
-.stamp.out{border-radius:6px;background:linear-gradient(118deg,rgba(255,255,255,.16) 0 34%,transparent 35%) padding-box,linear-gradient(160deg,#58707c,#22313a 55%,#3a505c) padding-box,linear-gradient(#ffffff,#8e98a1 45%,#eef1f3 60%,#7b858e) border-box;border:2.5px solid transparent;
-  color:#e9edf0;-webkit-text-stroke:.6px #0a1013;paint-order:stroke fill;box-shadow:0 0 0 1px #0a0c0e;height:22px;padding:0 8px}
+.stamp{position:relative;display:inline-flex;align-items:center;justify-content:center;height:21px;padding:0 6px 0 5px;white-space:nowrap;vertical-align:middle}
+/* the letters: big black serif, mottled like the printed M, set tight to the plate's edges */
+.stamp b{font:700 15px/1 Georgia,"Times New Roman",serif;letter-spacing:-.01em;color:transparent;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .55 0 0 0 0 .55 0 0 0 .26 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),linear-gradient(#1a1917,#030302);-webkit-background-clip:text;background-clip:text;transform:translateY(.5px)}
+/* in stock, like M19: one black keyline around a brushed-gold plate, brighter in the middle, a soft sheen on top */
+.stamp.in{border-radius:6px;border:1px solid #0d0c08;
+  background:linear-gradient(rgba(255,250,220,.22),rgba(255,250,220,0) 48%,rgba(0,0,0,.08)),linear-gradient(90deg,#7a6a2c,#ad9645 18%,#cdb862 45%,#d6c26d 55%,#b39c48 82%,#7c6b2d)}
+/* sold out, like M11: dark keyline, polished silver rim, an inner black line, then a pale steel-blue face with a diagonal reflection */
+.stamp.out{border-radius:8px;border:2px solid transparent;
+  background:linear-gradient(112deg,#8eaab3 0%,#cfe1e5 22%,#e9f3f4 34%,#a9c3ca 52%,#d9e8eb 72%,#93afb7 100%) padding-box,linear-gradient(#fbfcfc,#c9ced2 45%,#9aa2a8 55%,#e8ebed) border-box;
+  box-shadow:0 0 0 1px #1d2428,inset 0 0 0 1px #12181b;padding:0 7px}
 </style>
 </head>
 <body>
@@ -1467,7 +1470,7 @@ function openProduct(o, fromCart=productFromCart){
     ${imgTag(o,'big')}
     ${SBY[o.store]?`<button class="store" data-act="gostore" data-hold="${esc(o.store)}" data-s="${esc(o.store)}">${esc(o.storeName)} ${I.chev}</button>`:`<div class="store">${esc(o.storeName)}</div>`}<h3>${esc(o.title)}</h3>
     <div class="pr">${esc(priceText(o))}</div>
-    <div class="st${o.available?'':' sold'}"><span class="stamp ${o.available?'in':'out'}">${o.available?'In stock':'Sold out'}${isFoil(o.title)?' · Foil':''}</span></div>
+    <div class="st${o.available?'':' sold'}"><span class="stamp ${o.available?'in':'out'}"><b>${o.available?'In stock':'Sold out'}${isFoil(o.title)?' · Foil':''}</b></span></div>
     <div class="hint">${o.priceMax>o.price+0.001?'Price depends on condition. You choose the condition on the store\'s page.':'Check the condition on the store\'s page.'}</div>
     <div class="buy">
       ${c?`<div class="incart"><div><b>In your cart</b><span>${esc(money(c.price*c.qty))} from</span></div><div class="bigstep">
