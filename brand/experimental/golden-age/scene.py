@@ -1,4 +1,4 @@
-"""Card Hunt, Arabian Nights direction: the monkey card hunter as a 3D scene in Blender.
+"""Card Hunt, golden-age (1993-98) direction: the monkey card hunter as a 3D scene in Blender.
 
 The monkey (pith hat, brass magnifier, holding up a card) sits on a hoard of gold coins and old
 cards beside an oil lamp, with a crescent moon, dunes and a domed city behind. All modelled
